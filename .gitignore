@@ -1,0 +1,2 @@
+# Ignore sensitive files
+casters-tool/backend/app/config.py
