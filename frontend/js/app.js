@@ -65,6 +65,25 @@ document.addEventListener('click', e => {
     if (!wrapper) document.getElementById('settings-menu')?.classList.add('hidden');
 });
 
+// ── Theme Toggle ───────────────────────────────────────────
+function toggleTheme(isLight) {
+    document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+// Restore saved theme on load
+(function initTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        // Sync checkbox once DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            const cb = document.getElementById('toggle-theme');
+            if (cb) cb.checked = true;
+        });
+    }
+})();
+
 function toggleHighlightForeign(on) {
     highlightForeign = on;
     applyForeignHighlight();

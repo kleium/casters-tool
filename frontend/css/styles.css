@@ -42,6 +42,83 @@
     --transition:      .25s cubic-bezier(.4, 0, .2, 1);
 }
 
+/* ═══ LIGHT THEME OVERRIDES ════════════════════════════════ */
+[data-theme="light"] {
+    --bg:              #f4f5f9;
+    --bg-gradient:     linear-gradient(145deg, #f4f5f9 0%, #e8eaf0 50%, #f0f1f6 100%);
+    --surface:         #ffffff;
+    --surface-glass:   rgba(255, 255, 255, .82);
+    --card:            #ffffff;
+    --card-hover:      #f0f0f8;
+    --border:          rgba(99, 102, 241, .15);
+    --border-subtle:   rgba(0, 0, 0, .06);
+    --text:            #1a1a2e;
+    --text-secondary:  #4a4a6a;
+    --text-muted:      #8888a8;
+    --primary:         #5b5ef0;
+    --primary-glow:    rgba(91, 94, 240, .18);
+    --primary-hover:   #6366f1;
+    --primary-soft:    rgba(99, 102, 241, .08);
+    --red:             #dc2626;
+    --red-deep:        #b91c1c;
+    --red-bg:          rgba(239, 68, 68, .06);
+    --red-border:      rgba(239, 68, 68, .18);
+    --blue:            #2563eb;
+    --blue-deep:       #1d4ed8;
+    --blue-bg:         rgba(59, 130, 246, .06);
+    --blue-border:     rgba(59, 130, 246, .18);
+    --green:           #16a34a;
+    --green-deep:      #15803d;
+    --yellow:          #d97706;
+    --shadow-sm:       0 1px 4px rgba(0,0,0,.08);
+    --shadow-md:       0 2px 12px rgba(0,0,0,.08);
+    --shadow-lg:       0 4px 24px rgba(0,0,0,.1);
+    --shadow-glow:     0 0 20px rgba(99,102,241,.06);
+}
+
+[data-theme="light"] body::before { opacity: 0; }
+
+[data-theme="light"] #loading-overlay {
+    background: rgba(244, 245, 249, .92);
+}
+
+[data-theme="light"] header h1 {
+    background: linear-gradient(135deg, #1a1a2e 0%, #5b5ef0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+[data-theme="light"] .settings-btn {
+    background: rgba(0,0,0,.04);
+    border-color: rgba(0,0,0,.1);
+}
+
+[data-theme="light"] .settings-menu {
+    background: #fff;
+    border-color: rgba(0,0,0,.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,.12);
+}
+
+[data-theme="light"] .custom-tooltip {
+    background: #fff;
+    border-color: rgba(0,0,0,.1);
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track {
+    background: #f0f1f6;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: rgba(99,102,241,.25);
+}
+
+[data-theme="light"] ::selection {
+    background: rgba(99,102,241,.2);
+    color: #1a1a2e;
+}
+
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }

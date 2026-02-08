@@ -20,6 +20,11 @@
                 <div id="settings-menu" class="settings-menu hidden">
                     <div class="settings-title">Settings</div>
                     <label class="settings-toggle">
+                        <input type="checkbox" id="toggle-theme" onchange="toggleTheme(this.checked)">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Light mode</span>
+                    </label>
+                    <label class="settings-toggle">
                         <input type="checkbox" id="toggle-highlight-foreign" onchange="toggleHighlightForeign(this.checked)">
                         <span class="toggle-slider"></span>
                         <span class="toggle-label">Highlight non-Turkish teams</span>
