@@ -140,6 +140,9 @@ async def get_all_matches(event_key: str):
             if cl == "qm":
                 label = f"Qualification {mn}"
                 sort_key = (0, mn, 0)
+            elif cl == "f":
+                label = f"Final {mn}"
+                sort_key = (COMP_LEVEL_ORDER.get(cl, 9), sn, mn)
             else:
                 level_name = COMP_LEVEL_LABELS.get(cl, cl)
                 label = f"{level_name} {sn}" + (f" (Match {mn})" if mn > 1 else "")
