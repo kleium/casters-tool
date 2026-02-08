@@ -89,6 +89,8 @@ function toggleTheme(isLight) {
 function toggleHighlightForeign(on) {
     highlightForeign = on;
     applyForeignHighlight();
+    // Re-render PBP if it's loaded so team cards update
+    if (pbpData) renderPbpMatch();
 }
 
 function applyForeignHighlight() {
