@@ -96,7 +96,9 @@ async def get_all_matches(event_key: str):
             if rankings and rankings.get("rankings"):
                 for r in rankings["rankings"]:
                     if r["team_key"] == tk:
-                        rp_list = [sp.get("value", 0) for sp in r.get("sort_orders", [])[:1]]
+                        sort_orders = r.get("sort_orders", [])
+                        if sort_orders:
+                            rp_list = [sort_orders[0] if isinstance(sort_orders[0], (int, float)) else sort_orders[0].get("value", 0)]
             return {
                 "team_key": tk,
                 "team_number": info.get("team_number", int(tk.replace("frc", ""))),
