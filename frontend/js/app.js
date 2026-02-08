@@ -1,0 +1,578 @@
+/* ═══════════════════════════════════════════════════════════
+   app.js — FRC Caster's Tool UI Controller
+   ═══════════════════════════════════════════════════════════ */
+
+// ── Tooltip positioning (fixed to viewport) ───────────────
+document.addEventListener('mouseover', e => {
+    // Find the closest .has-tooltip that directly contains the event target
+    const badge = e.target.closest('.has-tooltip');
+    if (!badge) return;
+
+    // Only act on the innermost .has-tooltip (skip if target is inside a nested one)
+    const tip = badge.querySelector(':scope > .custom-tooltip');
+    if (!tip) return;
+
+    // Don't reposition if mouse just moved within the same badge
+    if (badge._tipActive) return;
+    badge._tipActive = true;
+    badge.addEventListener('mouseleave', function handler() {
+        badge._tipActive = false;
+        tip.style.display = '';
+        badge.removeEventListener('mouseleave', handler);
+    });
+
+    // Force display to measure, but off-screen
+    tip.style.display = 'block';
+    tip.style.left = '-9999px';
+    tip.style.top = '0';
+    tip.classList.remove('above', 'below');
+
+    const tipRect = tip.getBoundingClientRect();
+    const badgeRect = badge.getBoundingClientRect();
+
+    const spaceAbove = badgeRect.top;
+    const gap = 8;
+    let top, cls;
+
+    if (spaceAbove >= tipRect.height + gap) {
+        top = badgeRect.top - tipRect.height - gap;
+        cls = 'above';
+    } else {
+        top = badgeRect.bottom + gap;
+        cls = 'below';
+    }
+
+    let left = badgeRect.left + badgeRect.width / 2 - tipRect.width / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
+
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+    tip.classList.add(cls);
+});
+
+let currentEvent = null;   // event_key once loaded
+let playoffData  = null;   // cached playoff matches
+let allianceData = null;   // cached alliance data
+let highlightForeign = false; // settings: highlight non-Turkish teams
+
+// ── Settings ───────────────────────────────────────────────
+function toggleSettings() {
+    document.getElementById('settings-menu').classList.toggle('hidden');
+}
+// Close settings when clicking outside
+document.addEventListener('click', e => {
+    const wrapper = e.target.closest('.settings-wrapper');
+    if (!wrapper) document.getElementById('settings-menu')?.classList.add('hidden');
+});
+
+function toggleHighlightForeign(on) {
+    highlightForeign = on;
+    applyForeignHighlight();
+}
+
+function applyForeignHighlight() {
+    document.querySelectorAll('[data-country]').forEach(el => {
+        const c = el.dataset.country;
+        const isTurkish = !c || c === 'Turkey' || c === 'Türkiye' || c === 'Turkiye';
+        if (highlightForeign && !isTurkish) {
+            el.classList.add('foreign-team');
+        } else {
+            el.classList.remove('foreign-team');
+        }
+    });
+}
+
+// ── Tab switching ──────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+
+        // Auto-load data when switching to playoff / alliance tabs
+        if (btn.dataset.tab === 'playoff' && currentEvent && !playoffData) loadPlayoffs();
+        if (btn.dataset.tab === 'alliance' && currentEvent && !allianceData) loadAlliances();
+    });
+});
+
+// Allow enter key in inputs
+document.getElementById('event-year')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadEvent(); });
+document.getElementById('event-code')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadEvent(); });
+document.getElementById('team-number')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadTeam(); });
+document.getElementById('h2h-team-b')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadH2H(); });
+
+
+// ── Helpers ────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const show = (id) => $(id)?.classList.remove('hidden');
+const hide = (id) => $(id)?.classList.add('hidden');
+const loading = (on) => on ? show('loading-overlay') : hide('loading-overlay');
+
+
+// ═══════════════════════════════════════════════════════════
+// 1. EVENT SELECTION
+// ═══════════════════════════════════════════════════════════
+async function loadEvent() {
+    const year = $('event-year').value.trim();
+    const eventCode = $('event-code').value.trim().toLowerCase();
+    if (!year || !eventCode) return;
+    const code = `${year}${eventCode}`;
+
+    loading(true);
+    playoffData = null;
+    allianceData = null;
+
+    try {
+        const [info, teams] = await Promise.all([
+            API.eventInfo(code),
+            API.eventTeams(code),
+        ]);
+
+        currentEvent = code;
+
+        // Badge
+        const badge = $('event-badge');
+        badge.textContent = `${info.name} (${info.year})`;
+        show('event-badge');
+
+        // Info card
+        const infoEl = $('event-info');
+        infoEl.innerHTML = `
+            <div class="event-info-card">
+                <h2>${info.name}</h2>
+                <p>${info.event_type_string} — ${info.city}, ${info.state_prov}</p>
+                <p>${info.start_date} → ${info.end_date} &nbsp;|&nbsp; ${teams.length} teams</p>
+            </div>`;
+        show('event-info');
+
+        // Teams table
+        $('event-teams').innerHTML = buildTeamTable(teams);
+
+        // Reset dependent tabs
+        $('playoff-empty')?.classList.remove('hidden');
+        $('playoff-nav').innerHTML = '';
+        $('playoff-matches').innerHTML = '';
+        $('alliance-empty')?.classList.remove('hidden');
+        $('alliance-grid').innerHTML = '';
+
+    } catch (err) {
+        alert(`Error loading event: ${err.message}`);
+    } finally {
+        loading(false);
+    }
+}
+
+function buildTeamTable(teams) {
+    return `
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Rank</th><th>Team</th><th>Name</th><th>Location</th>
+                <th>Record</th><th>OPR</th><th>DPR</th><th>CCWM</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${teams.map(t => `
+            <tr>
+                <td class="rank">${t.rank}</td>
+                <td class="team-num">${t.team_number}</td>
+                <td>${t.nickname}</td>
+                <td class="location">${t.city ? `${t.city}, ${t.state_prov}` : ''}</td>
+                <td class="stat">${t.wins}-${t.losses}-${t.ties}</td>
+                <td class="stat stat-opr">${t.opr}</td>
+                <td class="stat stat-dpr">${t.dpr}</td>
+                <td class="stat">${t.ccwm}</td>
+            </tr>`).join('')}
+        </tbody>
+    </table>`;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 2. PLAYOFFS
+// ═══════════════════════════════════════════════════════════
+let currentBracket = 'all'; // 'all', 'upper', 'lower', 'final'
+
+async function loadPlayoffs() {
+    if (!currentEvent) return;
+    loading(true);
+    try {
+        const data = await API.playoffMatches(currentEvent);
+        playoffData = data.matches;
+        hide('playoff-empty');
+        currentBracket = 'all';
+        renderBracketNav();
+        renderPlayoffs();
+    } catch (err) {
+        alert(`Error loading playoffs: ${err.message}`);
+    } finally {
+        loading(false);
+    }
+}
+
+function renderBracketNav() {
+    $('playoff-bracket-nav').innerHTML = `
+        <button class="bracket-btn active" onclick="setBracket('all', this)">All Matches</button>
+        <button class="bracket-btn" onclick="setBracket('upper', this)">▲ Upper Bracket</button>
+        <button class="bracket-btn" onclick="setBracket('lower', this)">▼ Lower Bracket</button>
+        <button class="bracket-btn" onclick="setBracket('final', this)">🏆 Grand Final</button>
+    `;
+}
+
+function setBracket(bracket, btn) {
+    currentBracket = bracket;
+    document.querySelectorAll('.bracket-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderPlayoffs();
+}
+
+function renderPlayoffs() {
+    if (!playoffData || !playoffData.length) {
+        $('playoff-matches').innerHTML = '<p class="empty">No playoff matches found.</p>';
+        return;
+    }
+
+    // Filter by bracket
+    let filtered = playoffData;
+    if (currentBracket !== 'all') {
+        filtered = playoffData.filter(m => m.bracket === currentBracket);
+    }
+
+    // Build unique rounds in order
+    const roundOrder = [1, 2, 3, 4, 5, 0]; // 0 = Grand Final
+    const roundsPresent = roundOrder.filter(r => filtered.some(m => m.round === r));
+    const roundLabels = {1: 'Round 1', 2: 'Round 2', 3: 'Round 3', 4: 'Round 4', 5: 'Round 5', 0: 'Grand Final'};
+
+    $('playoff-nav').innerHTML = roundsPresent.map((r, i) =>
+        `<button class="round-btn ${i === 0 ? 'active' : ''}" data-round="${r}"
+                 onclick="filterRound(${r}, this)">${roundLabels[r]}</button>`
+    ).join('');
+
+    if (roundsPresent.length) filterRound(roundsPresent[0]);
+    else $('playoff-matches').innerHTML = '<p class="empty">No matches in this bracket.</p>';
+}
+
+function filterRound(round, btn) {
+    if (btn) {
+        document.querySelectorAll('.round-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    } else {
+        document.querySelector(`.round-btn[data-round="${round}"]`)?.classList.add('active');
+    }
+
+    const matches = playoffData.filter(m => {
+        if (m.round !== round) return false;
+        if (currentBracket !== 'all' && m.bracket !== currentBracket) return false;
+        return true;
+    });
+
+    // Sort by set_number then match_number
+    matches.sort((a, b) => a.set_number - b.set_number || a.match_number - b.match_number);
+
+    // Render each match as its own card — no series grouping
+    $('playoff-matches').innerHTML = matches.map(m => {
+        const redNums = m.red?.alliance_number ? `Alliance #${m.red.alliance_number}` : '';
+        const blueNums = m.blue?.alliance_number ? `Alliance #${m.blue.alliance_number}` : '';
+        const bracketTag = m.bracket === 'upper' ? '▲ Upper'
+                         : m.bracket === 'lower' ? '▼ Lower'
+                         : m.bracket === 'final' ? '🏆 Final' : '';
+
+        return `
+        <div class="series-card">
+            <div class="series-header">
+                <span class="series-title">Match ${m.set_number}${m.match_number > 1 ? ` (Replay ${m.match_number})` : ''}
+                    <span class="bracket-tag ${m.bracket}">${bracketTag}</span>
+                    <span class="muted" style="margin-left:.6rem">${redNums} vs ${blueNums}</span>
+                </span>
+            </div>
+            ${renderMatchCard(m)}
+        </div>`;
+    }).join('') || '<p class="empty">No matches in this bracket.</p>';
+}
+
+function renderMatchCard(m) {
+    const upcoming = m.red.score < 0 && m.blue.score < 0;
+    return `
+    <div class="match-card ${upcoming ? 'upcoming' : ''}">
+        <div class="match-alliances">
+            ${renderAlliance('red', m)}
+            ${renderAlliance('blue', m)}
+        </div>
+    </div>`;
+}
+
+function renderAlliance(color, m) {
+    const a = m[color];
+    const won = m.winning_alliance === color;
+    const badgeCls = color === 'red' ? 'red-badge' : 'blue-badge';
+    return `
+    <div class="alliance ${color} ${won ? 'winner' : ''}">
+        <div class="alliance-teams">
+            ${a.team_numbers.map((tn, i) => {
+                const name = (a.team_names && a.team_names[i]) || '';
+                const country = (a.team_countries && a.team_countries[i]) || '';
+                const foreignCls = highlightForeign && country && country !== 'Turkey' && country !== 'Türkiye' && country !== 'Turkiye' ? 'foreign-team' : '';
+                return name
+                    ? `<span class="team-badge ${badgeCls} ${foreignCls} has-tooltip" data-country="${country}">${tn}<span class="custom-tooltip">${name}</span></span>`
+                    : `<span class="team-badge ${badgeCls} ${foreignCls}" data-country="${country}">${tn}</span>`;
+            }).join('')}
+        </div>
+        <span class="alliance-opr">Σ OPR: ${a.total_opr}</span>
+        <span class="alliance-score ${won ? 'winner-text' : ''}">${a.score >= 0 ? a.score : '–'}</span>
+    </div>`;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 3. ALLIANCE SELECTION
+// ═══════════════════════════════════════════════════════════
+async function loadAlliances() {
+    if (!currentEvent) return;
+    hide('alliance-empty');
+    show('alliance-loading');
+    try {
+        const data = await API.alliances(currentEvent);
+        allianceData = data;
+        hide('alliance-loading');
+        renderAlliances(data);
+    } catch (err) {
+        hide('alliance-loading');
+        alert(`Error loading alliances: ${err.message}`);
+    }
+}
+
+function renderAlliances(data) {
+    const { alliances, partnerships } = data;
+    if (!alliances.length) {
+        $('alliance-grid').innerHTML = '<p class="empty">Alliance selection has not occurred yet.</p>';
+        return;
+    }
+
+    $('alliance-grid').innerHTML = alliances.map(a => {
+        const totalOpr = a.teams.reduce((s, t) => s + t.opr, 0).toFixed(2);
+        const roleLabels = ['Captain', '1st Pick', '2nd Pick', '3rd Pick', 'Backup'];
+
+        return `
+        <div class="alliance-card">
+            <div class="alliance-header">
+                <h3>${a.name || 'Alliance ' + a.number}</h3>
+                <span class="combined-opr">Σ OPR ${totalOpr}</span>
+            </div>
+            <div class="alliance-teams-list">
+                ${a.teams.map((t, idx) => {
+                    // Figure out partnership badges for this team
+                    const badges = [];
+                    a.teams.forEach((other, oidx) => {
+                        if (oidx === idx) return;
+                        const pairKey = [t.team_key, other.team_key].sort().join('+');
+                        const altKey = [other.team_key, t.team_key].sort().join('+');
+                        const p = partnerships[pairKey] || partnerships[altKey]
+                                 || partnerships[`${t.team_key}+${other.team_key}`]
+                                 || partnerships[`${other.team_key}+${t.team_key}`];
+                        if (p) {
+                            if (p.first_time) {
+                                badges.push(`<span class="badge first-time">1st w/ ${other.team_number}</span>`);
+                            } else {
+                                const tooltipRows = p.history.map(h =>
+                                    `<div class="tip-row">${h.year} &mdash; ${h.event_name.replace(/</g, '&lt;')}</div>`
+                                ).join('');
+                                badges.push(`<span class="badge returning has-tooltip">⟳ w/ ${other.team_number} (${p.history.length}×)<span class="custom-tooltip">${tooltipRows}</span></span>`);
+                            }
+                        }
+                    });
+
+                    return `
+                    <div class="alliance-team-row">
+                        <span class="team-role">${roleLabels[idx] || ''}</span>
+                        <span class="team-num ${highlightForeign && t.country && t.country !== 'Turkey' && t.country !== 'Türkiye' && t.country !== 'Turkiye' ? 'foreign-team' : ''} has-tooltip" data-country="${t.country || ''}">${t.team_number}${t.nickname ? `<span class="custom-tooltip">${t.nickname}</span>` : ''}</span>
+                        <div class="team-stats-mini">
+                            <span>Rank ${t.rank}</span>
+                            <span>${t.wins}-${t.losses}-${t.ties}</span>
+                            <span class="stat-opr">OPR ${t.opr}</span>
+                            <span class="stat-dpr">DPR ${t.dpr}</span>
+                        </div>
+                        <div class="partner-badges">${badges.join('')}</div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 4. TEAM LOOKUP
+// ═══════════════════════════════════════════════════════════
+async function loadTeam() {
+    const num = parseInt($('team-number').value, 10);
+    const year = $('team-year').value.trim() || null;
+    if (!num) return;
+
+    loading(true);
+    try {
+        const data = await API.teamStats(num, year);
+        $('team-stats').innerHTML = renderTeamStats(data);
+    } catch (err) {
+        alert(`Error loading team: ${err.message}`);
+    } finally {
+        loading(false);
+    }
+}
+
+function renderTeamStats(d) {
+    return `
+    <div class="team-card">
+        <div class="team-header">
+            <h2>${d.team_number} — ${d.nickname}</h2>
+            <p>${[d.city, d.state_prov, d.country].filter(Boolean).join(', ')}</p>
+            <p class="muted">Rookie: ${d.rookie_year || '?'} &nbsp;|&nbsp; ${d.years_active} season${d.years_active !== 1 ? 's' : ''} &nbsp;|&nbsp; Viewing: ${d.year}</p>
+        </div>
+
+        <div class="team-highlights">
+            <div class="highlight-card">
+                <div class="highlight-label">Highest Stage of Play (${d.year})</div>
+                <div class="highlight-value">${d.highest_stage_of_play}</div>
+            </div>
+            <div class="highlight-card">
+                <div class="highlight-label">Highest Event Level (${d.year})</div>
+                <div class="highlight-value">${d.highest_event_level}</div>
+            </div>
+        </div>
+
+        <h3>Event Results — ${d.year}</h3>
+        ${d.events_this_year.length ? `
+        <table class="data-table compact">
+            <thead>
+                <tr>
+                    <th>Event</th><th>Type</th><th>Qual Rank</th><th>Qual Record</th>
+                    <th>Playoff Level</th><th>Playoff Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${d.events_this_year.map(e => `
+                <tr>
+                    <td>${e.event_name}</td>
+                    <td class="muted">${e.event_type}</td>
+                    <td class="rank">${e.qual_rank}</td>
+                    <td class="stat">${e.qual_record}</td>
+                    <td>${e.playoff_level}</td>
+                    <td>${e.playoff_status === 'won'
+                        ? '<span class="winner-text">Won</span>'
+                        : e.playoff_status}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>` : '<p class="empty">No events yet this year.</p>'}
+
+        ${d.season_achievements && d.season_achievements.length ? `
+        <h3>Season-by-Season Achievements (since ${d.rookie_year || '?'})</h3>
+        <table class="data-table compact">
+            <thead>
+                <tr>
+                    <th>Year</th><th>Biggest Achievement</th><th>Event</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${[...d.season_achievements].reverse().map(s => `
+                <tr>
+                    <td class="stat">${s.year}</td>
+                    <td>${s.achievement.includes('Winner')
+                        ? '<span class="winner-text">' + s.achievement + '</span>'
+                        : s.achievement}</td>
+                    <td class="muted">${s.event_name}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>` : ''}
+    </div>`;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 5. HEAD TO HEAD
+// ═══════════════════════════════════════════════════════════
+async function loadH2H() {
+    const a = parseInt($('h2h-team-a').value, 10);
+    const b = parseInt($('h2h-team-b').value, 10);
+    if (!a || !b) return;
+
+    loading(true);
+    try {
+        const data = await API.headToHead(a, b);
+        $('h2h-results').innerHTML = renderH2H(data);
+    } catch (err) {
+        alert(`Error loading H2H: ${err.message}`);
+    } finally {
+        loading(false);
+    }
+}
+
+function renderH2H(d) {
+    const s = d.h2h_summary;
+    return `
+    <div class="h2h-card">
+        <div class="h2h-header">
+            <span class="red-text">${d.team_a}</span>
+            <span class="vs-label">vs</span>
+            <span class="blue-text">${d.team_b}</span>
+        </div>
+
+        <div class="h2h-summary">
+            <p>Checked years: ${d.years_checked.join(', ')}</p>
+            <div class="h2h-score">
+                <span class="red-text">${s.team_a_wins} W</span>
+                <span>–</span>
+                <span class="blue-text">${s.team_b_wins} W</span>
+            </div>
+            <p class="muted">${s.total_opponent_matches} opponent match${s.total_opponent_matches !== 1 ? 'es' : ''} &nbsp;|&nbsp;
+               ${s.total_ally_matches} as allies</p>
+        </div>
+
+        ${d.opponent_matches.length ? `
+        <h4>As Opponents</h4>
+        <table class="data-table compact">
+            <thead><tr>
+                <th>Match</th><th>Event</th><th>Round</th>
+                <th>Red</th><th>Score</th><th>Blue</th><th>Score</th><th>Winner</th>
+            </tr></thead>
+            <tbody>
+                ${d.opponent_matches.map(m => `
+                <tr>
+                    <td class="stat">${m.match_key.split('_').pop()}</td>
+                    <td class="muted">${m.event_key}</td>
+                    <td>${m.comp_level}</td>
+                    <td class="red-text stat">${m.red_teams.join(', ')}</td>
+                    <td class="stat">${m.red_score}</td>
+                    <td class="blue-text stat">${m.blue_teams.join(', ')}</td>
+                    <td class="stat">${m.blue_score}</td>
+                    <td class="${m.winner === String(d.team_a) ? 'red-text' : 'blue-text'} stat">
+                        ${m.winner}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>` : ''}
+
+        ${d.ally_matches.length ? `
+        <h4>As Allies</h4>
+        <table class="data-table compact">
+            <thead><tr>
+                <th>Match</th><th>Event</th><th>Round</th>
+                <th>Red</th><th>Score</th><th>Blue</th><th>Score</th><th>Result</th>
+            </tr></thead>
+            <tbody>
+                ${d.ally_matches.map(m => `
+                <tr>
+                    <td class="stat">${m.match_key.split('_').pop()}</td>
+                    <td class="muted">${m.event_key}</td>
+                    <td>${m.comp_level}</td>
+                    <td class="red-text stat">${m.red_teams.join(', ')}</td>
+                    <td class="stat">${m.red_score}</td>
+                    <td class="blue-text stat">${m.blue_teams.join(', ')}</td>
+                    <td class="stat">${m.blue_score}</td>
+                    <td class="stat">${m.winner === 'both' ? '✓ Won' : 'Lost'}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>` : ''}
+
+        ${!d.opponent_matches.length && !d.ally_matches.length
+            ? '<p class="empty">No playoff history found between these teams.</p>' : ''}
+    </div>`;
+}

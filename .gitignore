@@ -1,2 +1,14 @@
 # Ignore sensitive files
+backend/app/config.py
 casters-tool/backend/app/config.py
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
+
+# macOS
+.DS_Store
