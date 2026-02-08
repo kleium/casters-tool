@@ -19,6 +19,7 @@ const API = {
 
     // ── Matches ─────────────────────────────────────────
     playoffMatches: (ek) => API.get(`/matches/${ek}/playoffs`),
+    allMatches:     (ek) => API.get(`/matches/${ek}/all`),
 
     // ── Alliances ───────────────────────────────────────
     alliances: (ek) => API.get(`/alliances/${ek}`),

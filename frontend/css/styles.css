@@ -1148,6 +1148,258 @@ button:active {
     border: 1px dashed var(--border);
 }
 
+/* ═══ PLAY BY PLAY ═════════════════════════════════════════ */
+.pbp-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding: .8rem 1.2rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.pbp-nav-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: .55rem 1.3rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: .88rem;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: none;
+}
+.pbp-nav-btn:hover {
+    background: var(--primary-soft);
+    border-color: rgba(99,102,241,.3);
+    color: var(--primary-hover);
+    transform: none;
+    box-shadow: none;
+}
+
+.pbp-match-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .35rem;
+}
+
+.pbp-match-label {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    color: var(--text);
+}
+
+.pbp-selector-row select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: .35rem .8rem;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: .82rem;
+    outline: none;
+    cursor: pointer;
+}
+
+/* ── Arena: split red / blue ─────────────────────────────── */
+.pbp-arena {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+}
+
+.pbp-alliance {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+}
+
+.pbp-alliance.red-side {
+    border-top: 3px solid var(--red);
+}
+.pbp-alliance.blue-side {
+    border-top: 3px solid var(--blue);
+}
+
+.pbp-alliance-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1.3rem;
+}
+
+.pbp-alliance.red-side .pbp-alliance-header {
+    background: var(--red-bg);
+}
+.pbp-alliance.blue-side .pbp-alliance-header {
+    background: var(--blue-bg);
+}
+
+.pbp-alliance-title {
+    font-size: .88rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.red-side .pbp-alliance-title { color: var(--red); }
+.blue-side .pbp-alliance-title { color: var(--blue); }
+
+.pbp-alliance-score {
+    font-size: 1.6rem;
+    font-weight: 900;
+    font-family: var(--mono);
+    letter-spacing: -.03em;
+}
+.red-side .pbp-alliance-score { color: var(--red); }
+.blue-side .pbp-alliance-score { color: var(--blue); }
+
+.pbp-alliance-opr {
+    font-size: .76rem;
+    color: var(--text-muted);
+    font-family: var(--mono);
+}
+
+.pbp-alliance-won .pbp-alliance-score {
+    color: var(--green) !important;
+}
+.pbp-alliance-won .pbp-alliance-header {
+    background: rgba(34,197,94,.06) !important;
+}
+.pbp-alliance-won {
+    border-top-color: var(--green) !important;
+    box-shadow: var(--shadow-md), 0 0 16px rgba(34,197,94,.1);
+}
+
+/* ── Team card inside alliance ───────────────────────────── */
+.pbp-team-cards {
+    display: flex;
+    flex-direction: column;
+}
+
+.pbp-team {
+    padding: 1rem 1.3rem;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--card);
+    transition: background var(--transition);
+}
+.pbp-team:last-child { border-bottom: none; }
+.pbp-team:hover { background: var(--card-hover); }
+
+.pbp-team-top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: .5rem;
+}
+
+.pbp-team-number {
+    font-size: 1.8rem;
+    font-weight: 900;
+    font-family: var(--mono);
+    letter-spacing: -.03em;
+    min-width: 80px;
+}
+.red-side .pbp-team-number { color: var(--red); }
+.blue-side .pbp-team-number { color: var(--blue); }
+
+.pbp-team-identity {
+    flex: 1;
+    min-width: 0;
+}
+
+.pbp-team-nickname {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pbp-team-school {
+    font-size: .78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pbp-team-location {
+    font-size: .76rem;
+    color: var(--text-muted);
+    margin-top: .1rem;
+}
+
+.pbp-team-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: .5rem;
+    margin-top: .6rem;
+}
+
+.pbp-stat {
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: .35rem .6rem;
+    text-align: center;
+}
+
+.pbp-stat-label {
+    font-size: .62rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.pbp-stat-value {
+    font-size: .88rem;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--text);
+}
+
+.pbp-stat-value.opr-val { color: var(--green); }
+.pbp-stat-value.dpr-val { color: var(--red); }
+
+.pbp-team-highscore {
+    font-size: .72rem;
+    color: var(--primary-hover);
+    margin-top: .4rem;
+    font-weight: 600;
+}
+
+/* ── Footer ──────────────────────────────────────────────── */
+.pbp-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1.2rem;
+    padding: .7rem 1.2rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.pbp-footer-text {
+    font-size: .82rem;
+    color: var(--text-muted);
+    font-family: var(--mono);
+}
+
+.pbp-footer-score { font-weight: 700; color: var(--primary-hover); }
+
 /* ═══ SCROLLBAR ═══════════════════════════════════════════ */
 ::-webkit-scrollbar {
     width: 8px;
@@ -1200,4 +1452,9 @@ button:active {
 
     .alliance-team-row { flex-wrap: wrap; }
     .partner-badges { margin-left: 0; margin-top: .3rem; }
+
+    .pbp-arena { grid-template-columns: 1fr; }
+    .pbp-topbar { flex-wrap: wrap; justify-content: center; gap: .5rem; }
+    .pbp-team-number { font-size: 1.4rem; min-width: 60px; }
+    .pbp-team-stats { grid-template-columns: repeat(3, 1fr); }
 }

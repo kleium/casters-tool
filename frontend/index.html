@@ -36,6 +36,7 @@
 
     <nav class="tabs">
         <button class="tab active" data-tab="event">📡 Event Selection</button>
+        <button class="tab" data-tab="playbyplay">🎙️ Play by Play</button>
         <button class="tab" data-tab="playoff">🎮 Playoffs</button>
         <button class="tab" data-tab="alliance">🤝 Alliance Selection</button>
         <button class="tab" data-tab="team">🔍 Team Lookup</button>
@@ -53,6 +54,27 @@
             </div>
             <div id="event-info" class="hidden"></div>
             <div id="event-teams"></div>
+        </section>
+
+        <!-- ═══ Play by Play ═══ -->
+        <section id="tab-playbyplay" class="tab-content">
+            <p id="pbp-empty" class="empty">
+                Load an event first, then switch here for the play-by-play view.
+            </p>
+            <div id="pbp-container" class="hidden">
+                <div class="pbp-topbar">
+                    <button class="pbp-nav-btn" onclick="pbpPrev()" title="Previous Match">◀ Previous</button>
+                    <div class="pbp-match-info">
+                        <div id="pbp-match-label" class="pbp-match-label"></div>
+                        <div class="pbp-selector-row">
+                            <select id="pbp-match-select" onchange="pbpGoTo(this.value)"></select>
+                        </div>
+                    </div>
+                    <button class="pbp-nav-btn" onclick="pbpNext()" title="Next Match">Next ▶</button>
+                </div>
+                <div id="pbp-arena" class="pbp-arena"></div>
+                <div id="pbp-footer" class="pbp-footer"></div>
+            </div>
         </section>
 
         <!-- ═══ Playoffs ═══ -->

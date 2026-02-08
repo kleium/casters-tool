@@ -53,6 +53,8 @@ document.addEventListener('mouseover', e => {
 let currentEvent = null;   // event_key once loaded
 let playoffData  = null;   // cached playoff matches
 let allianceData = null;   // cached alliance data
+let pbpData      = null;   // cached play-by-play data
+let pbpIndex     = 0;      // current match index
 let highlightForeign = false; // settings: highlight non-Turkish teams
 
 // ── Settings ───────────────────────────────────────────────
@@ -109,9 +111,10 @@ document.querySelectorAll('.tab').forEach(btn => {
         btn.classList.add('active');
         document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
 
-        // Auto-load data when switching to playoff / alliance tabs
+        // Auto-load data when switching to playoff / alliance / pbp tabs
         if (btn.dataset.tab === 'playoff' && currentEvent && !playoffData) loadPlayoffs();
         if (btn.dataset.tab === 'alliance' && currentEvent && !allianceData) loadAlliances();
+        if (btn.dataset.tab === 'playbyplay' && currentEvent && !pbpData) loadPlayByPlay();
     });
 });
 
@@ -141,6 +144,8 @@ async function loadEvent() {
     loading(true);
     playoffData = null;
     allianceData = null;
+    pbpData = null;
+    pbpIndex = 0;
 
     try {
         const [info, teams] = await Promise.all([
@@ -593,5 +598,144 @@ function renderH2H(d) {
 
         ${!d.opponent_matches.length && !d.ally_matches.length
             ? '<p class="empty">No playoff history found between these teams.</p>' : ''}
+    </div>`;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 6. PLAY BY PLAY
+// ═══════════════════════════════════════════════════════════
+async function loadPlayByPlay() {
+    if (!currentEvent) return;
+    loading(true);
+    try {
+        const data = await API.allMatches(currentEvent);
+        pbpData = data;
+        pbpIndex = 0;
+        hide('pbp-empty');
+        show('pbp-container');
+        buildPbpSelector();
+        renderPbpMatch();
+    } catch (err) {
+        alert(`Error loading matches: ${err.message}`);
+    } finally {
+        loading(false);
+    }
+}
+
+function buildPbpSelector() {
+    const sel = $('pbp-match-select');
+    sel.innerHTML = pbpData.matches.map((m, i) =>
+        `<option value="${i}">${m.label}</option>`
+    ).join('');
+    sel.value = pbpIndex;
+}
+
+function pbpGoTo(idx) {
+    pbpIndex = parseInt(idx, 10);
+    renderPbpMatch();
+}
+
+function pbpPrev() {
+    if (pbpIndex > 0) {
+        pbpIndex--;
+        $('pbp-match-select').value = pbpIndex;
+        renderPbpMatch();
+    }
+}
+
+function pbpNext() {
+    if (pbpData && pbpIndex < pbpData.matches.length - 1) {
+        pbpIndex++;
+        $('pbp-match-select').value = pbpIndex;
+        renderPbpMatch();
+    }
+}
+
+function renderPbpMatch() {
+    if (!pbpData || !pbpData.matches.length) return;
+    const m = pbpData.matches[pbpIndex];
+
+    $('pbp-match-label').textContent = m.label;
+    $('pbp-match-select').value = pbpIndex;
+
+    const redWon = m.winning_alliance === 'red';
+    const blueWon = m.winning_alliance === 'blue';
+    const upcoming = m.red.score < 0 && m.blue.score < 0;
+
+    $('pbp-arena').innerHTML = `
+        <div class="pbp-alliance red-side ${redWon ? 'pbp-alliance-won' : ''}">
+            <div class="pbp-alliance-header">
+                <span class="pbp-alliance-title">Red Alliance</span>
+                <span class="pbp-alliance-opr">Σ OPR ${m.red.total_opr}</span>
+                <span class="pbp-alliance-score">${upcoming ? '–' : m.red.score}</span>
+            </div>
+            <div class="pbp-team-cards">
+                ${m.red.teams.map(t => renderPbpTeam(t, 'red-side')).join('')}
+            </div>
+        </div>
+        <div class="pbp-alliance blue-side ${blueWon ? 'pbp-alliance-won' : ''}">
+            <div class="pbp-alliance-header">
+                <span class="pbp-alliance-title">Blue Alliance</span>
+                <span class="pbp-alliance-opr">Σ OPR ${m.blue.total_opr}</span>
+                <span class="pbp-alliance-score">${upcoming ? '–' : m.blue.score}</span>
+            </div>
+            <div class="pbp-team-cards">
+                ${m.blue.teams.map(t => renderPbpTeam(t, 'blue-side')).join('')}
+            </div>
+        </div>
+    `;
+
+    // Footer: quals high score
+    const qs = pbpData.quals_high_score;
+    $('pbp-footer').innerHTML = qs && qs.score > 0
+        ? `<span class="pbp-footer-text">
+               Quals High Score: <span class="pbp-footer-score">${qs.score}</span>
+               in ${qs.match} (${qs.teams.join(', ')})
+           </span>`
+        : '';
+}
+
+function renderPbpTeam(t, sideCls) {
+    const loc = [t.city, t.state_prov, t.country].filter(Boolean).join(', ');
+    const foreignCls = highlightForeign && t.country && t.country !== 'Turkey' && t.country !== 'Türkiye' && t.country !== 'Turkiye' ? 'foreign-team' : '';
+
+    return `
+    <div class="pbp-team ${foreignCls}" data-country="${t.country || ''}">
+        <div class="pbp-team-top">
+            <div class="pbp-team-number">${t.team_number}</div>
+            <div class="pbp-team-identity">
+                <div class="pbp-team-nickname">${t.nickname || 'Team ' + t.team_number}</div>
+                ${t.school_name ? `<div class="pbp-team-school">${t.school_name}</div>` : ''}
+                ${loc ? `<div class="pbp-team-location">${loc}</div>` : ''}
+            </div>
+        </div>
+        <div class="pbp-team-stats">
+            <div class="pbp-stat">
+                <div class="pbp-stat-label">Rank</div>
+                <div class="pbp-stat-value">${t.rank}</div>
+            </div>
+            <div class="pbp-stat">
+                <div class="pbp-stat-label">Qual Avg</div>
+                <div class="pbp-stat-value">${t.qual_average}</div>
+            </div>
+            <div class="pbp-stat">
+                <div class="pbp-stat-label">W-L-T</div>
+                <div class="pbp-stat-value">${t.wins}-${t.losses}-${t.ties}</div>
+            </div>
+            <div class="pbp-stat">
+                <div class="pbp-stat-label">OPR</div>
+                <div class="pbp-stat-value opr-val">${t.opr}</div>
+            </div>
+            <div class="pbp-stat">
+                <div class="pbp-stat-label">DPR</div>
+                <div class="pbp-stat-value dpr-val">${t.dpr}</div>
+            </div>
+            <div class="pbp-stat">
+                <div class="pbp-stat-label">Avg RP</div>
+                <div class="pbp-stat-value">${t.avg_rp}</div>
+            </div>
+        </div>
+        ${t.high_score > 0 ? `<div class="pbp-team-highscore">Team high score: ${t.high_score}${t.high_score_match ? ' in ' + t.high_score_match : ''}</div>` : ''}
     </div>`;
 }
