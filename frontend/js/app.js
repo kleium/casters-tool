@@ -56,6 +56,9 @@ let allianceData = null;   // cached alliance data
 let pbpData      = null;   // cached play-by-play data
 let pbpIndex     = 0;      // current match index
 let highlightForeign = false; // settings: highlight non-Turkish teams
+let bdData       = null;   // cached breakdown match list (same as pbpData)
+let bdIndex      = 0;      // current breakdown match index
+let bdCache      = {};     // match_key -> breakdown data
 
 // ── Settings ───────────────────────────────────────────────
 function toggleSettings() {
@@ -117,6 +120,7 @@ document.querySelectorAll('.tab').forEach(btn => {
         if (btn.dataset.tab === 'playoff' && currentEvent && !playoffData) loadPlayoffs();
         if (btn.dataset.tab === 'alliance' && currentEvent && !allianceData) loadAlliances();
         if (btn.dataset.tab === 'playbyplay' && currentEvent && !pbpData) loadPlayByPlay();
+        if (btn.dataset.tab === 'breakdown' && currentEvent && !bdData) loadBreakdownTab();
     });
 });
 
@@ -740,4 +744,317 @@ function renderPbpTeam(t, sideCls) {
         </div>
         ${t.high_score > 0 ? `<div class="pbp-team-highscore">Team high score: ${t.high_score}${t.high_score_match ? ' in ' + t.high_score_match : ''}</div>` : ''}
     </div>`;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 7. SCORE BREAKDOWN
+// ═══════════════════════════════════════════════════════════
+async function loadBreakdownTab() {
+    if (!currentEvent) return;
+    loading(true);
+    try {
+        // Reuse the same all-matches data as PBP (or fetch if needed)
+        if (!pbpData) {
+            const data = await API.allMatches(currentEvent);
+            pbpData = data;
+        }
+        bdData = pbpData;
+        bdIndex = 0;
+        bdCache = {};
+        hide('bd-empty');
+        show('bd-container');
+        buildBdSelector();
+        loadBdMatch();
+    } catch (err) {
+        alert(`Error loading matches: ${err.message}`);
+    } finally {
+        loading(false);
+    }
+}
+
+function buildBdSelector() {
+    const sel = $('bd-match-select');
+    sel.innerHTML = bdData.matches.map((m, i) => {
+        const hasBd = m.has_breakdown;
+        return `<option value="${i}" ${hasBd ? 'class="has-breakdown" style="color:#22c55e"' : ''}>${hasBd ? '● ' : '○ '}${m.label}</option>`;
+    }).join('');
+    sel.value = bdIndex;
+}
+
+function bdGoTo(idx) {
+    bdIndex = parseInt(idx, 10);
+    loadBdMatch();
+}
+
+function bdPrev() {
+    if (bdIndex > 0) {
+        bdIndex--;
+        $('bd-match-select').value = bdIndex;
+        loadBdMatch();
+    }
+}
+
+function bdNext() {
+    if (bdData && bdIndex < bdData.matches.length - 1) {
+        bdIndex++;
+        $('bd-match-select').value = bdIndex;
+        loadBdMatch();
+    }
+}
+
+async function loadBdMatch() {
+    if (!bdData || !bdData.matches.length) return;
+    const m = bdData.matches[bdIndex];
+    $('bd-match-label').textContent = m.label;
+    $('bd-match-select').value = bdIndex;
+
+    if (!m.has_breakdown) {
+        $('bd-status').innerHTML = '<span class="bd-unavailable">Score breakdown not yet available for this match</span>';
+        $('bd-content').innerHTML = '';
+        return;
+    }
+
+    // Check cache
+    if (bdCache[m.key]) {
+        renderBreakdown(bdCache[m.key]);
+        return;
+    }
+
+    $('bd-status').innerHTML = '<span style="color:var(--text-muted)">Loading breakdown…</span>';
+    $('bd-content').innerHTML = '';
+
+    try {
+        const data = await API.matchBreakdown(m.key);
+        if (data.available) {
+            bdCache[m.key] = data;
+            renderBreakdown(data);
+        } else {
+            $('bd-status').innerHTML = '<span class="bd-unavailable">Score breakdown not available</span>';
+        }
+    } catch (err) {
+        $('bd-status').innerHTML = `<span style="color:#ef4444">Error: ${err.message}</span>`;
+    }
+}
+
+function renderBreakdown(data) {
+    $('bd-status').innerHTML = `<span class="bd-available">✓ Score breakdown available</span>`;
+
+    const redWon = data.winning_alliance === 'red';
+    const blueWon = data.winning_alliance === 'blue';
+
+    $('bd-content').innerHTML = `
+        ${renderBdAlliance(data.red, 'red', redWon)}
+        ${renderBdAlliance(data.blue, 'blue', blueWon)}
+    `;
+}
+
+function renderBdAlliance(alliance, color, won) {
+    const bd = alliance.breakdown;
+    const sideCls = color === 'red' ? 'red-side' : 'blue-side';
+    const title = color === 'red' ? 'Red Alliance' : 'Blue Alliance';
+
+    return `
+    <div class="bd-alliance ${sideCls}">
+        <div class="bd-alliance-header">
+            <span>${title}${won ? ' 🏆' : ''}</span>
+            <span class="bd-alliance-score">${alliance.score}</span>
+        </div>
+
+        <!-- Per-robot: Auto Leave + Barge -->
+        <div class="bd-section">
+            <div class="bd-section-title">Per-Team Performance</div>
+            <div class="bd-robots">
+                ${bd.robots.map(r => renderBdRobot(r)).join('')}
+            </div>
+        </div>
+
+        <!-- Autonomous -->
+        <div class="bd-section">
+            <div class="bd-section-title">Autonomous (${bd.autoPoints} pts)</div>
+            <div class="bd-stats">
+                <div class="bd-stat-row">
+                    <span class="bd-stat-label">Mobility Points</span>
+                    <span class="bd-stat-value">${bd.autoMobilityPoints}</span>
+                </div>
+                <div class="bd-stat-row">
+                    <span class="bd-stat-label">Coral Scored</span>
+                    <span class="bd-stat-value">${bd.autoCoralCount}</span>
+                </div>
+                <div class="bd-stat-row">
+                    <span class="bd-stat-label">Coral Points</span>
+                    <span class="bd-stat-value">${bd.autoCoralPoints}</span>
+                </div>
+            </div>
+            ${renderReefGrid(bd.autoReef, bd.teleopReef, true)}
+        </div>
+
+        <!-- Teleop -->
+        <div class="bd-section">
+            <div class="bd-section-title">Teleop (${bd.teleopPoints} pts)</div>
+            <div class="bd-stats">
+                <div class="bd-stat-row">
+                    <span class="bd-stat-label">Coral Scored</span>
+                    <span class="bd-stat-value">${bd.teleopCoralCount}</span>
+                </div>
+                <div class="bd-stat-row">
+                    <span class="bd-stat-label">Coral Points</span>
+                    <span class="bd-stat-value">${bd.teleopCoralPoints}</span>
+                </div>
+            </div>
+            ${renderReefGrid(bd.teleopReef, bd.autoReef, false)}
+        </div>
+
+        <!-- Algae -->
+        <div class="bd-section">
+            <div class="bd-section-title">Algae (${bd.algaePoints} pts)</div>
+            <div class="bd-stats">
+                <div class="bd-stat-row">
+                    <span class="bd-stat-label">Net Algae</span>
+                    <span class="bd-stat-value">${bd.netAlgaeCount}</span>
+                </div>
+                <div class="bd-stat-row">
+                    <span class="bd-stat-label">Wall Algae</span>
+                    <span class="bd-stat-value">${bd.wallAlgaeCount}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barge -->
+        <div class="bd-section">
+            <div class="bd-section-title">Barge (${bd.endGameBargePoints} pts)</div>
+            <div class="bd-stats">
+                <div class="bd-stat-row">
+                    <span class="bd-stat-label">Barge Points</span>
+                    <span class="bd-stat-value">${bd.endGameBargePoints}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fouls -->
+        <div class="bd-section">
+            <div class="bd-section-title">Fouls & Penalties</div>
+            <div class="bd-fouls">
+                <div class="bd-foul-item">
+                    <span class="bd-foul-label">Fouls:</span>
+                    <span class="bd-foul-value">${bd.foulCount}</span>
+                </div>
+                <div class="bd-foul-item">
+                    <span class="bd-foul-label">Tech Fouls:</span>
+                    <span class="bd-foul-value">${bd.techFoulCount}</span>
+                </div>
+                <div class="bd-foul-item">
+                    <span class="bd-foul-label">Foul Pts:</span>
+                    <span class="bd-foul-value">${bd.foulPoints}</span>
+                </div>
+            </div>
+            ${bd.g206Penalty || bd.g410Penalty || bd.g418Penalty || bd.g428Penalty ? `
+                <div class="bd-bonuses" style="margin-top:.3rem">
+                    ${bd.g206Penalty ? '<span class="bd-bonus-badge" style="border-color:rgba(239,68,68,.4);color:#ef4444">G206</span>' : ''}
+                    ${bd.g410Penalty ? '<span class="bd-bonus-badge" style="border-color:rgba(239,68,68,.4);color:#ef4444">G410</span>' : ''}
+                    ${bd.g418Penalty ? '<span class="bd-bonus-badge" style="border-color:rgba(239,68,68,.4);color:#ef4444">G418</span>' : ''}
+                    ${bd.g428Penalty ? '<span class="bd-bonus-badge" style="border-color:rgba(239,68,68,.4);color:#ef4444">G428</span>' : ''}
+                </div>
+            ` : ''}
+        </div>
+
+        <!-- Bonuses / RP -->
+        <div class="bd-section">
+            <div class="bd-section-title">Bonuses & Ranking Points</div>
+            <div class="bd-bonuses">
+                <span class="bd-bonus-badge ${bd.autoBonusAchieved ? 'achieved' : ''}">Auto Bonus</span>
+                <span class="bd-bonus-badge ${bd.coralBonusAchieved ? 'achieved' : ''}">Coral Bonus</span>
+                <span class="bd-bonus-badge ${bd.bargeBonusAchieved ? 'achieved' : ''}">Barge Bonus</span>
+                <span class="bd-bonus-badge ${bd.coopertitionCriteriaMet ? 'achieved' : ''}">Coopertition</span>
+            </div>
+            <div class="bd-stats" style="margin-top:.4rem">
+                <div class="bd-stat-row">
+                    <span class="bd-stat-label">Ranking Points</span>
+                    <span class="bd-stat-value">${bd.rp}</span>
+                </div>
+                ${bd.adjustPoints ? `
+                <div class="bd-stat-row">
+                    <span class="bd-stat-label">Adjust Points</span>
+                    <span class="bd-stat-value">${bd.adjustPoints}</span>
+                </div>` : ''}
+            </div>
+        </div>
+
+        <!-- Total -->
+        <div class="bd-total-bar">
+            <span class="bd-total-label">Total</span>
+            <span class="bd-total-score">${bd.totalPoints}</span>
+        </div>
+    </div>`;
+}
+
+function renderBdRobot(robot) {
+    const leaveVal = robot.autoLine === 'Yes' ? 'Yes' : 'No';
+    const leaveCls = robot.autoLine === 'Yes' ? 'yes' : 'no';
+
+    const endGameMap = {
+        'DeepCage': { label: 'Deep Cage', cls: 'deep' },
+        'ShallowCage': { label: 'Shallow Cage', cls: 'shallow' },
+        'Parked': { label: 'Parked', cls: 'parked' },
+        'None': { label: 'None', cls: 'no' },
+    };
+    const eg = endGameMap[robot.endGame] || { label: robot.endGame, cls: '' };
+
+    return `
+    <div class="bd-robot-card">
+        <div class="bd-robot-num">${robot.team_number || '?'}</div>
+        <div class="bd-robot-field">
+            <span class="bd-robot-label">Leave</span>
+            <span class="bd-robot-value ${leaveCls}">${leaveVal}</span>
+        </div>
+        <div class="bd-robot-field">
+            <span class="bd-robot-label">Barge</span>
+            <span class="bd-robot-value ${eg.cls}">${eg.label}</span>
+        </div>
+    </div>`;
+}
+
+function renderReefGrid(reef, otherPhaseReef, isAuto) {
+    const nodes = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+    const levels = [
+        { key: 'topRow', label: 'L4 (Top)' },
+        { key: 'midRow', label: 'L3 (Mid)' },
+        { key: 'botRow', label: 'L2 (Bot)' },
+    ];
+
+    let html = '<div class="bd-reef">';
+    html += `<div class="bd-reef-title">Reef Grid</div>`;
+    html += '<div class="bd-reef-grid">';
+
+    // Header row with node labels
+    for (const n of nodes) {
+        html += `<div class="bd-reef-cell" style="border:none;background:transparent;font-weight:700;color:var(--text-muted)">${n}</div>`;
+    }
+
+    for (const level of levels) {
+        const row = reef[level.key] || {};
+        const otherRow = otherPhaseReef ? (otherPhaseReef[level.key] || {}) : {};
+        for (const n of nodes) {
+            const nodeKey = `node${n}`;
+            const filled = row[nodeKey] === true;
+            // For teleop view, show auto-scored nodes differently
+            const autoFilled = !isAuto && otherRow[nodeKey] === true;
+            let cls = '';
+            if (filled && isAuto) cls = 'filled-auto';
+            else if (filled && !isAuto) cls = autoFilled ? 'filled-auto' : 'filled';
+            else if (autoFilled && !isAuto) cls = 'filled-auto';
+            html += `<div class="bd-reef-cell ${cls}" title="${n} ${level.label}${filled ? ' ●' : ''}">${filled || autoFilled ? '●' : ''}</div>`;
+        }
+    }
+
+    html += '</div>';
+
+    // Trough
+    html += `<div class="bd-trough">
+        <span class="bd-trough-label">Trough:</span>
+        <span class="bd-trough-value">${reef.trough || 0}</span>
+    </div>`;
+
+    html += '</div>';
+    return html;
 }

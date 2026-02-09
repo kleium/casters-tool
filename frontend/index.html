@@ -37,6 +37,7 @@
     <nav class="tabs">
         <button class="tab active" data-tab="event">📡 Event Selection</button>
         <button class="tab" data-tab="playbyplay">🎙️ Play by Play</button>
+        <button class="tab" data-tab="breakdown">📊 Score Breakdown</button>
         <button class="tab" data-tab="playoff">🎮 Playoffs</button>
         <button class="tab" data-tab="alliance">🤝 Alliance Selection</button>
         <button class="tab" data-tab="team">🔍 Team Lookup</button>
@@ -74,6 +75,27 @@
                 </div>
                 <div id="pbp-arena" class="pbp-arena"></div>
                 <div id="pbp-footer" class="pbp-footer"></div>
+            </div>
+        </section>
+
+        <!-- ═══ Score Breakdown ═══ -->
+        <section id="tab-breakdown" class="tab-content">
+            <p id="bd-empty" class="empty">
+                Load an event first, then switch here for detailed score breakdowns.
+            </p>
+            <div id="bd-container" class="hidden">
+                <div class="pbp-topbar">
+                    <button class="pbp-nav-btn" onclick="bdPrev()" title="Previous Match">◀ Previous</button>
+                    <div class="pbp-match-info">
+                        <div id="bd-match-label" class="pbp-match-label"></div>
+                        <div class="pbp-selector-row">
+                            <select id="bd-match-select" onchange="bdGoTo(this.value)"></select>
+                        </div>
+                    </div>
+                    <button class="pbp-nav-btn" onclick="bdNext()" title="Next Match">Next ▶</button>
+                </div>
+                <div id="bd-status" class="bd-status"></div>
+                <div id="bd-content" class="bd-content"></div>
             </div>
         </section>
 

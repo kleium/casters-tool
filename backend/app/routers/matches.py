@@ -171,6 +171,7 @@ async def get_all_matches(event_key: str):
                 "label": label,
                 "sort_key": sort_key,
                 "time": m.get("actual_time") or m.get("predicted_time"),
+                "has_breakdown": m.get("score_breakdown") is not None,
                 "red": {
                     "teams": red_teams,
                     "score": m["alliances"]["red"].get("score", -1),
@@ -197,6 +198,111 @@ async def get_all_matches(event_key: str):
             "total_matches": len(result),
         }
 
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/match/{match_key}/breakdown")
+async def get_match_breakdown(match_key: str):
+    """Return parsed score breakdown for a single match, with per-robot mapping."""
+    try:
+        client = get_tba_client()
+        match = await client.get_match(match_key)
+
+        sb = match.get("score_breakdown")
+        if not sb:
+            return {"match_key": match_key, "available": False}
+
+        red_keys = match["alliances"]["red"].get("team_keys", [])
+        blue_keys = match["alliances"]["blue"].get("team_keys", [])
+
+        def parse_alliance(data: dict, team_keys: list[str]) -> dict:
+            """Parse one alliance's score_breakdown into a structured dict."""
+            # Per-robot fields (Robot 1/2/3 → team_keys[0/1/2])
+            robots = []
+            for i in range(3):
+                tk = team_keys[i] if i < len(team_keys) else None
+                robots.append({
+                    "team_key": tk,
+                    "team_number": int(tk.replace("frc", "")) if tk else None,
+                    "autoLine": data.get(f"autoLineRobot{i+1}", "No"),
+                    "endGame": data.get(f"endGameRobot{i+1}", "None"),
+                })
+
+            # Reef grid helper
+            def parse_reef(reef: dict) -> dict:
+                rows = {}
+                for rname in ("topRow", "midRow", "botRow"):
+                    row = reef.get(rname, {})
+                    rows[rname] = {k: v for k, v in row.items() if k.startswith("node")}
+                return {
+                    **rows,
+                    "trough": reef.get("trough", 0),
+                    "tba_botRowCount": reef.get("tba_botRowCount", 0),
+                    "tba_midRowCount": reef.get("tba_midRowCount", 0),
+                    "tba_topRowCount": reef.get("tba_topRowCount", 0),
+                }
+
+            auto_reef = parse_reef(data.get("autoReef", {}))
+            teleop_reef = parse_reef(data.get("teleopReef", {}))
+
+            return {
+                "robots": robots,
+                # Auto
+                "autoPoints": data.get("autoPoints", 0),
+                "autoMobilityPoints": data.get("autoMobilityPoints", 0),
+                "autoCoralCount": data.get("autoCoralCount", 0),
+                "autoCoralPoints": data.get("autoCoralPoints", 0),
+                "autoBonusAchieved": data.get("autoBonusAchieved", False),
+                "autoReef": auto_reef,
+                # Teleop
+                "teleopPoints": data.get("teleopPoints", 0),
+                "teleopCoralCount": data.get("teleopCoralCount", 0),
+                "teleopCoralPoints": data.get("teleopCoralPoints", 0),
+                "teleopReef": teleop_reef,
+                # Algae
+                "algaePoints": data.get("algaePoints", 0),
+                "netAlgaeCount": data.get("netAlgaeCount", 0),
+                "wallAlgaeCount": data.get("wallAlgaeCount", 0),
+                # Barge
+                "endGameBargePoints": data.get("endGameBargePoints", 0),
+                "bargeBonusAchieved": data.get("bargeBonusAchieved", False),
+                # Bonuses
+                "coralBonusAchieved": data.get("coralBonusAchieved", False),
+                "coopertitionCriteriaMet": data.get("coopertitionCriteriaMet", False),
+                # Fouls
+                "foulCount": data.get("foulCount", 0),
+                "techFoulCount": data.get("techFoulCount", 0),
+                "foulPoints": data.get("foulPoints", 0),
+                # Penalties
+                "g206Penalty": data.get("g206Penalty", False),
+                "g410Penalty": data.get("g410Penalty", False),
+                "g418Penalty": data.get("g418Penalty", False),
+                "g428Penalty": data.get("g428Penalty", False),
+                # Totals
+                "adjustPoints": data.get("adjustPoints", 0),
+                "totalPoints": data.get("totalPoints", 0),
+                "rp": data.get("rp", 0),
+            }
+
+        return {
+            "match_key": match_key,
+            "available": True,
+            "comp_level": match.get("comp_level", ""),
+            "match_number": match.get("match_number", 0),
+            "set_number": match.get("set_number", 0),
+            "red": {
+                "score": match["alliances"]["red"].get("score", -1),
+                "team_keys": red_keys,
+                "breakdown": parse_alliance(sb.get("red", {}), red_keys),
+            },
+            "blue": {
+                "score": match["alliances"]["blue"].get("score", -1),
+                "team_keys": blue_keys,
+                "breakdown": parse_alliance(sb.get("blue", {}), blue_keys),
+            },
+            "winning_alliance": match.get("winning_alliance", ""),
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
