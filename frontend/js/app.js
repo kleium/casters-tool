@@ -152,6 +152,9 @@ async function loadEvent() {
     allianceData = null;
     pbpData = null;
     pbpIndex = 0;
+    bdData = null;
+    bdIndex = 0;
+    bdCache = {};
 
     try {
         const [info, teams] = await Promise.all([
@@ -185,6 +188,13 @@ async function loadEvent() {
         $('playoff-matches').innerHTML = '';
         $('alliance-empty')?.classList.remove('hidden');
         $('alliance-grid').innerHTML = '';
+        $('bd-empty')?.classList.remove('hidden');
+        $('bd-container')?.classList.add('hidden');
+        $('bd-content') && ($('bd-content').innerHTML = '');
+        $('bd-status') && ($('bd-status').innerHTML = '');
+        // Reset PBP tab
+        $('pbp-empty')?.classList.remove('hidden');
+        $('pbp-container')?.classList.add('hidden');
 
     } catch (err) {
         alert(`Error loading event: ${err.message}`);

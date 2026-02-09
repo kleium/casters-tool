@@ -1,9 +1,11 @@
 """FRC Caster's Tool — FastAPI application."""
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
 from .routers import events, matches, alliances, teams
 
@@ -22,6 +24,18 @@ app.include_router(events.router, prefix="/api/events", tags=["Events"])
 app.include_router(matches.router, prefix="/api/matches", tags=["Matches"])
 app.include_router(alliances.router, prefix="/api/alliances", tags=["Alliances"])
 app.include_router(teams.router, prefix="/api/teams", tags=["Teams"])
+
+# ── No-cache middleware for JS/CSS (prevents stale browser cache) ───
+class NoCacheStaticMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response: Response = await call_next(request)
+        if request.url.path.endswith(('.js', '.css')):
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+        return response
+
+app.add_middleware(NoCacheStaticMiddleware)
 
 # ── Serve frontend ──────────────────────────────────────────
 frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
