@@ -850,16 +850,27 @@ async function loadBdMatch() {
 function renderBreakdown(data) {
     $('bd-status').innerHTML = `<span class="bd-available">✓ Score breakdown available</span>`;
 
+    // Build team_number -> nickname map from bdData match teams
+    const nickMap = {};
+    if (bdData && bdData.matches && bdData.matches[bdIndex]) {
+        const m = bdData.matches[bdIndex];
+        for (const side of ['red', 'blue']) {
+            if (m[side] && m[side].teams) {
+                m[side].teams.forEach(t => { if (t.nickname) nickMap[t.team_number] = t.nickname; });
+            }
+        }
+    }
+
     const redWon = data.winning_alliance === 'red';
     const blueWon = data.winning_alliance === 'blue';
 
     $('bd-content').innerHTML = `
-        ${renderBdAlliance(data.red, 'red', redWon)}
-        ${renderBdAlliance(data.blue, 'blue', blueWon)}
+        ${renderBdAlliance(data.red, 'red', redWon, nickMap)}
+        ${renderBdAlliance(data.blue, 'blue', blueWon, nickMap)}
     `;
 }
 
-function renderBdAlliance(alliance, color, won) {
+function renderBdAlliance(alliance, color, won, nickMap) {
     const bd = alliance.breakdown;
     const sideCls = color === 'red' ? 'red-side' : 'blue-side';
     const title = color === 'red' ? 'Red Alliance' : 'Blue Alliance';
@@ -875,7 +886,7 @@ function renderBdAlliance(alliance, color, won) {
         <div class="bd-section">
             <div class="bd-section-title">Per-Team Performance</div>
             <div class="bd-robots">
-                ${bd.robots.map(r => renderBdRobot(r)).join('')}
+                ${bd.robots.map(r => renderBdRobot(r, nickMap)).join('')}
             </div>
         </div>
 
@@ -998,7 +1009,7 @@ function renderBdAlliance(alliance, color, won) {
     </div>`;
 }
 
-function renderBdRobot(robot) {
+function renderBdRobot(robot, nickMap) {
     const leaveVal = robot.autoLine === 'Yes' ? 'Yes' : 'No';
     const leaveCls = robot.autoLine === 'Yes' ? 'yes' : 'no';
 
@@ -1009,10 +1020,13 @@ function renderBdRobot(robot) {
         'None': { label: 'None', cls: 'no' },
     };
     const eg = endGameMap[robot.endGame] || { label: robot.endGame, cls: '' };
+    const num = robot.team_number || '?';
+    const nick = (nickMap && nickMap[num]) || '';
+    const tooltipHtml = nick ? `<span class="custom-tooltip">${nick}</span>` : '';
 
     return `
     <div class="bd-robot-card">
-        <div class="bd-robot-num">${robot.team_number || '?'}</div>
+        <div class="bd-robot-num has-tooltip">${num}${tooltipHtml}</div>
         <div class="bd-robot-field">
             <span class="bd-robot-label">Leave</span>
             <span class="bd-robot-value ${leaveCls}">${leaveVal}</span>
