@@ -45,12 +45,23 @@ class TBAClient:
     def clear_cache(self) -> None:
         self._cache.clear()
 
+    def clear_cache_for(self, *endpoints: str) -> None:
+        """Remove specific endpoints from the cache."""
+        for ep in endpoints:
+            self._cache.pop(ep, None)
+
     # ── Event endpoints ─────────────────────────────────────
+    async def get_events_by_year(self, year: int):
+        return await self.get(f"/events/{year}")
+
     async def get_event(self, event_key: str):
         return await self.get(f"/event/{event_key}")
 
     async def get_event_teams(self, event_key: str):
         return await self.get(f"/event/{event_key}/teams/simple")
+
+    async def get_event_teams_full(self, event_key: str):
+        return await self.get(f"/event/{event_key}/teams")
 
     async def get_event_rankings(self, event_key: str):
         return await self.get(f"/event/{event_key}/rankings")
@@ -82,6 +93,12 @@ class TBAClient:
 
     async def get_team_years_participated(self, team_key: str):
         return await self.get(f"/team/{team_key}/years_participated")
+
+    async def get_team_awards(self, team_key: str):
+        return await self.get(f"/team/{team_key}/awards")
+
+    async def get_team_media(self, team_key: str, year: int):
+        return await self.get(f"/team/{team_key}/media/{year}")
 
     # ── Match endpoints ─────────────────────────────────────
     async def get_match(self, match_key: str):

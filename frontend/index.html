@@ -3,14 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FRC Caster's Tool</title>
+    <title>Caster's Tool — FRC Event Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
     <header>
-        <h1>⚙️ FRC Caster's Tool</h1>
+        <div class="header-brand">
+            <svg class="brand-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>
+            <div class="brand-text">
+                <h1>Caster's Tool</h1>
+                <span class="brand-sub">FRC Event Dashboard</span>
+            </div>
+        </div>
         <div class="header-right">
             <div id="event-badge" class="hidden"></div>
             <div class="settings-wrapper">
@@ -35,26 +41,168 @@
     </header>
 
     <nav class="tabs">
-        <button class="tab active" data-tab="event">📡 Event Selection</button>
-        <button class="tab" data-tab="playbyplay">🎙️ Play by Play</button>
-        <button class="tab" data-tab="breakdown">📊 Score Breakdown</button>
-        <button class="tab" data-tab="playoff">🎮 Playoffs</button>
-        <button class="tab" data-tab="alliance">🤝 Alliance Selection</button>
-        <button class="tab" data-tab="team">🔍 Team Lookup</button>
+        <button class="tab active" data-tab="event">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Events
+        </button>
+        <button class="tab" data-tab="rankings">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+            Rankings
+        </button>
+        <button class="tab" data-tab="summary">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Summary
+        </button>
+        <button class="tab" data-tab="playbyplay">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Play by Play
+        </button>
+        <button class="tab" data-tab="breakdown">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Breakdown
+        </button>
+        <button class="tab" data-tab="playoff">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 12 7s5-3 7.5-3a2.5 2.5 0 0 1 0 5H18"/><path d="M18 15h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M6 15H4.5a2.5 2.5 0 0 1 0 5H6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><path d="M6 20h12a2 2 0 0 0 2-2v-2H4v2a2 2 0 0 0 2 2z"/></svg>
+            Playoffs
+        </button>
+        <button class="tab" data-tab="alliance">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Alliances
+        </button>
+        <button class="tab" data-tab="team">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Team Lookup
+        </button>
     </nav>
 
     <main>
         <!-- ═══ Event Selection ═══ -->
         <section id="tab-event" class="tab-content active">
-            <div class="input-row">
-                <input type="text" id="event-year"
-                       placeholder="Year (e.g. 2025)" class="input-sm" />
-                <input type="text" id="event-code"
-                       placeholder="Event code (e.g. TXDA)" />
-                <button id="btn-load-event" onclick="loadEvent()">Load Event</button>
+
+            <!-- Active event banner -->
+            <div id="active-event-banner" class="active-event-banner hidden">
+                <div class="aeb-left">
+                    <span class="aeb-dot"></span>
+                    <div class="aeb-info">
+                        <span id="aeb-name" class="aeb-name"></span>
+                        <span id="aeb-meta" class="aeb-meta"></span>
+                    </div>
+                </div>
             </div>
-            <div id="event-info" class="hidden"></div>
-            <div id="event-teams"></div>
+
+            <!-- Current season quick-select -->
+            <div class="event-section-card">
+                <div class="event-section-header">
+                    <h3 class="event-section-title">2026 Season Events</h3>
+                    <div class="season-header-right">
+                        <span id="season-count-badge" class="season-count-badge"></span>
+                        <button id="season-refresh-btn" class="season-refresh-btn" onclick="refreshSeasonEventsFromAPI()" title="Refresh event list from TBA">↻</button>
+                    </div>
+                </div>
+                <p class="event-section-desc">Select an event from the current season. Filter by region or week, or search by name.</p>
+                <div class="season-controls">
+                    <div class="season-filter-row">
+                        <select id="season-filter-region" onchange="filterSeasonEvents()">
+                            <option value="">All Regions</option>
+                        </select>
+                        <select id="season-filter-week" onchange="filterSeasonEvents()">
+                            <option value="">All Weeks</option>
+                        </select>
+                    </div>
+                    <div class="season-search-wrap">
+                        <input type="text" id="season-search"
+                               placeholder="Type to search events…"
+                               autocomplete="off"
+                               oninput="filterSeasonEvents()" />
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <div id="season-dropdown" class="season-dropdown hidden">
+                            <div id="season-dropdown-list"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="season-status" class="season-status"></div>
+            </div>
+
+            <!-- Manual event code entry (collapsed by default) -->
+            <div class="event-section-card event-section-alt">
+                <div class="event-section-header clickable" onclick="toggleManualEntry()">
+                    <h3 class="event-section-title">Search by Event Code</h3>
+                    <span id="manual-toggle-icon" class="collapse-icon">▼</span>
+                </div>
+                <div id="manual-entry-body" class="manual-entry-body collapsed">
+                    <p class="event-section-desc">Load any event from any year using its TBA event key.</p>
+                    <div class="input-row">
+                        <input type="text" id="event-year"
+                               placeholder="Year (e.g. 2025)" class="input-sm" />
+                        <input type="text" id="event-code"
+                               placeholder="Event code (e.g. txda)" />
+                        <button id="btn-load-event" onclick="loadEvent()">Load Event</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ Rankings & Teams ═══ -->
+        <section id="tab-rankings" class="tab-content">
+            <p id="rankings-empty" class="empty">
+                Load an event first to see rankings and team list.
+            </p>
+            <div id="rankings-container" class="hidden">
+                <div id="event-teams"></div>
+            </div>
+        </section>
+
+        <!-- ═══ Event Summary ═══ -->
+        <section id="tab-summary" class="tab-content">
+            <p id="summary-empty" class="empty">
+                Load an event first, then switch here for the event summary.
+            </p>
+            <div id="summary-container" class="hidden">
+                <div class="summary-header">
+                    <h2 id="summary-title"></h2>
+                    <button class="summary-refresh-btn" onclick="refreshSummaryStats()">↻ Refresh Stats</button>
+                </div>
+
+                <!-- Demographics row -->
+                <div class="summary-stats-row" id="summary-demographics"></div>
+
+                <!-- Hall of Fame & Impact Award -->
+                <div id="summary-hof" class="summary-card hidden">
+                    <h3>Hall of Fame Teams</h3>
+                    <div id="summary-hof-list"></div>
+                </div>
+                <div id="summary-impact" class="summary-card hidden">
+                    <h3>Impact Award Finalists</h3>
+                    <div id="summary-impact-list"></div>
+                </div>
+
+                <!-- Prior partnerships & rivalries -->
+                <div id="summary-history" class="summary-card hidden">
+                    <div class="summary-card-header" onclick="toggleConnections()">
+                        <h3>Prior Playoff Connections</h3>
+                        <span id="conn-toggle-icon" class="collapse-icon">▲</span>
+                    </div>
+                    <div id="summary-history-body">
+                        <p class="summary-card-desc">Teams at this event who have partnered or competed against each other in past playoff matches.</p>
+                        <div class="conn-filter-bar">
+                            <button class="conn-filter-btn active" data-conn-filter="all" onclick="event.stopPropagation(); filterConnections('all', this)">All</button>
+                            <button class="conn-filter-btn" data-conn-filter="partners" onclick="event.stopPropagation(); filterConnections('partners', this)">Partners</button>
+                            <button class="conn-filter-btn" data-conn-filter="opponents" onclick="event.stopPropagation(); filterConnections('opponents', this)">Opponents</button>
+                        </div>
+                        <div id="summary-history-list"></div>
+                    </div>
+                </div>
+
+                <!-- Top 3 score contributors -->
+                <div id="summary-top-scorers" class="summary-card hidden">
+                    <h3>Top Score Contributors</h3>
+                    <p class="summary-card-desc">Highest individual OPR (score contribution) at this event so far.</p>
+                    <div id="summary-top-list"></div>
+                </div>
+            </div>
+            <div id="summary-loading" class="hidden loading-msg">
+                Analysing event data …
+            </div>
         </section>
 
         <!-- ═══ Play by Play ═══ -->
@@ -155,9 +303,9 @@
     <footer class="site-footer">
         <span>Caster's Tool</span>
         <span class="footer-sep">·</span>
-        <span>by Gürsel</span>
+        <span>Built by Gürsel</span>
         <span class="footer-sep">·</span>
-        <span class="footer-version">v0.2 Alpha</span>
+        <span class="footer-version">v1.0</span>
     </footer>
 </body>
 </html>

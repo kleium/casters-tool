@@ -29,7 +29,7 @@ app.include_router(teams.router, prefix="/api/teams", tags=["Teams"])
 class NoCacheStaticMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response: Response = await call_next(request)
-        if request.url.path.endswith(('.js', '.css')):
+        if request.url.path.endswith(('.js', '.css', '.json')):
             response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             response.headers['Pragma'] = 'no-cache'
             response.headers['Expires'] = '0'
@@ -41,6 +41,7 @@ app.add_middleware(NoCacheStaticMiddleware)
 frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
 app.mount("/css", StaticFiles(directory=str(frontend_dir / "css")), name="css")
 app.mount("/js", StaticFiles(directory=str(frontend_dir / "js")), name="js")
+app.mount("/data", StaticFiles(directory=str(frontend_dir / "data")), name="data")
 
 
 @app.get("/")

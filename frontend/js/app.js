@@ -53,12 +53,25 @@ document.addEventListener('mouseover', e => {
 let currentEvent = null;   // event_key once loaded
 let playoffData  = null;   // cached playoff matches
 let allianceData = null;   // cached alliance data
+let summaryData  = null;   // cached event summary
 let pbpData      = null;   // cached play-by-play data
 let pbpIndex     = 0;      // current match index
 let highlightForeign = false; // settings: highlight non-Turkish teams
 let bdData       = null;   // cached breakdown match list (same as pbpData)
 let bdIndex      = 0;      // current breakdown match index
 let bdCache      = {};     // match_key -> breakdown data
+
+// Season events
+let seasonEventsRaw = [];          // full list from backend
+let seasonEventsFiltered = [];     // after applying region/week/search
+let seasonDropdownIdx = -1;        // keyboard-highlighted index in dropdown
+
+// Auto-refresh polling
+let rankingsRefreshTimer = null;   // setInterval id for rankings polling
+let currentEventStatus = null;     // 'ongoing' | 'completed' | 'upcoming' | null
+
+// Track which tabs have been rendered from preloaded data
+let renderedTabs = { playoff: false, alliance: false, playbyplay: false, breakdown: false };
 
 // ── Settings ───────────────────────────────────────────────
 function toggleSettings() {
@@ -116,19 +129,106 @@ document.querySelectorAll('.tab').forEach(btn => {
         btn.classList.add('active');
         document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
 
-        // Auto-load data when switching to playoff / alliance / pbp tabs
-        if (btn.dataset.tab === 'playoff' && currentEvent && !playoffData) loadPlayoffs();
-        if (btn.dataset.tab === 'alliance' && currentEvent && !allianceData) loadAlliances();
-        if (btn.dataset.tab === 'playbyplay' && currentEvent && !pbpData) loadPlayByPlay();
-        if (btn.dataset.tab === 'breakdown' && currentEvent && !bdData) loadBreakdownTab();
+        // Auto-load data when switching to dependent tabs
+        // Summary is heavy (awards + history) — stays lazy-loaded
+        if (btn.dataset.tab === 'summary' && currentEvent && !summaryData) loadSummary();
+
+        // Lightweight tabs: render from preloaded cache, or fetch if missing
+        if (btn.dataset.tab === 'playoff' && currentEvent && !renderedTabs.playoff) {
+            if (playoffData) {
+                hide('playoff-empty');
+                currentBracket = 'all';
+                renderBracketNav();
+                renderPlayoffs();
+                renderedTabs.playoff = true;
+            } else {
+                loadPlayoffs();
+            }
+        }
+        if (btn.dataset.tab === 'alliance' && currentEvent && !renderedTabs.alliance) {
+            if (allianceData) {
+                hide('alliance-empty');
+                hide('alliance-loading');
+                renderAlliances(allianceData);
+                renderedTabs.alliance = true;
+            } else {
+                loadAlliances();
+            }
+        }
+        if (btn.dataset.tab === 'playbyplay' && currentEvent && !renderedTabs.playbyplay) {
+            if (pbpData) {
+                pbpIndex = 0;
+                hide('pbp-empty');
+                show('pbp-container');
+                buildPbpSelector();
+                renderPbpMatch();
+                renderedTabs.playbyplay = true;
+            } else {
+                loadPlayByPlay();
+            }
+        }
+        if (btn.dataset.tab === 'breakdown' && currentEvent && !renderedTabs.breakdown) {
+            if (bdData) {
+                bdIndex = 0;
+                bdCache = {};
+                hide('bd-empty');
+                show('bd-container');
+                buildBdSelector();
+                loadBdMatch();
+                renderedTabs.breakdown = true;
+            } else {
+                loadBreakdownTab();
+            }
+        }
     });
 });
 
 // Allow enter key in inputs
 document.getElementById('event-year')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadEvent(); });
 document.getElementById('event-code')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadEvent(); });
+
+// ── Restore last event on page load ───────────────────────
+(function restoreEvent() {
+    const saved = localStorage.getItem('selectedEvent');
+    if (!saved) return;
+    try {
+        const { year, eventCode } = JSON.parse(saved);
+        if (!year || !eventCode) return;
+        const apply = () => {
+            const yEl = document.getElementById('event-year');
+            const cEl = document.getElementById('event-code');
+            if (yEl) yEl.value = year;
+            if (cEl) cEl.value = eventCode;
+            loadEvent();
+        };
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', apply);
+        } else {
+            apply();
+        }
+    } catch (_) { /* ignore corrupt data */ }
+})();
 document.getElementById('team-number')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadTeam(); });
 document.getElementById('h2h-team-b')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadH2H(); });
+
+// ── Arrow key navigation for Play by Play & Score Breakdown ──
+document.addEventListener('keydown', e => {
+    // Skip if user is typing in an input/select/textarea
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        const pbpActive = $('tab-playbyplay')?.classList.contains('active');
+        const bdActive  = $('tab-breakdown')?.classList.contains('active');
+        if (pbpActive && pbpData) {
+            e.preventDefault();
+            e.key === 'ArrowLeft' ? pbpPrev() : pbpNext();
+        } else if (bdActive && bdData) {
+            e.preventDefault();
+            e.key === 'ArrowLeft' ? bdPrev() : bdNext();
+        }
+    }
+});
 
 
 // ── Helpers ────────────────────────────────────────────────
@@ -141,6 +241,225 @@ const loading = (on) => on ? show('loading-overlay') : hide('loading-overlay');
 // ═══════════════════════════════════════════════════════════
 // 1. EVENT SELECTION
 // ═══════════════════════════════════════════════════════════
+
+// ── Season events loader ──────────────────────────────────
+async function loadSeasonEvents() {
+    const status = $('season-status');
+    status.textContent = 'Loading 2026 events…';
+    try {
+        // Load from bundled static JSON (instant, no API call)
+        const resp = await fetch('/data/season_2026.json');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        seasonEventsRaw = await resp.json();
+        populateSeasonFilters();
+        filterSeasonEvents();
+        status.textContent = '';
+        const badge = $('season-count-badge');
+        if (badge) badge.textContent = `${seasonEventsRaw.length} events`;
+    } catch (err) {
+        // Fallback: fetch live from API if static file missing
+        try {
+            seasonEventsRaw = await API.seasonEvents(2026);
+            populateSeasonFilters();
+            filterSeasonEvents();
+            status.textContent = '';
+            const badge = $('season-count-badge');
+            if (badge) badge.textContent = `${seasonEventsRaw.length} events`;
+        } catch (err2) {
+            status.textContent = `Failed to load events: ${err2.message}`;
+        }
+    }
+}
+
+async function refreshSeasonEventsFromAPI() {
+    const status = $('season-status');
+    const btn = $('season-refresh-btn');
+    btn.classList.add('spinning');
+    status.textContent = 'Refreshing from TBA…';
+    try {
+        seasonEventsRaw = await API.seasonEvents(2026);
+        populateSeasonFilters();
+        filterSeasonEvents();
+        status.textContent = 'Updated from TBA ✓';
+        setTimeout(() => { if (status.textContent === 'Updated from TBA ✓') status.textContent = ''; }, 3000);
+        const badge = $('season-count-badge');
+        if (badge) badge.textContent = `${seasonEventsRaw.length} events`;
+    } catch (err) {
+        status.textContent = `Refresh failed: ${err.message}`;
+    } finally {
+        btn.classList.remove('spinning');
+    }
+}
+
+function populateSeasonFilters() {
+    // Region filter
+    const regions = [...new Set(seasonEventsRaw.map(e => e.region))].sort();
+    const regionSel = $('season-filter-region');
+    regionSel.innerHTML = '<option value="">All Regions</option>'
+        + regions.map(r => `<option value="${r}">${r}</option>`).join('');
+
+    // Week filter
+    const weeks = [...new Set(seasonEventsRaw.map(e => e.week).filter(w => w !== null && w !== undefined))].sort((a, b) => a - b);
+    const weekSel = $('season-filter-week');
+    weekSel.innerHTML = '<option value="">All Weeks</option>'
+        + weeks.map(w => `<option value="${w}">Week ${w + 1}</option>`).join('');
+}
+
+function filterSeasonEvents() {
+    const region = $('season-filter-region').value;
+    const week = $('season-filter-week').value;
+    const search = ($('season-search').value || '').toLowerCase().trim();
+
+    seasonEventsFiltered = seasonEventsRaw.filter(e => {
+        if (region && e.region !== region) return false;
+        if (week !== '' && String(e.week) !== week) return false;
+        if (search && !e.name.toLowerCase().includes(search) && !e.key.toLowerCase().includes(search)) return false;
+        return true;
+    });
+
+    // Only show dropdown when the search input is focused
+    if (document.activeElement === $('season-search')) {
+        renderSeasonDropdown();
+    }
+
+    $('season-status').textContent = `${seasonEventsFiltered.length} of ${seasonEventsRaw.length} events`;
+}
+
+function renderSeasonDropdown() {
+    const list = $('season-dropdown-list');
+    const dropdown = $('season-dropdown');
+    seasonDropdownIdx = -1;
+
+    if (seasonEventsFiltered.length === 0) {
+        list.innerHTML = '<div class="season-dropdown-item" style="color:var(--text-muted);justify-content:center">No events match your filters</div>';
+        dropdown.classList.remove('hidden');
+        return;
+    }
+
+    list.innerHTML = seasonEventsFiltered.map((e, i) => {
+        const weekLabel = e.week !== null && e.week !== undefined ? `Wk ${e.week + 1}` : 'CMP';
+        const loc = [e.city, e.country].filter(Boolean).join(', ');
+        return `<div class="season-dropdown-item" data-idx="${i}" onclick="selectSeasonEvent(${i})">
+            <span class="sdi-name">${e.name}</span>
+            <span class="sdi-week">${weekLabel}</span>
+            <span class="sdi-loc">${loc}</span>
+        </div>`;
+    }).join('');
+
+    dropdown.classList.remove('hidden');
+}
+
+function selectSeasonEvent(idx) {
+    const ev = seasonEventsFiltered[idx];
+    if (!ev) return;
+    $('season-dropdown').classList.add('hidden');
+    $('season-search').value = ev.name;
+    // Fill manual fields too for consistency
+    const year = ev.key.substring(0, 4);
+    const code = ev.key.substring(4);
+    $('event-year').value = year;
+    $('event-code').value = code;
+    loadEvent();
+}
+
+// Keyboard navigation in season dropdown
+$('season-search')?.addEventListener('keydown', e => {
+    const dropdown = $('season-dropdown');
+    if (dropdown.classList.contains('hidden')) return;
+    const items = dropdown.querySelectorAll('.season-dropdown-item[data-idx]');
+    if (!items.length) return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        seasonDropdownIdx = Math.min(seasonDropdownIdx + 1, items.length - 1);
+        highlightDropdownItem(items);
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        seasonDropdownIdx = Math.max(seasonDropdownIdx - 1, 0);
+        highlightDropdownItem(items);
+    } else if (e.key === 'Enter' && seasonDropdownIdx >= 0) {
+        e.preventDefault();
+        selectSeasonEvent(seasonDropdownIdx);
+    } else if (e.key === 'Escape') {
+        dropdown.classList.add('hidden');
+    }
+});
+
+function highlightDropdownItem(items) {
+    items.forEach(el => el.classList.remove('highlighted'));
+    if (items[seasonDropdownIdx]) {
+        items[seasonDropdownIdx].classList.add('highlighted');
+        items[seasonDropdownIdx].scrollIntoView({ block: 'nearest' });
+    }
+}
+
+// Show dropdown on focus, hide on outside click
+$('season-search')?.addEventListener('focus', () => {
+    if (seasonEventsFiltered.length) {
+        renderSeasonDropdown();
+    }
+});
+document.addEventListener('click', e => {
+    if (!e.target.closest('.season-search-wrap')) {
+        $('season-dropdown')?.classList.add('hidden');
+    }
+});
+
+// Load season events on page init
+loadSeasonEvents();
+
+function toggleManualEntry() {
+    const body = $('manual-entry-body');
+    const icon = $('manual-toggle-icon');
+    body.classList.toggle('collapsed');
+    icon.textContent = body.classList.contains('collapsed') ? '▼' : '▲';
+}
+
+function clearActiveEvent() {
+    currentEvent = null;
+    currentEventStatus = null;
+    localStorage.removeItem('selectedEvent');
+    stopRankingsPolling();
+    hide('active-event-banner');
+    const badge = $('event-badge');
+    badge.classList.remove('status-ongoing', 'status-upcoming', 'status-completed');
+    hide('event-badge');
+    $('season-search').value = '';
+    $('event-year').value = '';
+    $('event-code').value = '';
+    // Reset Rankings tab
+    show('rankings-empty');
+    hide('rankings-container');
+    $('event-teams').innerHTML = '';
+}
+
+// ── Auto-refresh rankings polling ─────────────────────────
+const RANKINGS_POLL_INTERVAL = 60_000; // 60 seconds
+
+function startRankingsPolling() {
+    stopRankingsPolling();
+    if (currentEventStatus !== 'ongoing') return;
+    rankingsRefreshTimer = setInterval(refreshRankings, RANKINGS_POLL_INTERVAL);
+}
+
+function stopRankingsPolling() {
+    if (rankingsRefreshTimer) {
+        clearInterval(rankingsRefreshTimer);
+        rankingsRefreshTimer = null;
+    }
+}
+
+async function refreshRankings() {
+    if (!currentEvent) { stopRankingsPolling(); return; }
+    try {
+        const teams = await API.refreshRankings(currentEvent);
+        $('event-teams').innerHTML = buildTeamTable(teams);
+    } catch (_) {
+        // Silently ignore — network hiccups shouldn't disrupt the UI
+    }
+}
+
+// ── Manual event load ─────────────────────────────────────
 async function loadEvent() {
     const year = $('event-year').value.trim();
     const eventCode = $('event-code').value.trim().toLowerCase();
@@ -150,11 +469,13 @@ async function loadEvent() {
     loading(true);
     playoffData = null;
     allianceData = null;
+    summaryData = null;
     pbpData = null;
     pbpIndex = 0;
     bdData = null;
     bdIndex = 0;
     bdCache = {};
+    renderedTabs = { playoff: false, alliance: false, playbyplay: false, breakdown: false };
 
     try {
         const [info, teams] = await Promise.all([
@@ -163,38 +484,90 @@ async function loadEvent() {
         ]);
 
         currentEvent = code;
+        localStorage.setItem('selectedEvent', JSON.stringify({ year, eventCode }));
+
+        // Sync season search box if this is a 2026 event
+        const matchedSeason = seasonEventsRaw.find(e => e.key === code);
+        if (matchedSeason) {
+            $('season-search').value = matchedSeason.name;
+        }
 
         // Badge
         const badge = $('event-badge');
         badge.textContent = `${info.name} (${info.year})`;
+        badge.classList.remove('status-ongoing', 'status-upcoming', 'status-completed');
+        if (info.status) badge.classList.add(`status-${info.status}`);
+        currentEventStatus = info.status || null;
         show('event-badge');
 
-        // Info card
-        const infoEl = $('event-info');
-        infoEl.innerHTML = `
-            <div class="event-info-card">
-                <h2>${info.name}</h2>
-                <p>${info.event_type_string} — ${info.city}, ${info.state_prov}</p>
-                <p>${info.start_date} → ${info.end_date} &nbsp;|&nbsp; ${teams.length} teams</p>
-            </div>`;
-        show('event-info');
+        // Start auto-refresh for ongoing events
+        startRankingsPolling();
 
-        // Teams table
+        // Active event banner
+        const statusBadge = info.status
+            ? `<span class="aeb-status-badge status-${info.status}">${info.status.toUpperCase()}</span>`
+            : '';
+        $('aeb-name').textContent = info.name;
+        $('aeb-meta').innerHTML = `<span>${info.event_type_string} — ${info.city}, ${info.state_prov} · ${info.start_date} → ${info.end_date} · ${teams.length} teams</span>${statusBadge}`;
+
+        // Match dot color to event status
+        const dot = document.querySelector('.aeb-dot');
+        if (dot) {
+            dot.classList.remove('dot-ongoing', 'dot-upcoming', 'dot-completed');
+            if (info.status) dot.classList.add(`dot-${info.status}`);
+        }
+        show('active-event-banner');
+
+        // Rankings & Teams tab — default sort by team number for upcoming events
+        if (currentEventStatus === 'upcoming') {
+            teamsSortCol = 'team_number';
+            teamsSortAsc = true;
+        } else {
+            teamsSortCol = 'rank';
+            teamsSortAsc = true;
+        }
+        hide('rankings-empty');
+        show('rankings-container');
         $('event-teams').innerHTML = buildTeamTable(teams);
 
         // Reset dependent tabs
+        $('summary-empty')?.classList.remove('hidden');
+        $('summary-container')?.classList.add('hidden');
         $('playoff-empty')?.classList.remove('hidden');
         $('playoff-nav').innerHTML = '';
         $('playoff-matches').innerHTML = '';
+        $('playoff-bracket-nav').innerHTML = '';
         $('alliance-empty')?.classList.remove('hidden');
         $('alliance-grid').innerHTML = '';
         $('bd-empty')?.classList.remove('hidden');
         $('bd-container')?.classList.add('hidden');
         $('bd-content') && ($('bd-content').innerHTML = '');
         $('bd-status') && ($('bd-status').innerHTML = '');
-        // Reset PBP tab
         $('pbp-empty')?.classList.remove('hidden');
         $('pbp-container')?.classList.add('hidden');
+
+        // ── Preload lightweight data in parallel ───────────
+        const [matchData, playoffResult, allianceResult] = await Promise.all([
+            API.allMatches(code).catch(() => null),
+            API.playoffMatches(code).catch(() => null),
+            API.alliances(code).catch(() => null),
+        ]);
+
+        // Stash matches (shared by PBP + Breakdown)
+        if (matchData) {
+            pbpData = matchData;
+            bdData  = matchData;
+        }
+
+        // Stash playoffs
+        if (playoffResult && playoffResult.matches) {
+            playoffData = playoffResult.matches;
+        }
+
+        // Stash alliances
+        if (allianceResult) {
+            allianceData = allianceResult;
+        }
 
     } catch (err) {
         alert(`Error loading event: ${err.message}`);
@@ -203,29 +576,303 @@ async function loadEvent() {
     }
 }
 
+let teamsData = null;      // cached teams list for sorting
+let teamsSortCol = 'rank';  // current sort column
+let teamsSortAsc = true;    // sort direction
+
 function buildTeamTable(teams) {
+    teamsData = teams;
+    // Apply the current sort so upcoming events (sorted by team_number) render correctly
+    sortTeamsData();
+    return renderTeamTable(teamsData, teamsSortCol, teamsSortAsc);
+}
+
+function sortTeamsData() {
+    if (!teamsData) return;
+    const col = teamsSortCol;
+    const asc = teamsSortAsc;
+    teamsData.sort((a, b) => {
+        let va, vb;
+        switch (col) {
+            case 'rank':
+                va = typeof a.rank === 'number' ? a.rank : 999;
+                vb = typeof b.rank === 'number' ? b.rank : 999;
+                return asc ? va - vb : vb - va;
+            case 'team_number':
+                return asc ? a.team_number - b.team_number : b.team_number - a.team_number;
+            case 'nickname':
+                va = (a.nickname || '').toLowerCase();
+                vb = (b.nickname || '').toLowerCase();
+                return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+            case 'location':
+                va = [a.city, a.state_prov, a.country].filter(Boolean).join(', ').toLowerCase();
+                vb = [b.city, b.state_prov, b.country].filter(Boolean).join(', ').toLowerCase();
+                return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+            case 'record':
+                va = a.wins - a.losses;
+                vb = b.wins - b.losses;
+                if (va !== vb) return asc ? vb - va : va - vb;
+                return asc ? b.wins - a.wins : a.wins - b.wins;
+            case 'opr':
+                return asc ? b.opr - a.opr : a.opr - b.opr;
+            case 'dpr':
+                return asc ? a.dpr - b.dpr : b.dpr - a.dpr;
+            case 'ccwm':
+                return asc ? b.ccwm - a.ccwm : a.ccwm - b.ccwm;
+            default:
+                return 0;
+        }
+    });
+}
+
+function renderTeamTable(teams, sortCol, asc) {
+    const arrow = asc ? ' ▲' : ' ▼';
+    const th = (key, label) =>
+        `<th class="sortable-th${sortCol === key ? ' sorted' : ''}" onclick="sortTeams('${key}')">${label}${sortCol === key ? arrow : ''}</th>`;
+
     return `
     <table class="data-table">
         <thead>
             <tr>
-                <th>Rank</th><th>Team</th><th>Name</th><th>Location</th>
-                <th>Record</th><th>OPR</th><th>DPR</th><th>CCWM</th>
+                ${th('rank', 'Rank')}
+                <th></th>
+                ${th('team_number', 'Team')}
+                ${th('nickname', 'Name')}
+                ${th('location', 'Location')}
+                ${th('record', 'Record')}
+                ${th('opr', 'OPR')}
+                ${th('dpr', 'DPR')}
+                ${th('ccwm', 'CCWM')}
             </tr>
         </thead>
         <tbody>
-            ${teams.map(t => `
+            ${teams.map(t => {
+                const loc = [t.city, t.state_prov, t.country].filter(Boolean).join(', ');
+                const name = formatTeamName(t.nickname);
+                const avatarImg = t.avatar
+                    ? `<img src="${t.avatar}" class="team-avatar" alt="" loading="lazy">`
+                    : `<span class="team-avatar team-avatar-placeholder">${t.team_number}</span>`;
+                return `
             <tr>
                 <td class="rank">${t.rank}</td>
+                <td class="team-avatar-cell">${avatarImg}</td>
                 <td class="team-num">${t.team_number}</td>
-                <td>${t.nickname}</td>
-                <td class="location">${t.city ? `${t.city}, ${t.state_prov}` : ''}</td>
+                <td>${name}</td>
+                <td class="location">${loc}</td>
                 <td class="stat">${t.wins}-${t.losses}-${t.ties}</td>
                 <td class="stat stat-opr">${t.opr}</td>
                 <td class="stat stat-dpr">${t.dpr}</td>
                 <td class="stat">${t.ccwm}</td>
-            </tr>`).join('')}
+            </tr>`;
+            }).join('')}
         </tbody>
     </table>`;
+}
+
+function formatTeamName(name) {
+    if (!name) return '';
+    // Title-case: capitalize first letter of each word, lowercase the rest
+    return name.replace(/\S+/g, w => {
+        // Keep acronyms (all-caps 2+ letters) as-is
+        if (w.length >= 2 && w === w.toUpperCase() && /^[A-Z]+$/.test(w)) return w;
+        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    });
+}
+
+function sortTeams(col) {
+    if (!teamsData) return;
+    if (teamsSortCol === col) {
+        teamsSortAsc = !teamsSortAsc;
+    } else {
+        teamsSortCol = col;
+        teamsSortAsc = true;
+    }
+
+    sortTeamsData();
+    $('event-teams').innerHTML = renderTeamTable(teamsData, teamsSortCol, teamsSortAsc);
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 1b. EVENT SUMMARY
+// ═══════════════════════════════════════════════════════════
+
+async function loadSummary() {
+    if (!currentEvent) return;
+    hide('summary-empty');
+    show('summary-loading');
+    hide('summary-container');
+
+    try {
+        const data = await API.eventSummary(currentEvent);
+        summaryData = data;
+        renderSummary(data);
+    } catch (err) {
+        alert(`Error loading summary: ${err.message}`);
+        show('summary-empty');
+    } finally {
+        hide('summary-loading');
+    }
+}
+
+async function refreshSummaryStats() {
+    if (!currentEvent) return;
+    const btn = document.querySelector('.summary-refresh-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '↻ Refreshing…'; }
+
+    try {
+        const data = await API.eventSummaryRefresh(currentEvent);
+        if (data.top_scorers && summaryData) {
+            summaryData.top_scorers = data.top_scorers;
+            renderTopScorers(data.top_scorers);
+        }
+    } catch (err) {
+        alert(`Error refreshing stats: ${err.message}`);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '↻ Refresh Stats'; }
+    }
+}
+
+function renderSummary(data) {
+    $('summary-title').textContent = `Event Summary — ${currentEvent.toUpperCase()}`;
+    show('summary-container');
+
+    // Demographics
+    const d = data.demographics;
+    $('summary-demographics').innerHTML = `
+        <div class="summary-stat-card">
+            <div class="summary-stat-value">${d.total_teams}</div>
+            <div class="summary-stat-label">Total Teams</div>
+        </div>
+        <div class="summary-stat-card">
+            <div class="summary-stat-value">${d.rookie_pct}%</div>
+            <div class="summary-stat-label">Rookie Teams <span class="summary-stat-sub">(${d.rookie_count})</span></div>
+        </div>
+        <div class="summary-stat-card">
+            <div class="summary-stat-value">${d.veteran_pct}%</div>
+            <div class="summary-stat-label">Veteran Teams <span class="summary-stat-sub">(${d.veteran_count}, 5+ yrs)</span></div>
+        </div>
+        <div class="summary-stat-card">
+            <div class="summary-stat-value">${d.foreign_pct}%</div>
+            <div class="summary-stat-label">Foreign Teams <span class="summary-stat-sub">(${d.foreign_count})</span></div>
+        </div>
+        <div class="summary-stat-card">
+            <div class="summary-stat-value">${d.country_count}</div>
+            <div class="summary-stat-label">Countries</div>
+            <div class="summary-stat-sub">${d.countries.join(', ')}</div>
+        </div>`;
+
+    // Hall of Fame
+    const hofEl = $('summary-hof');
+    if (data.hall_of_fame.length > 0) {
+        $('summary-hof-list').innerHTML = data.hall_of_fame.map(t => `
+            <div class="summary-hof-team">
+                <span class="summary-hof-num">${t.team_number}</span>
+                <span class="summary-hof-name">${t.nickname}</span>
+                <span class="summary-hof-loc">${[t.city, t.state_prov, t.country].filter(Boolean).join(', ')}</span>
+            </div>`).join('');
+        hofEl.classList.remove('hidden');
+    } else {
+        hofEl.classList.add('hidden');
+    }
+
+    // Impact Award Finalists
+    const impactEl = $('summary-impact');
+    if (data.impact_finalists && data.impact_finalists.length > 0) {
+        $('summary-impact-list').innerHTML = data.impact_finalists.map(t => `
+            <div class="summary-hof-team">
+                <span class="summary-hof-num" style="color:var(--primary)">${t.team_number}</span>
+                <span class="summary-hof-name">${t.nickname}</span>
+                <span class="summary-hof-loc">${t.impact_years.join(', ')}</span>
+            </div>`).join('');
+        impactEl.classList.remove('hidden');
+    } else {
+        impactEl.classList.add('hidden');
+    }
+
+    // Prior connections
+    const histEl = $('summary-history');
+    if (data.connections.length > 0) {
+        renderConnections(data.connections, 'all');
+        // Reset filter to "All"
+        document.querySelectorAll('.conn-filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.conn-filter-btn[data-conn-filter="all"]')?.classList.add('active');
+        histEl.classList.remove('hidden');
+    } else {
+        histEl.classList.add('hidden');
+    }
+
+    // Top scorers
+    renderTopScorers(data.top_scorers);
+}
+
+let currentConnFilter = 'all';
+
+function toggleConnections() {
+    const body = $('summary-history-body');
+    const icon = $('conn-toggle-icon');
+    body.classList.toggle('collapsed');
+    icon.textContent = body.classList.contains('collapsed') ? '▼' : '▲';
+}
+
+function filterConnections(filter, btn) {
+    currentConnFilter = filter;
+    document.querySelectorAll('.conn-filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    if (summaryData) renderConnections(summaryData.connections, filter);
+}
+
+function renderConnections(connections, filter) {
+    const filtered = connections.filter(c => {
+        if (filter === 'partners') return c.partnered_at.length > 0;
+        if (filter === 'opponents') return c.opponents_at.length > 0;
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        $('summary-history-list').innerHTML = '<p class="empty" style="margin:.5rem 0;font-size:.82rem">No connections match this filter.</p>';
+        return;
+    }
+
+    $('summary-history-list').innerHTML = filtered.map(c => {
+        const badges = [];
+        if (c.partnered_at.length) {
+            c.partnered_at.forEach(p => {
+                const stage = p.stage ? ` ${p.stage}` : '';
+                badges.push(`<span class="conn-badge conn-partner">${p.year}${stage} — Partners</span>`);
+            });
+        }
+        if (c.opponents_at.length) {
+            c.opponents_at.forEach(o => {
+                badges.push(`<span class="conn-badge conn-opponent">${o.year} ${o.stage} — Opponents</span>`);
+            });
+        }
+        return `
+        <div class="summary-conn-row">
+            <span class="conn-team has-tooltip">${c.team_a}<span class="custom-tooltip">${c.team_a_name}</span></span>
+            <span class="conn-vs">—</span>
+            <span class="conn-team has-tooltip">${c.team_b}<span class="custom-tooltip">${c.team_b_name}</span></span>
+            <div class="conn-badges">${badges.join('')}</div>
+        </div>`;
+    }).join('');
+}
+
+function renderTopScorers(scorers) {
+    const el = $('summary-top-scorers');
+    if (scorers.length > 0) {
+        const medals = ['1st', '2nd', '3rd'];
+        $('summary-top-list').innerHTML = scorers.map((s, i) => `
+            <div class="summary-top-row">
+                <span class="top-medal">${medals[i] || ''}</span>
+                <span class="top-team-num">${s.team_number}</span>
+                <span class="top-team-name">${s.nickname}</span>
+                <span class="top-opr">OPR ${s.opr}</span>
+                <span class="top-rank">${s.rank !== '-' ? `Rank #${s.rank}` : ''}</span>
+            </div>`).join('');
+        el.classList.remove('hidden');
+    } else {
+        el.classList.add('hidden');
+    }
 }
 
 
@@ -256,7 +903,7 @@ function renderBracketNav() {
         <button class="bracket-btn active" onclick="setBracket('all', this)">All Matches</button>
         <button class="bracket-btn" onclick="setBracket('upper', this)">▲ Upper Bracket</button>
         <button class="bracket-btn" onclick="setBracket('lower', this)">▼ Lower Bracket</button>
-        <button class="bracket-btn" onclick="setBracket('final', this)">🏆 Grand Final</button>
+        <button class="bracket-btn" onclick="setBracket('final', this)">★ Grand Final</button>
     `;
 }
 
@@ -316,7 +963,7 @@ function filterRound(round, btn) {
         const blueNums = m.blue?.alliance_number ? `Alliance #${m.blue.alliance_number}` : '';
         const bracketTag = m.bracket === 'upper' ? '▲ Upper'
                          : m.bracket === 'lower' ? '▼ Lower'
-                         : m.bracket === 'final' ? '🏆 Final' : '';
+                         : m.bracket === 'final' ? '★ Final' : '';
 
         return `
         <div class="series-card">
@@ -692,9 +1339,9 @@ function renderPbpMatch() {
         </div>
         <div class="pbp-alliance blue-side ${blueWon ? 'pbp-alliance-won' : ''}">
             <div class="pbp-alliance-header">
-                <span class="pbp-alliance-title">Blue Alliance</span>
-                <span class="pbp-alliance-opr">Σ OPR ${m.blue.total_opr}</span>
                 <span class="pbp-alliance-score">${upcoming ? '–' : m.blue.score}</span>
+                <span class="pbp-alliance-opr">Σ OPR ${m.blue.total_opr}</span>
+                <span class="pbp-alliance-title">Blue Alliance</span>
             </div>
             <div class="pbp-team-cards">
                 ${m.blue.teams.map(t => renderPbpTeam(t, 'blue-side')).join('')}
@@ -875,11 +1522,22 @@ function renderBdAlliance(alliance, color, won, nickMap) {
     const sideCls = color === 'red' ? 'red-side' : 'blue-side';
     const title = color === 'red' ? 'Red Alliance' : 'Blue Alliance';
 
+    const headerContent = color === 'blue'
+        ? `<div class="bd-alliance-score-group">
+                <span class="bd-alliance-score">${alliance.score}</span>
+                ${won ? '<span class="bd-winner-label">WINNER</span>' : ''}
+            </div>
+            <span>${title}${won ? ' ★' : ''}</span>`
+        : `<span>${title}${won ? ' ★' : ''}</span>
+            <div class="bd-alliance-score-group">
+                ${won ? '<span class="bd-winner-label">WINNER</span>' : ''}
+                <span class="bd-alliance-score">${alliance.score}</span>
+            </div>`;
+
     return `
     <div class="bd-alliance ${sideCls}">
         <div class="bd-alliance-header">
-            <span>${title}${won ? ' 🏆' : ''}</span>
-            <span class="bd-alliance-score">${alliance.score}</span>
+            ${headerContent}
         </div>
 
         <!-- Per-robot: Auto Leave + Barge -->

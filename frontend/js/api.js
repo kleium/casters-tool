@@ -13,9 +13,13 @@ const API = {
     },
 
     // ── Events ──────────────────────────────────────────
-    eventInfo:   (ek) => API.get(`/events/${ek}/info`),
-    eventTeams:  (ek) => API.get(`/events/${ek}/teams`),
-    clearCache:  (ek) => API.get(`/events/${ek}/clear-cache`),
+    seasonEvents:       (yr) => API.get(`/events/season/${yr}`),
+    eventInfo:          (ek) => API.get(`/events/${ek}/info`),
+    eventTeams:         (ek) => API.get(`/events/${ek}/teams`),
+    eventSummary:       (ek) => API.get(`/events/${ek}/summary`),
+    eventSummaryRefresh:(ek) => API.get(`/events/${ek}/summary/refresh-stats`),
+    clearCache:         (ek) => API.get(`/events/${ek}/clear-cache`),
+    refreshRankings:    (ek) => API.get(`/events/${ek}/refresh-rankings`),
 
     // ── Matches ─────────────────────────────────────────
     playoffMatches: (ek) => API.get(`/matches/${ek}/playoffs`),
