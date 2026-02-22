@@ -612,8 +612,9 @@ async function loadEvent() {
         }
         show('active-event-banner');
 
-        // Rankings & Teams tab — default sort by team number for upcoming events
-        if (currentEventStatus === 'upcoming') {
+        // Rankings & Teams tab — sort by team number when no rankings exist
+        const hasRankings = teams.some(t => typeof t.rank === 'number');
+        if (!hasRankings || currentEventStatus === 'upcoming') {
             teamsSortCol = 'team_number';
             teamsSortAsc = true;
         } else {
@@ -814,8 +815,9 @@ async function loadSavedEvent(eventKey) {
             cacheBadge.classList.remove('hidden');
         }
 
-        // Sort
-        if (currentEventStatus === 'upcoming') {
+        // Sort — by team number when no rankings exist
+        const hasRankings = teams.some(t => typeof t.rank === 'number');
+        if (!hasRankings || currentEventStatus === 'upcoming') {
             teamsSortCol = 'team_number'; teamsSortAsc = true;
         } else {
             teamsSortCol = 'rank'; teamsSortAsc = true;
@@ -990,7 +992,8 @@ function sortTeamsData() {
             case 'rank':
                 va = typeof a.rank === 'number' ? a.rank : 999;
                 vb = typeof b.rank === 'number' ? b.rank : 999;
-                return asc ? va - vb : vb - va;
+                if (va !== vb) return asc ? va - vb : vb - va;
+                return a.team_number - b.team_number;  // tiebreak: lowest number first
             case 'team_number':
                 return asc ? a.team_number - b.team_number : b.team_number - a.team_number;
             case 'nickname':
