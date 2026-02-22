@@ -51,6 +51,7 @@ document.addEventListener('mouseover', e => {
 });
 
 let currentEvent = null;   // event_key once loaded
+let eventInfoData = null;  // cached event info for saving
 let playoffData  = null;   // cached playoff matches
 let allianceData = null;   // cached alliance data
 let summaryData  = null;   // cached event summary
@@ -531,6 +532,7 @@ async function loadEvent() {
     playoffData = null;
     allianceData = null;
     summaryData = null;
+    eventInfoData = null;
     pbpData = null;
     pbpIndex = 0;
     bdData = null;
@@ -552,6 +554,7 @@ async function loadEvent() {
         ]);
 
         currentEvent = code;
+        eventInfoData = info;
         localStorage.setItem('selectedEvent', JSON.stringify({ year, eventCode }));
 
         // Sync season search box if this is a 2026 event
@@ -659,7 +662,7 @@ async function loadEvent() {
 //  Save / Load Event Cache
 // ═══════════════════════════════════════════════════════════
 
-/** Save current event — pre-fetches ALL data, stores on server + browser IndexedDB */
+/** Save current event — stores snapshot in browser IndexedDB (per-user) */
 async function saveCurrentEvent() {
     if (!currentEvent) return;
     const btn = $('btn-save-event');
@@ -671,25 +674,20 @@ async function saveCurrentEvent() {
     btn.classList.add('saving');
 
     try {
-        // Send already-loaded data so the server skips redundant fetches
-        const prefetched = {};
-        if (teamsData)           prefetched.teams = teamsData;
-        if (summaryData)         prefetched.summary = summaryData;
-        if (pbpData)             prefetched.matches = pbpData;
-        if (playoffData)         prefetched.playoffs = { matches: playoffData };
-        if (allianceData)        prefetched.alliances = allianceData;
-        if (_pbpConnectionsCache && !_pbpConnAllTime)
-            prefetched.connections = _pbpConnectionsCache;
-        if (_pbpConnectionsAlltimeCache)
-            prefetched.connections_alltime = _pbpConnectionsAlltimeCache;
+        // Build the snapshot from already-loaded client data
+        const snapshot = {
+            info:       eventInfoData || null,
+            teams:      teamsData || null,
+            summary:    summaryData || null,
+            matches:    pbpData || null,
+            playoffs:   playoffData ? { matches: playoffData } : null,
+            alliances:  allianceData || null,
+            connections: (_pbpConnectionsCache && !_pbpConnAllTime) ? _pbpConnectionsCache : null,
+            connections_alltime: _pbpConnectionsAlltimeCache || null,
+        };
 
-        // Trigger server-side save (fetches only what's missing)
-        const result = await API.saveEvent(currentEvent, prefetched);
-
-        // Also store in browser IndexedDB for offline/instant access
-        if (result.data) {
-            await EventCache.put(currentEvent, result.data);
-        }
+        // Store in browser IndexedDB (per-user, per-browser)
+        await EventCache.put(currentEvent, snapshot);
 
         label.textContent = 'Saved ✓';
         btn.classList.remove('saving');
@@ -718,7 +716,7 @@ async function loadSavedEvent(eventKey) {
     loading(true);
 
     // Reset state
-    playoffData = null; allianceData = null; summaryData = null;
+    playoffData = null; allianceData = null; summaryData = null; eventInfoData = null;
     pbpData = null; pbpIndex = 0; bdData = null; bdIndex = 0; bdCache = {};
     historyData = null; regionData = null;
     stopBdPolling(); stopBdListRefresh();
@@ -726,18 +724,9 @@ async function loadSavedEvent(eventKey) {
     renderedTabs = { playoff: false, alliance: false, playbyplay: false, breakdown: false, history: false };
 
     try {
-        // Try browser cache first
-        let snapshot = await EventCache.get(eventKey);
-        let source = 'browser';
-
-        // Fall back to server cache
-        if (!snapshot) {
-            const serverData = await API.loadSaved(eventKey);
-            snapshot = serverData;
-            source = 'server';
-            // Sync to browser cache
-            if (serverData.data) await EventCache.put(eventKey, serverData.data);
-        }
+        // Load from browser IndexedDB
+        const snapshot = await EventCache.get(eventKey);
+        if (!snapshot) throw new Error('Event not found in local cache');
 
         const data = snapshot.data || snapshot;
         if (!data.info || !data.teams) throw new Error('Incomplete saved data');
@@ -749,6 +738,7 @@ async function loadSavedEvent(eventKey) {
         $('event-code').value = eventCode;
 
         currentEvent = eventKey;
+        eventInfoData = data.info;
         localStorage.setItem('selectedEvent', JSON.stringify({ year, eventCode }));
 
         const info = data.info;
@@ -920,18 +910,8 @@ async function autoCacheTab(tabName, tabData) {
 /** Load and render the saved events list on the Events tab */
 async function loadSavedEventsList() {
     try {
-        // Merge browser + server saved events
-        const [browserList, serverList] = await Promise.all([
-            EventCache.list(),
-            API.savedList().catch(() => []),
-        ]);
-
-        // Merge by event_key, prefer server metadata
-        const merged = new Map();
-        for (const e of browserList) merged.set(e.event_key, e);
-        for (const e of serverList)  merged.set(e.event_key, { ...merged.get(e.event_key), ...e });
-
-        const events = [...merged.values()].sort((a, b) => (b.saved_at || 0) - (a.saved_at || 0));
+        // Load saved events from browser IndexedDB only (per-user)
+        const events = (await EventCache.list()).sort((a, b) => (b.saved_at || 0) - (a.saved_at || 0));
 
         const card = $('saved-events-card');
         const list = $('saved-events-list');
@@ -966,12 +946,9 @@ async function loadSavedEventsList() {
     }
 }
 
-/** Delete a saved event from both browser and server */
+/** Delete a saved event from browser cache */
 async function deleteSavedEvent(eventKey) {
-    await Promise.all([
-        EventCache.remove(eventKey),
-        API.deleteSaved(eventKey).catch(() => {}),
-    ]);
+    await EventCache.remove(eventKey);
     loadSavedEventsList();
 }
 

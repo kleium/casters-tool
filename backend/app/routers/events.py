@@ -1,9 +1,7 @@
 """Event endpoints — info, teams with stats, summary, season list, compare."""
-import asyncio
-from fastapi import APIRouter, HTTPException, Query, Body
+from fastapi import APIRouter, HTTPException, Query
 from ..services import event_service
 from ..services import summary_service
-from ..services import cache_service
 from ..services import region_service
 from ..services.tba_client import get_tba_client
 from ..services.alliance_service import get_alliances_with_stats
@@ -120,98 +118,3 @@ async def event_history(event_key: str):
         return await region_service.get_event_history(event_key)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-
-# ═══════════════════════════════════════════════════════════
-#  Save / Load event snapshots
-# ═══════════════════════════════════════════════════════════
-
-@router.get("/saved/list")
-async def list_saved():
-    """List all saved event snapshots (metadata only)."""
-    return cache_service.list_saved_events()
-
-
-@router.post("/{event_key}/save")
-async def save_event(event_key: str, prefetched: dict | None = Body(None)):
-    """Save event snapshot. Accepts optional pre-loaded data from frontend to skip redundant fetches."""
-    try:
-        pre = prefetched or {}
-
-        # Build list of what we still need to fetch
-        coros = {}
-        if "info" not in pre:       coros["info"] = event_service.get_event_info(event_key)
-        if "teams" not in pre:      coros["teams"] = event_service.get_event_teams_with_stats(event_key)
-        if "summary" not in pre:    coros["summary"] = summary_service.get_event_summary(event_key)
-        if "alliances" not in pre:  coros["alliances"] = _safe_async(get_alliances_with_stats(event_key))
-        if "matches" not in pre:    coros["matches"] = _safe_async(_get_all_matches(event_key))
-        if "playoffs" not in pre:   coros["playoffs"] = _safe_async(_get_playoffs(event_key))
-        # connections: summary already contains past-3 connections, so only fetch all-time if missing
-        if "connections_alltime" not in pre:
-            coros["connections_alltime"] = _safe_async(
-                summary_service.get_event_connections(event_key, all_time=True)
-            )
-
-        # Fetch only what's missing
-        keys = list(coros.keys())
-        values = await asyncio.gather(*coros.values()) if coros else []
-        fetched = dict(zip(keys, values))
-
-        # Merge: prefer pre-loaded, fill gaps from fetched
-        info    = pre.get("info")    or fetched.get("info")
-        teams   = pre.get("teams")   or fetched.get("teams")
-        summary = pre.get("summary") or fetched.get("summary")
-
-        snapshot = {
-            "info":       info,
-            "teams":      teams,
-            "summary":    summary,
-            "alliances":  pre.get("alliances")  or fetched.get("alliances"),
-            "matches":    pre.get("matches")    or fetched.get("matches"),
-            "playoffs":   pre.get("playoffs")   or fetched.get("playoffs"),
-            "connections": pre.get("connections") or (summary or {}).get("connections"),
-            "connections_alltime": pre.get("connections_alltime") or fetched.get("connections_alltime"),
-        }
-
-        meta = cache_service.save_event(event_key, snapshot)
-        return {**meta, "data": snapshot}
-
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.get("/{event_key}/saved")
-async def load_saved_event(event_key: str):
-    """Load a previously saved event snapshot from disk."""
-    result = cache_service.load_event(event_key)
-    if not result:
-        raise HTTPException(status_code=404, detail="No saved data for this event")
-    return result
-
-
-@router.delete("/{event_key}/saved")
-async def delete_saved_event(event_key: str):
-    """Delete a saved event snapshot."""
-    if cache_service.delete_event(event_key):
-        return {"status": "deleted", "event_key": event_key}
-    raise HTTPException(status_code=404, detail="No saved data for this event")
-
-
-async def _safe_async(coro):
-    """Await coroutine; return None on error."""
-    try:
-        return await coro
-    except Exception:
-        return None
-
-
-async def _get_all_matches(event_key: str):
-    """Re-use the matches router logic by importing & calling directly."""
-    from .matches import get_all_matches
-    return await get_all_matches(event_key)
-
-
-async def _get_playoffs(event_key: str):
-    """Re-use the matches router logic for playoffs."""
-    from .matches import get_playoff_matches
-    return await get_playoff_matches(event_key)
