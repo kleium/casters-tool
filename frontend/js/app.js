@@ -137,12 +137,29 @@ function applyForeignHighlight() {
     });
 }
 
+// ── Tab scroll fade indicators ─────────────────────────────
+(() => {
+    const wrap = document.querySelector('.tabs-wrap');
+    const tabs = document.querySelector('.tabs');
+    if (!wrap || !tabs) return;
+    function updateFades() {
+        const sl = tabs.scrollLeft, sw = tabs.scrollWidth, cw = tabs.clientWidth;
+        wrap.classList.toggle('scroll-left', sl > 4);
+        wrap.classList.toggle('scroll-right', sl + cw < sw - 4);
+    }
+    tabs.addEventListener('scroll', updateFades, { passive: true });
+    window.addEventListener('resize', updateFades);
+    // Run on next frame so layout is ready
+    requestAnimationFrame(updateFades);
+})();
+
 // ── Tab switching ──────────────────────────────────────────
 document.querySelectorAll('.tab').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
         btn.classList.add('active');
+        btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
         document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
 
         // Stop breakdown polling when leaving the breakdown tab

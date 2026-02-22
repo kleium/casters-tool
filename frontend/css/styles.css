@@ -366,6 +366,31 @@ input[type="checkbox"] {
 }
 
 /* ═══ TAB BAR ══════════════════════════════════════════════ */
+.tabs-wrap {
+    position: relative;
+}
+.tabs-wrap::before,
+.tabs-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 32px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity .25s;
+}
+.tabs-wrap::before {
+    left: 0;
+    background: linear-gradient(to right, var(--surface), transparent);
+}
+.tabs-wrap::after {
+    right: 0;
+    background: linear-gradient(to left, var(--surface), transparent);
+}
+.tabs-wrap.scroll-right::after { opacity: 1; }
+.tabs-wrap.scroll-left::before { opacity: 1; }
+
 .tabs {
     display: flex;
     background: var(--surface-glass);
@@ -3107,45 +3132,74 @@ tr:hover .compare-cb,
 }
 
 /* ═══ RESPONSIVE ═══════════════════════════════════════════ */
+
+/* ── Tablet / small laptop ────────────────────────────────── */
 @media (max-width: 768px) {
-    header, main {
-        padding-left: 1.2rem;
-        padding-right: 1.2rem;
+    header {
+        padding: .65rem 1rem;
+        gap: .5rem;
+    }
+    header h1 { font-size: 1rem; }
+    .brand-sub { display: none; }
+    .brand-icon { width: 22px; height: 22px; }
+
+    main {
+        padding: 1.2rem 1rem;
     }
 
+    /* ── Tab bar: compact scrollable pills with fade hints ── */
     .tabs {
-        padding: 0 1rem;
+        padding: 0 .75rem;
         overflow-x: auto;
         scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        position: relative;
     }
     .tabs::-webkit-scrollbar { display: none; }
 
     .tab {
-        padding: .7rem 1rem;
-        font-size: .82rem;
+        padding: .7rem .85rem;
+        font-size: .78rem;
         white-space: nowrap;
+        gap: .3rem;
+        min-height: 44px;          /* touch target */
     }
 
+    /* ── Active event banner ── */
+    .active-event-banner {
+        flex-wrap: wrap;
+        padding: .65rem 1rem;
+        gap: .5rem;
+    }
+    .aeb-name { white-space: normal; word-break: break-word; }
+    .aeb-right { width: 100%; justify-content: flex-end; }
+    .aeb-cache-badge { font-size: .65rem; }
+
+    /* ── Alliance ── */
     #alliance-grid { grid-template-columns: 1fr; }
     .team-highlights { flex-direction: column; }
-
-    .h2h-header { font-size: 1.15rem; }
-
     .alliance-team-row { flex-wrap: wrap; }
     .alliance-header { flex-direction: column; align-items: flex-start; }
     .alliance-header-stats { margin-top: .3rem; }
     .alliance-partners-row { padding-left: .5rem; }
+    .alliance-toolbar { flex-wrap: wrap; gap: .6rem; }
 
+    /* ── H2H ── */
+    .h2h-header { font-size: 1.15rem; }
+
+    /* ── PBP ── */
     .pbp-arena { grid-template-columns: 1fr; }
     .pbp-topbar { flex-wrap: wrap; justify-content: center; gap: .5rem; }
     .pbp-team-number { font-size: 1.4rem; min-width: 60px; }
     .pbp-team-stats { grid-template-columns: repeat(3, 1fr); }
 
+    /* ── Breakdown ── */
     .bd-content { flex-direction: column; }
     .bd-robots { grid-template-columns: 1fr 1fr 1fr; }
     .bd-stats { grid-template-columns: 1fr; }
     .bd-reef-cell { font-size: .45rem; }
 
+    /* ── Summary ── */
     .summary-stats-row { grid-template-columns: repeat(2, 1fr); }
     .conn-detail-line { flex-wrap: wrap; }
     .conn-detail-event { min-width: 0; }
@@ -3154,6 +3208,221 @@ tr:hover .compare-cb,
     .conn-search-input { width: 100%; }
     .conn-filter-bar { flex-wrap: wrap; }
     .conn-sort-bar { flex-wrap: wrap; }
+    .conn-filter-btn { min-height: 36px; padding: .4rem .85rem; }
+    .conn-sort-btn { min-height: 32px; padding: .35rem .65rem; }
+
+    /* ── Tables: horizontal scroll ── */
+    #event-teams, #summary-history-list, .history-panel {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── Compare modal ── */
+    .compare-overlay { padding: .5rem; }
+    .compare-modal { max-width: 100%; max-height: 92vh; }
+    .compare-body { padding: .75rem; overflow-x: auto; }
+    .compare-grid { font-size: .72rem; }
+    .comp-label { font-size: .62rem; padding: .35rem .4rem; }
+    .comp-team-num { font-size: .95rem; }
+
+    /* ── Compare bar ── */
+    .compare-bar {
+        left: .75rem;
+        right: .75rem;
+        transform: none;
+        border-radius: var(--radius-lg);
+        justify-content: center;
+        padding: .55rem .85rem;
+    }
+    @keyframes comp-bar-in {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Footer ── */
+    .site-footer {
+        flex-wrap: wrap;
+        padding: 1rem 1rem;
+        gap: .3rem .5rem;
+        text-align: center;
+        justify-content: center;
+    }
+
+    /* ── Event filters ── */
+    .season-filter-row select { min-width: 0; flex: 1; }
+    .event-section-card { padding: 1rem 1rem; }
+
+    /* ── Saved events ── */
+    .saved-event-meta { gap: .3rem; }
+    .saved-event-time { font-size: .62rem; }
+    .saved-event-delete { min-width: 32px; min-height: 32px; display: flex; align-items: center; justify-content: center; }
+}
+
+/* ── Phone (≤480px) ───────────────────────────────────────── */
+@media (max-width: 480px) {
+    header {
+        padding: .55rem .75rem;
+    }
+    header h1 { font-size: .92rem; }
+    #event-badge {
+        font-size: .68rem;
+        padding: .2rem .7rem;
+        max-width: 140px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    main {
+        padding: .85rem .65rem;
+    }
+
+    /* ── Tab bar: icon-prominent compact pills ── */
+    .tabs {
+        padding: 0 .5rem;
+        gap: .15rem;
+    }
+    .tab {
+        padding: .55rem .6rem;
+        font-size: .68rem;
+        min-height: 44px;
+        flex-direction: column;
+        gap: .15rem;
+    }
+    .tab-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* ── Active event banner ── */
+    .active-event-banner { padding: .55rem .75rem; }
+    .aeb-name { font-size: .82rem; }
+    .aeb-meta { font-size: .68rem; }
+    .aeb-status-badge { font-size: .58rem; }
+    .btn-save-event {
+        padding: .35rem .65rem;
+        font-size: .72rem;
+    }
+
+    /* ── Event section cards ── */
+    .event-section-card { padding: .85rem .75rem; }
+    .event-section-title { font-size: .88rem; }
+    .event-section-desc { font-size: .75rem; }
+
+    /* ── Input / button sizing ── */
+    input[type="text"] {
+        padding: .55rem .85rem;
+        font-size: .85rem;
+    }
+    button {
+        padding: .55rem 1.1rem;
+        font-size: .82rem;
+    }
+    .input-row { gap: .5rem; }
+    input[type="text"].input-sm { max-width: 100px; }
+
+    /* ── Season filter dropdowns ── */
+    .season-filter-row {
+        flex-direction: column;
+    }
+    .season-filter-row select {
+        min-width: 0;
+        width: 100%;
+    }
+
+    /* ── Rankings table ── */
+    .data-table { font-size: .76rem; }
+    .data-table th { padding: .5rem .5rem; font-size: .62rem; }
+    .data-table td { padding: .45rem .5rem; }
+
+    /* ── Summary stat cards ── */
+    .summary-stats-row { grid-template-columns: repeat(2, 1fr); gap: .5rem; }
+
+    /* ── PBP ── */
+    .pbp-team { padding: .75rem .85rem; }
+    .pbp-team-number { font-size: 1.2rem; }
+    .pbp-team-stats { grid-template-columns: repeat(2, 1fr); gap: .4rem; }
+    .pbp-nav-btn { padding: .5rem .85rem; font-size: .78rem; min-height: 44px; }
+    .pbp-match-label { font-size: .85rem; }
+
+    /* ── Breakdown reef ── */
+    .bd-reef-cell { font-size: .4rem; min-width: 0; }
+    .bd-robots { gap: .35rem; }
+    .bd-robot-card { padding: .5rem; }
+
+    /* ── Alliance cards ── */
+    .alliance-toolbar {
+        padding: .5rem .65rem;
+        gap: .4rem .8rem;
+        font-size: .75rem;
+    }
+    .alliance-card { border-radius: var(--radius); }
+    .team-stats-mini { font-size: .7rem; }
+
+    /* ── Playoff bracket ── */
+    .bkt-slot { min-width: 140px; }
+    .bkt-score { font-size: .85rem; }
+
+    /* ── History stat cards ── */
+    .history-stat-card { flex: 1 1 90px; min-width: 80px; padding: .55rem .45rem; }
+    .hsc-value { font-size: 1.1rem; }
+    .hsc-label { font-size: .65rem; }
+    .history-panel { padding: .85rem .75rem; }
+    .history-panel-title { font-size: .95rem; }
+
+    /* ── Compare modal ── */
+    .compare-overlay { padding: .25rem; }
+    .compare-modal { border-radius: var(--radius); }
+    .compare-modal-header { padding: .65rem .85rem; }
+    .compare-modal-header h2 { font-size: .88rem; }
+    .compare-body { padding: .5rem; }
+    .compare-grid { gap: 1px; font-size: .65rem; }
+    .comp-label { font-size: .55rem; padding: .3rem .35rem; min-width: 0; }
+    .comp-header { padding: .45rem .35rem; }
+    .comp-team-num { font-size: .85rem; }
+    .comp-team-name { font-size: .65rem; }
+
+    /* ── Compare bar ── */
+    .compare-bar {
+        bottom: .75rem;
+        left: .5rem;
+        right: .5rem;
+        font-size: .78rem;
+        padding: .45rem .65rem;
+        gap: .5rem;
+    }
+    .compare-bar button { padding: .35rem .75rem; font-size: .72rem; }
+
+    /* ── Footer ── */
+    .site-footer {
+        font-size: .68rem;
+        padding: .85rem .75rem;
+        flex-direction: column;
+        gap: .2rem;
+    }
+    .footer-sep { display: none; }
+
+    /* ── H2H ── */
+    .h2h-header { font-size: 1rem; }
+    .conn-range-toggle { font-size: .72rem; }
+
+    /* ── PBP connections ── */
+    .pbp-conn-item { flex-wrap: wrap; }
+
+    /* ── Settings menu ── */
+    .settings-menu {
+        min-width: 200px;
+        right: -.5rem;
+        max-width: calc(100vw - 1.5rem);
+    }
+
+    /* ── Saved events ── */
+    .saved-event-item { padding: .5rem .65rem; }
+    .saved-event-name { font-size: .78rem; }
+    .saved-event-status { font-size: .58rem; }
+
+    /* ── Loading overlay ── */
+    .loader { width: 32px; height: 32px; }
 }
 
 
