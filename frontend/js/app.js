@@ -3576,7 +3576,7 @@ function renderRegionFacts(data) {
     // International visitors
     if (data.top_international_visitors && data.top_international_visitors.length) {
         html += '<div class="history-detail-section">';
-        html += '<h4>Most International Visitors <span class="detail-note">(last 5 seasons)</span></h4>';
+        html += '<h4>Most International Appearances <span class="detail-note">(last 5 seasons)</span></h4>';
         html += '<div class="history-team-chips">';
         const vis = data.top_international_visitors;
         const SHOW = 5;
