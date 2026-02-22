@@ -3642,9 +3642,9 @@ function renderEventHistory(data) {
         html += '<h4>Year-by-Year Results</h4>';
         html += '<table class="data-table history-table"><thead><tr><th>Year</th><th>Winners</th><th>Finalists</th><th>Event Impact</th></tr></thead><tbody>';
         for (const yr of data.timeline) {
-            const winners = (yr.winners || []).map(t => `${t.team_number}`).join(', ') || '—';
-            const finalists = (yr.finalists || []).map(t => `${t.team_number}`).join(', ') || '—';
-            const impact = yr.impact ? `${yr.impact.team_number}` : '—';
+            const winners = (yr.winners || []).map(t => `<span class="has-tooltip">${t.team_number}<span class="custom-tooltip">${_esc(t.nickname)}</span></span>`).join(', ') || '—';
+            const finalists = (yr.finalists || []).map(t => `<span class="has-tooltip">${t.team_number}<span class="custom-tooltip">${_esc(t.nickname)}</span></span>`).join(', ') || '—';
+            const impact = yr.impact ? `<span class="has-tooltip">${yr.impact.team_number}<span class="custom-tooltip">${_esc(yr.impact.nickname)}</span></span>` : '—';
             html += `<tr><td class="year-cell">${yr.year}</td><td>${winners}</td><td>${finalists}</td><td>${impact}</td></tr>`;
         }
         html += '</tbody></table></div>';
