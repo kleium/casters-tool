@@ -141,7 +141,10 @@
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+    scroll-behavior: smooth;
+    touch-action: manipulation;   /* prevent double-tap zoom on mobile */
+}
 
 body {
     font-family: var(--font);
@@ -3042,9 +3045,10 @@ tr:hover .compare-cb,
 
 .site-footer {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: .5rem;
+    gap: .45rem;
     padding: 1.2rem 2rem;
     margin-top: 2rem;
     font-size: .74rem;
@@ -3055,7 +3059,13 @@ tr:hover .compare-cb,
     position: relative;
     z-index: 0;
 }
-
+.footer-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
 .footer-sep {
     opacity: .35;
 }
@@ -3069,18 +3079,32 @@ tr:hover .compare-cb,
     border-radius: 999px;
     border: 1px solid var(--border);
 }
-.footer-status {
+.footer-attribution {
     display: flex;
     align-items: center;
-    gap: .6rem;
+    justify-content: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+    font-size: .68rem;
+    color: var(--text-muted);
+    opacity: .85;
 }
 .status-item {
     display: flex;
     align-items: center;
     gap: .3rem;
-    font-size: .7rem;
-    font-weight: 600;
+    font-size: .68rem;
+    font-weight: 500;
     color: var(--text-muted);
+}
+.status-item a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+.status-item a:hover {
+    text-decoration: underline;
+    color: var(--primary-hover);
 }
 .status-dot {
     width: .5rem;
@@ -3249,11 +3273,12 @@ tr:hover .compare-cb,
 
     /* ── Footer ── */
     .site-footer {
-        flex-wrap: wrap;
         padding: 1rem 1rem;
-        gap: .3rem .5rem;
+        gap: .35rem;
         text-align: center;
-        justify-content: center;
+    }
+    .footer-top {
+        gap: .3rem .5rem;
     }
 
     /* ── Event filters ── */
@@ -3415,10 +3440,14 @@ tr:hover .compare-cb,
     .site-footer {
         font-size: .68rem;
         padding: .85rem .75rem;
+        gap: .25rem;
+    }
+    .footer-top .footer-sep { display: none; }
+    .footer-attribution .footer-sep { display: none; }
+    .footer-attribution {
         flex-direction: column;
         gap: .2rem;
     }
-    .footer-sep { display: none; }
 
     /* ── H2H ── */
     .h2h-header { font-size: 1rem; }
