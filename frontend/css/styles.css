@@ -424,6 +424,12 @@ input[type="checkbox"] {
     border-radius: var(--radius) var(--radius) 0 0;
 }
 
+.tab.disabled {
+    opacity: .4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .tab.active {
     color: var(--primary-hover);
     font-weight: 600;

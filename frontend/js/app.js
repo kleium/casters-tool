@@ -51,6 +51,7 @@ document.addEventListener('mouseover', e => {
 });
 
 let currentEvent = null;   // event_key once loaded
+let currentEventYear = null; // numeric year of the loaded event
 let eventInfoData = null;  // cached event info for saving
 let playoffData  = null;   // cached playoff matches
 let allianceData = null;   // cached alliance data
@@ -208,7 +209,15 @@ document.querySelectorAll('.tab').forEach(btn => {
                 loadPlayByPlay();
             }
         }
-        if (btn.dataset.tab === 'breakdown' && currentEvent && !renderedTabs.breakdown) {
+        if (btn.dataset.tab === 'breakdown' && currentEventYear && currentEventYear < 2025) {
+            // Pre-2025: show unavailable message, skip loading
+            hide('bd-container');
+            const el = $('bd-empty');
+            if (el) {
+                el.innerHTML = 'Score breakdown is only available for 2025 events onwards.';
+                el.classList.remove('hidden');
+            }
+        } else if (btn.dataset.tab === 'breakdown' && currentEvent && !renderedTabs.breakdown) {
             if (bdData) {
                 bdIndex = 0;
                 bdCache = {};
@@ -496,6 +505,7 @@ function toggleManualEntry() {
 
 function clearActiveEvent() {
     currentEvent = null;
+    currentEventYear = null;
     currentEventStatus = null;
     localStorage.removeItem('selectedEvent');
     stopRankingsPolling();
@@ -571,8 +581,12 @@ async function loadEvent() {
         ]);
 
         currentEvent = code;
+        currentEventYear = parseInt(year, 10);
         eventInfoData = info;
         localStorage.setItem('selectedEvent', JSON.stringify({ year, eventCode }));
+
+        // Disable breakdown tab for pre-2025 events
+        updateBreakdownTabState();
 
         // Sync season search box if this is a 2026 event
         const matchedSeason = seasonEventsRaw.find(e => e.key === code);
@@ -756,8 +770,12 @@ async function loadSavedEvent(eventKey) {
         $('event-code').value = eventCode;
 
         currentEvent = eventKey;
+        currentEventYear = parseInt(year, 10);
         eventInfoData = data.info;
         localStorage.setItem('selectedEvent', JSON.stringify({ year, eventCode }));
+
+        // Disable breakdown tab for pre-2025 events
+        updateBreakdownTabState();
 
         const info = data.info;
         const teams = data.teams;
@@ -2240,6 +2258,20 @@ function renderPbpTeam(t, sideCls) {
 // ═══════════════════════════════════════════════════════════
 // 7. SCORE BREAKDOWN
 // ═══════════════════════════════════════════════════════════
+
+/** Enable or disable the Breakdown tab based on the loaded event year. */
+function updateBreakdownTabState() {
+    const bdBtn = document.querySelector('.tab[data-tab="breakdown"]');
+    if (!bdBtn) return;
+    if (currentEventYear && currentEventYear < 2025) {
+        bdBtn.classList.add('disabled');
+        bdBtn.title = 'Score breakdown is only available for 2025 events onwards';
+    } else {
+        bdBtn.classList.remove('disabled');
+        bdBtn.title = '';
+    }
+}
+
 async function loadBreakdownTab() {
     if (!currentEvent) return;
     loading(true);
