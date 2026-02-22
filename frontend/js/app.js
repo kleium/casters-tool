@@ -1696,7 +1696,7 @@ function renderAlliances(data) {
                     <div class="alliance-team-row ${isIntl ? 'intl-highlight' : ''}">
                         <span class="team-role">${roleLabels[idx] || ''}</span>
                         ${avatarHtml}
-                        <span class="team-num ${isIntl ? 'foreign-team' : ''} has-tooltip" data-country="${t.country || ''}">${t.team_number}${t.nickname ? `<span class="custom-tooltip">${t.nickname}</span>` : ''}</span>
+                        <span class="team-num has-tooltip" data-country="${t.country || ''}">${t.team_number}${t.nickname ? `<span class="custom-tooltip">${t.nickname}</span>` : ''}</span>
                         ${allianceShowNames ? `<span class="team-nick">${t.nickname || ''}</span>` : ''}
                         <div class="team-stats-mini">
                             <span>Rank ${t.rank}</span>

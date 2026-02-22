@@ -354,6 +354,10 @@ tr.foreign-team-row {
     background: rgba(250, 204, 21, .10) !important;
     box-shadow: inset 3px 0 0 var(--yellow);
 }
+.pbp-team.foreign-team {
+    background: rgba(250, 204, 21, .10);
+    box-shadow: inset 3px 0 0 var(--yellow);
+}
 
 /* ── Dark-mode checkboxes ─────────────────────────────────── */
 input[type="checkbox"] {
