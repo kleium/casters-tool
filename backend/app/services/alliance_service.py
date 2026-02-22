@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from .tba_client import get_tba_client
+from .frc_client import get_frc_client
 
 
 async def _safe(coro):
@@ -12,15 +13,29 @@ async def _safe(coro):
         return None
 
 
+# Map TBA playoff levels to readable labels
+_PLAYOFF_LABELS = {
+    "f": "Finals",
+    "sf": "Semifinals",
+    "qf": "Quarterfinals",
+    "ef": "Round 1",
+}
+
+
 async def get_alliances_with_stats(event_key: str) -> dict:
     """Alliances + per-team qual stats + first-time-partner flags."""
     client = get_tba_client()
+    frc = get_frc_client()
 
-    alliances_raw, rankings, oprs, teams_list = await asyncio.gather(
+    year = int(event_key[:4]) if event_key[:4].isdigit() else 2026
+    event_code = event_key[4:]
+
+    alliances_raw, rankings, oprs, teams_list, frc_teams_raw = await asyncio.gather(
         client.get_event_alliances(event_key),
         _safe(client.get_event_rankings(event_key)),
         _safe(client.get_event_oprs(event_key)),
         _safe(client.get_event_teams(event_key)),
+        _safe(frc.get_event_teams(year, event_code)),
     )
 
     if not alliances_raw:
@@ -29,10 +44,21 @@ async def get_alliances_with_stats(event_key: str) -> dict:
     # ── Lookups ─────────────────────────────────────────────
     name_map: dict[str, str] = {}
     country_map: dict[str, str] = {}
+    school_map: dict[str, str] = {}
     if teams_list:
         for t in teams_list:
             name_map[t["key"]] = t.get("nickname", "")
             country_map[t["key"]] = t.get("country", "")
+            school_map[t["key"]] = t.get("school_name", "")
+
+    # FRC Events API school/org names (preferred)
+    frc_org_map: dict[int, str] = {}
+    if frc_teams_raw:
+        for ft in frc_teams_raw:
+            num = ft.get("teamNumber")
+            org = ft.get("schoolName") or ft.get("nameShort") or ""
+            if num and org:
+                frc_org_map[num] = org
 
     rank_map: dict[str, dict] = {}
     if rankings and rankings.get("rankings"):
@@ -48,21 +74,49 @@ async def get_alliances_with_stats(event_key: str) -> dict:
                 "ccwm": round(oprs["ccwms"].get(tk, 0), 2),
             }
 
+    # ── Fetch avatars for all alliance teams ────────────────
+    all_alliance_keys: list[str] = []
+    for a in alliances_raw:
+        all_alliance_keys.extend(a.get("picks", []))
+
+    async def _fetch_avatar(tk: str):
+        media = await _safe(client.get_team_media(tk, year))
+        if media:
+            for item in media:
+                if item.get("type") == "avatar":
+                    b64 = (item.get("details") or {}).get("base64Image")
+                    if b64:
+                        return (tk, f"data:image/png;base64,{b64}")
+        return (tk, None)
+
+    avatar_results = await asyncio.gather(*[_fetch_avatar(tk) for tk in all_alliance_keys])
+    avatar_map = {tk: url for tk, url in avatar_results if url}
+
+    # ── Pick labels ───────────────────────────────────────
+    _pick_labels = ['Captain', '1st Pick', '2nd Pick', '3rd Pick', 'Backup']
+
     # ── Build alliance cards ────────────────────────────────
     alliances = []
     for idx, alliance in enumerate(alliances_raw):
         picks = alliance.get("picks", [])
         team_details = []
-        for tk in picks:
+        for pick_idx, tk in enumerate(picks):
             r = rank_map.get(tk, {})
             rec = r.get("record", {})
             o = opr_map.get(tk, {"opr": 0, "dpr": 0, "ccwm": 0})
+            tnum = int(tk.replace("frc", ""))
+
+            pick_label = _pick_labels[pick_idx] if pick_idx < len(_pick_labels) else ''
+
             team_details.append(
                 {
                     "team_key": tk,
-                    "team_number": int(tk.replace("frc", "")),
+                    "team_number": tnum,
                     "nickname": name_map.get(tk, ""),
                     "country": country_map.get(tk, ""),
+                    "school_name": frc_org_map.get(tnum, "") or school_map.get(tk, ""),
+                    "avatar": avatar_map.get(tk),
+                    "pick_label": pick_label,
                     "rank": r.get("rank", "-"),
                     "wins": rec.get("wins", 0),
                     "losses": rec.get("losses", 0),
@@ -72,19 +126,62 @@ async def get_alliances_with_stats(event_key: str) -> dict:
                     "ccwm": o["ccwm"],
                 }
             )
+
+        # ── Playoff result from TBA status ──────────────────
+        status = alliance.get("status") or {}
+        playoff_status = status.get("status", "")  # "won", "eliminated", "playing", ""
+        playoff_level = status.get("level", "")
+        playoff_record = status.get("record") or {}
+        pw = playoff_record.get("wins", 0)
+        pl = playoff_record.get("losses", 0)
+
+        if playoff_status == "won":
+            result_label = "Event Winner"
+            result_type = "winner"
+        elif playoff_status == "eliminated" and playoff_level == "f":
+            result_label = "Finalist"
+            result_type = "finalist"
+        elif playoff_status == "eliminated":
+            result_label = f"Eliminated in {_PLAYOFF_LABELS.get(playoff_level, playoff_level)}"
+            result_type = "eliminated"
+        elif playoff_status == "playing":
+            result_label = f"Playing — {_PLAYOFF_LABELS.get(playoff_level, playoff_level)}"
+            result_type = "playing"
+        else:
+            result_label = ""
+            result_type = ""
+
+        # Combined stats
+        combined_opr = round(sum(t["opr"] for t in team_details), 2)
+        combined_dpr = round(sum(t["dpr"] for t in team_details), 2)
+        combined_ccwm = round(sum(t["ccwm"] for t in team_details), 2)
+
         alliances.append(
             {
                 "number": idx + 1,
                 "name": alliance.get("name", f"Alliance {idx + 1}"),
                 "teams": team_details,
                 "picks": picks,
+                "combined_opr": combined_opr,
+                "combined_dpr": combined_dpr,
+                "combined_ccwm": combined_ccwm,
+                "playoff_result": result_label,
+                "playoff_type": result_type,
+                "playoff_record": f"{pw}-{pl}" if (pw or pl) else "",
             }
         )
+
+    # ── Compute max OPR for strength bar ────────────────────
+    max_opr = max((a["combined_opr"] for a in alliances), default=1) or 1
 
     # ── Partnership history ─────────────────────────────────
     partnerships = await _check_all_partnerships(alliances_raw, event_key)
 
-    return {"alliances": alliances, "partnerships": partnerships}
+    return {
+        "alliances": alliances,
+        "partnerships": partnerships,
+        "max_combined_opr": max_opr,
+    }
 
 
 # ── Partnership history helpers ─────────────────────────────

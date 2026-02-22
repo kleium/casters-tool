@@ -1,6 +1,6 @@
 """Team lookup endpoints — stats, highest stage, head-to-head."""
 from typing import Optional
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from ..services import team_service
 
 router = APIRouter()
@@ -15,8 +15,13 @@ async def team_stats(team_number: int, year: Optional[int] = None):
 
 
 @router.get("/head-to-head/{team_a}/{team_b}")
-async def head_to_head(team_a: int, team_b: int, year: Optional[int] = None):
+async def head_to_head(
+    team_a: int,
+    team_b: int,
+    year: Optional[int] = None,
+    all_time: bool = Query(False),
+):
     try:
-        return await team_service.get_head_to_head(team_a, team_b, year)
+        return await team_service.get_head_to_head(team_a, team_b, year, all_time=all_time)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

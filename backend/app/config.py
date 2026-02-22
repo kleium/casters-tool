@@ -13,3 +13,7 @@ if not BLUE_ALLIANCE_API_KEY:
         "TBA_API_KEY environment variable is not set. "
         "Create a .env file with TBA_API_KEY=your_key"
     )
+
+# FIRST FRC Events API Token (Base64-encoded "username:authkey")
+# Set via environment variable FRC_EVENTS_API_TOKEN
+FRC_EVENTS_API_TOKEN = os.environ.get("FRC_EVENTS_API_TOKEN", "")

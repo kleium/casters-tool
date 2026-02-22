@@ -13,7 +13,7 @@ COMP_LEVEL_LABELS = {
     "ef": "Round 1",
     "qf": "Round 2",
     "sf": "Round 3",
-    "f": "Grand Final",
+    "f": "Finals",
 }
 
 EVENT_TYPE_ORDER = {99: 0, 6: 0, 0: 1, 1: 1, 5: 2, 2: 3, 3: 4, 4: 5}
@@ -47,11 +47,22 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
     if year is None:
         year = date.today().year
 
-    team_info, years, events = await asyncio.gather(
+    team_info, years, events, media = await asyncio.gather(
         client.get_team(team_key),
         _safe(client.get_team_years_participated(team_key)),
         client.get_team_events(team_key, year),
+        _safe(client.get_team_media(team_key, year)),
     )
+
+    # Extract avatar (base64-encoded PNG from TBA)
+    avatar_base64 = None
+    if media:
+        for item in media:
+            if item.get("type") == "avatar":
+                b64 = (item.get("details") or {}).get("base64Image")
+                if b64:
+                    avatar_base64 = f"data:image/png;base64,{b64}"
+                    break
 
     statuses = await _safe(client.get_team_events_statuses(team_key, year)) or {}
 
@@ -139,6 +150,7 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
         "events_this_year": event_results,
         "year": year,
         "season_achievements": None,
+        "avatar": avatar_base64,
     }
 
     # If no explicit year was given, compute per-season achievements
@@ -239,7 +251,8 @@ async def _get_season_achievements(
 
 
 async def get_head_to_head(
-    team_a: int, team_b: int, year: Optional[int] = None
+    team_a: int, team_b: int, year: Optional[int] = None,
+    all_time: bool = False,
 ) -> dict:
     """Find every playoff match where two teams faced each other (or allied)."""
     client = get_tba_client()
@@ -247,9 +260,28 @@ async def get_head_to_head(
     if year is None:
         year = date.today().year
 
+    if all_time:
+        years_a, years_b = await asyncio.gather(
+            _safe(client.get_team_years_participated(key_a)),
+            _safe(client.get_team_years_participated(key_b)),
+        )
+        all_years = sorted(set((years_a or []) + (years_b or [])))
+        start_year = min(all_years) if all_years else year - 2
+        year_range = list(range(start_year, year + 1))
+    else:
+        year_range = list(range(year - 2, year + 1))
+
     results: list[dict] = []
 
-    for check_year in range(year - 2, year + 1):
+    # Helper to format match code into readable label
+    def _match_label(m_key: str, comp_level: str, match_num: int, set_num: int) -> str:
+        short = {"ef": "R1", "qf": "R2", "sf": "R3", "f": "F"}
+        prefix = short.get(comp_level, comp_level.upper())
+        if comp_level == "f":
+            return f"Final {match_num}"
+        return f"{prefix} {set_num}-{match_num}"
+
+    for check_year in year_range:
         events_a, events_b = await asyncio.gather(
             _safe(client.get_team_events(key_a, check_year)),
             _safe(client.get_team_events(key_b, check_year)),
@@ -257,9 +289,14 @@ async def get_head_to_head(
         if not events_a or not events_b:
             continue
 
-        ek_a = {e["key"] for e in events_a}
-        ek_b = {e["key"] for e in events_b}
-        common = ek_a & ek_b
+        ek_a = {e["key"]: e for e in events_a}
+        ek_b = {e["key"]: e for e in events_b}
+        common = set(ek_a.keys()) & set(ek_b.keys())
+        # Build event name map
+        event_name_map = {}
+        for ek_key in common:
+            ev = ek_a.get(ek_key) or ek_b.get(ek_key)
+            event_name_map[ek_key] = ev.get("name", ek_key) if ev else ek_key
 
         for ek in common:
             matches = await _safe(client.get_event_matches(ek))
@@ -285,7 +322,11 @@ async def get_head_to_head(
                     a_won = winner == a_side
                     results.append({
                         "event_key": ek,
+                        "event_name": event_name_map.get(ek, ek),
                         "match_key": m["key"],
+                        "match_label": _match_label(
+                            m["key"], m["comp_level"],
+                            m.get("match_number", 0), m.get("set_number", 0)),
                         "comp_level": COMP_LEVEL_LABELS.get(m["comp_level"], m["comp_level"]),
                         "year": check_year,
                         "red_teams": [tk.replace("frc", "") for tk in red],
@@ -299,7 +340,11 @@ async def get_head_to_head(
                     side = "red" if (a_red and b_red) else "blue"
                     results.append({
                         "event_key": ek,
+                        "event_name": event_name_map.get(ek, ek),
                         "match_key": m["key"],
+                        "match_label": _match_label(
+                            m["key"], m["comp_level"],
+                            m.get("match_number", 0), m.get("set_number", 0)),
                         "comp_level": COMP_LEVEL_LABELS.get(m["comp_level"], m["comp_level"]),
                         "year": check_year,
                         "red_teams": [tk.replace("frc", "") for tk in red],
@@ -316,6 +361,19 @@ async def get_head_to_head(
     a_wins = sum(1 for r in opp if r["winner"] == str(team_a))
     b_wins = sum(1 for r in opp if r["winner"] == str(team_b))
 
+    # Collect nicknames for all team numbers that appear
+    all_nums: set[str] = set()
+    for r in results:
+        all_nums.update(r["red_teams"])
+        all_nums.update(r["blue_teams"])
+
+    async def _nick(num: str):
+        info = await _safe(client.get_team(f"frc{num}"))
+        return (num, info.get("nickname", "") if info else "")
+
+    nick_results = await asyncio.gather(*[_nick(n) for n in all_nums])
+    team_nicknames = {n: nick for n, nick in nick_results if nick}
+
     return {
         "team_a": team_a,
         "team_b": team_b,
@@ -327,5 +385,7 @@ async def get_head_to_head(
             "team_b_wins": b_wins,
             "total_ally_matches": len(ally),
         },
-        "years_checked": list(range(year - 2, year + 1)),
+        "years_checked": year_range,
+        "all_time": all_time,
+        "team_nicknames": team_nicknames,
     }

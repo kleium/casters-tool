@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caster's Tool — FRC Event Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="/css/styles.css">
@@ -33,7 +34,7 @@
                     <label class="settings-toggle">
                         <input type="checkbox" id="toggle-highlight-foreign" onchange="toggleHighlightForeign(this.checked)">
                         <span class="toggle-slider"></span>
-                        <span class="toggle-label">Highlight non-Turkish teams</span>
+                        <span class="toggle-label">Highlight International Teams</span>
                     </label>
                 </div>
             </div>
@@ -44,6 +45,10 @@
         <button class="tab active" data-tab="event">
             <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Events
+        </button>
+        <button class="tab" data-tab="history">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            History
         </button>
         <button class="tab" data-tab="rankings">
             <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
@@ -61,13 +66,13 @@
             <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             Breakdown
         </button>
-        <button class="tab" data-tab="playoff">
-            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 12 7s5-3 7.5-3a2.5 2.5 0 0 1 0 5H18"/><path d="M18 15h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M6 15H4.5a2.5 2.5 0 0 1 0 5H6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><path d="M6 20h12a2 2 0 0 0 2-2v-2H4v2a2 2 0 0 0 2 2z"/></svg>
-            Playoffs
-        </button>
         <button class="tab" data-tab="alliance">
             <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Alliances
+        </button>
+        <button class="tab" data-tab="playoff">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 12 7s5-3 7.5-3a2.5 2.5 0 0 1 0 5H18"/><path d="M18 15h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M6 15H4.5a2.5 2.5 0 0 1 0 5H6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><path d="M6 20h12a2 2 0 0 0 2-2v-2H4v2a2 2 0 0 0 2 2z"/></svg>
+            Playoffs
         </button>
         <button class="tab" data-tab="team">
             <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -87,6 +92,13 @@
                         <span id="aeb-name" class="aeb-name"></span>
                         <span id="aeb-meta" class="aeb-meta"></span>
                     </div>
+                </div>
+                <div class="aeb-right">
+                    <span id="aeb-cache-badge" class="aeb-cache-badge hidden" title="Loaded from saved cache"></span>
+                    <button id="btn-save-event" class="btn-save-event" onclick="saveCurrentEvent()" title="Save event for instant loading">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        <span id="save-event-label">Save Event</span>
+                    </button>
                 </div>
             </div>
 
@@ -140,6 +152,17 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Saved Events quick-access -->
+            <div id="saved-events-card" class="event-section-card saved-events-card hidden">
+                <div class="event-section-header">
+                    <h3 class="event-section-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Saved Events
+                    </h3>
+                </div>
+                <div id="saved-events-list" class="saved-events-list"></div>
+            </div>
         </section>
 
         <!-- ═══ Rankings & Teams ═══ -->
@@ -184,10 +207,30 @@
                     </div>
                     <div id="summary-history-body">
                         <p class="summary-card-desc">Teams at this event who have partnered or competed against each other in past playoff matches.</p>
-                        <div class="conn-filter-bar">
-                            <button class="conn-filter-btn active" data-conn-filter="all" onclick="event.stopPropagation(); filterConnections('all', this)">All</button>
-                            <button class="conn-filter-btn" data-conn-filter="partners" onclick="event.stopPropagation(); filterConnections('partners', this)">Partners</button>
-                            <button class="conn-filter-btn" data-conn-filter="opponents" onclick="event.stopPropagation(); filterConnections('opponents', this)">Opponents</button>
+                        <div class="conn-toolbar">
+                            <input type="text" id="conn-team-search" class="conn-search-input" placeholder="Filter by team #…" oninput="applyConnFilters()">
+                            <div class="conn-filter-bar">
+                                <button class="conn-filter-btn active" data-conn-filter="all" onclick="event.stopPropagation(); filterConnections('all', this)">All</button>
+                                <button class="conn-filter-btn" data-conn-filter="partners" onclick="event.stopPropagation(); filterConnections('partners', this)">Partners</button>
+                                <button class="conn-filter-btn" data-conn-filter="opponents" onclick="event.stopPropagation(); filterConnections('opponents', this)">Opponents</button>
+                                <span class="conn-filter-sep"></span>
+                                <button class="conn-filter-btn" data-conn-filter="winners" onclick="event.stopPropagation(); filterConnections('winners', this)">Winners</button>
+                                <button class="conn-filter-btn" data-conn-filter="finalists" onclick="event.stopPropagation(); filterConnections('finalists', this)">Finalists</button>
+                            </div>
+                        </div>
+                        <div class="conn-toolbar conn-toolbar-secondary">
+                            <label class="conn-range-toggle" onclick="event.stopPropagation()">
+                                <span class="conn-range-side active">Past 3 seasons</span>
+                                <input type="checkbox" id="conn-alltime-toggle" onchange="toggleConnRange(this.checked)">
+                                <span class="conn-toggle-slider"></span>
+                                <span class="conn-range-side">All time</span>
+                            </label>
+                            <div class="conn-sort-bar" onclick="event.stopPropagation()">
+                                <span class="conn-sort-label">Sort:</span>
+                                <button class="conn-sort-btn active" data-conn-sort="most" onclick="setConnSort('most', this)">Most connections</button>
+                                <button class="conn-sort-btn" data-conn-sort="recent" onclick="setConnSort('recent', this)">Most recent</button>
+                                <button class="conn-sort-btn" data-conn-sort="oldest" onclick="setConnSort('oldest', this)">Oldest</button>
+                            </div>
                         </div>
                         <div id="summary-history-list"></div>
                     </div>
@@ -242,6 +285,7 @@
                     </div>
                     <button class="pbp-nav-btn" onclick="bdNext()" title="Next Match">Next ▶</button>
                 </div>
+                <div id="bd-spotlight" class="bd-spotlight hidden"></div>
                 <div id="bd-status" class="bd-status"></div>
                 <div id="bd-content" class="bd-content"></div>
             </div>
@@ -252,9 +296,7 @@
             <p id="playoff-empty" class="empty">
                 Load an event first, then switch here to see playoff matches.
             </p>
-            <div id="playoff-bracket-nav" class="bracket-nav"></div>
-            <div id="playoff-nav" class="round-nav"></div>
-            <div id="playoff-matches"></div>
+            <div id="playoff-bracket"></div>
         </section>
 
         <!-- ═══ Alliance Selection ═══ -->
@@ -265,7 +307,37 @@
             <div id="alliance-loading" class="hidden loading-msg">
                 Fetching alliance data &amp; partnership history …
             </div>
+            <div id="alliance-toolbar" class="alliance-toolbar hidden">
+                <label class="toggle-label"><input type="checkbox" id="alliance-toggle-avatars" checked onchange="toggleAllianceAvatars(this.checked)"> Avatars</label>
+                <label class="toggle-label"><input type="checkbox" id="alliance-toggle-names" onchange="toggleAllianceNames(this.checked)"> Team Names</label>
+                <label class="toggle-label"><input type="checkbox" id="alliance-toggle-dpr" onchange="toggleAllianceDpr(this.checked)"> DPR / CCWM</label>
+                <label class="toggle-label"><input type="checkbox" id="alliance-toggle-playoff" onchange="toggleAlliancePlayoff(this.checked)"> Playoff Status</label>
+            </div>
             <div id="alliance-grid"></div>
+        </section>
+
+        <!-- ═══ Region & Event History ═══ -->
+        <section id="tab-history" class="tab-content">
+            <p id="history-empty" class="empty">
+                Load an event first, then switch here for region & event history.
+            </p>
+            <div id="history-loading" class="hidden loading-msg">
+                Loading event history …
+            </div>
+            <div id="history-container" class="hidden">
+                <div class="history-panels">
+                    <!-- Region Facts panel -->
+                    <div class="history-panel" id="history-region">
+                        <h3 class="history-panel-title" id="history-region-title">Region Facts</h3>
+                        <div id="history-region-body"></div>
+                    </div>
+                    <!-- Event History panel -->
+                    <div class="history-panel" id="history-event">
+                        <h3 class="history-panel-title" id="history-event-title">Event History</h3>
+                        <div id="history-event-body"></div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- ═══ Team Lookup ═══ -->
@@ -280,7 +352,15 @@
             <div id="team-stats"></div>
 
             <div class="h2h-section">
-                <h3>Head-to-Head Playoff History</h3>
+                <div class="h2h-title-bar">
+                    <h3>Head-to-Head Playoff History</h3>
+                    <label class="pbp-conn-range-toggle" onclick="event.stopPropagation()">
+                        <span class="conn-range-side h2h-range-side active">Past 3 Seasons</span>
+                        <input type="checkbox" id="h2h-all-time-toggle" onchange="toggleH2HRange(this.checked)">
+                        <span class="conn-toggle-slider"></span>
+                        <span class="conn-range-side h2h-range-side">All time</span>
+                    </label>
+                </div>
                 <div class="input-row">
                     <input type="text" id="h2h-team-a" placeholder="Team A" />
                     <span class="vs-label">vs</span>
@@ -297,7 +377,28 @@
         <p>Loading …</p>
     </div>
 
+    <!-- ═══ Comparison Modal ═══ -->
+    <div id="compare-overlay" class="compare-overlay hidden" onclick="if(event.target===this)closeCompare()">
+        <div class="compare-modal">
+            <div class="compare-modal-header">
+                <h2 id="compare-title">Team Comparison</h2>
+                <button class="compare-close-btn" onclick="closeCompare()" title="Close">&times;</button>
+            </div>
+            <div id="compare-body" class="compare-body">
+                <p class="empty">Select teams to compare.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Floating Compare Bar (for table selection) ═══ -->
+    <div id="compare-bar" class="compare-bar hidden">
+        <span id="compare-bar-count">0 teams selected</span>
+        <button onclick="launchCompareFromSelection()">Compare</button>
+        <button class="compare-bar-clear" onclick="clearCompareSelection()">Clear</button>
+    </div>
+
     <script src="/js/api.js"></script>
+    <script src="/js/cache.js"></script>
     <script src="/js/app.js"></script>
 
     <footer class="site-footer">
@@ -306,6 +407,15 @@
         <span>Built by Gürsel</span>
         <span class="footer-sep">·</span>
         <span class="footer-version">v1.0</span>
+        <span class="footer-sep">·</span>
+        <span class="footer-status" id="footer-status">
+            <span class="status-item" id="status-tba" title="The Blue Alliance API">
+                <span class="status-dot status-checking"></span> TBA
+            </span>
+            <span class="status-item" id="status-frc" title="FIRST FRC Events API">
+                <span class="status-dot status-checking"></span> FRC
+            </span>
+        </span>
     </footer>
 </body>
 </html>

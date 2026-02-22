@@ -29,9 +29,9 @@ class TBAClient:
             )
         return self._http
 
-    async def get(self, endpoint: str) -> Any:
+    async def get(self, endpoint: str, *, bypass_cache: bool = False) -> Any:
         now = time.time()
-        if endpoint in self._cache:
+        if not bypass_cache and endpoint in self._cache:
             ts, data = self._cache[endpoint]
             if now - ts < CACHE_TTL:
                 return data

@@ -49,6 +49,39 @@ async def serve_frontend():
     return FileResponse(str(frontend_dir / "index.html"))
 
 
+@app.get("/favicon.svg")
+async def serve_favicon():
+    return FileResponse(str(frontend_dir / "favicon.svg"), media_type="image/svg+xml")
+
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
+
+
+@app.get("/api/status")
+async def api_status():
+    """Check connectivity to TBA and FIRST FRC Events APIs."""
+    import asyncio
+    from .services.tba_client import get_tba_client
+    from .services.frc_client import get_frc_client
+
+    async def check_tba():
+        try:
+            client = get_tba_client()
+            resp = await client._client().get("/status")
+            return resp.status_code == 200
+        except Exception:
+            return False
+
+    async def check_frc():
+        try:
+            client = get_frc_client()
+            # A lightweight call — just fetch current season
+            resp = await client._client().get("/")
+            return resp.status_code == 200
+        except Exception:
+            return False
+
+    tba_ok, frc_ok = await asyncio.gather(check_tba(), check_frc())
+    return {"tba": tba_ok, "frc": frc_ok}

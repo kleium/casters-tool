@@ -19,8 +19,9 @@ async def get_event_summary(event_key: str) -> dict:
     year = int(event_key[:4])
     current_year = date.today().year
 
-    # Parallel fetch: teams (full detail), rankings, OPRs
-    teams, rankings, oprs = await asyncio.gather(
+    # Parallel fetch: event info, teams (full detail), rankings, OPRs
+    event_info, teams, rankings, oprs = await asyncio.gather(
+        _safe(client.get_event(event_key)),
         client.get_event_teams_full(event_key),
         _safe(client.get_event_rankings(event_key)),
         _safe(client.get_event_oprs(event_key)),
@@ -29,25 +30,33 @@ async def get_event_summary(event_key: str) -> dict:
     if not teams:
         return {"error": "No teams found for this event."}
 
+    # Determine the event's home country for foreign-team detection
+    event_country = (event_info or {}).get("country", "") or ""
+
     # ── Demographics ────────────────────────────────────────
     total = len(teams)
     rookie_count = 0
-    veteran_count = 0   # 5+ years active
+    veteran_count = 0   # any team older than 1 year
     countries: set[str] = set()
-    foreign_count = 0   # non-Turkish for this regional context
+    foreign_count = 0   # teams from a different country than the event
+    team_ages: list[int] = []  # years since rookie_year for all teams
 
     for t in teams:
         ry = t.get("rookie_year")
         country = t.get("country", "") or ""
         if country:
             countries.add(country)
-        # "Foreign" = not Turkish (matches the existing highlight feature)
-        if country and country not in ("Turkey", "Türkiye", "Turkiye"):
+        # "Foreign" = different country from the event's host country
+        if event_country and country and country != event_country:
             foreign_count += 1
+        if ry:
+            team_ages.append(year - ry)
         if ry and ry == year:
             rookie_count += 1
-        elif ry and (year - ry) >= 5:
+        elif ry and ry < year:
             veteran_count += 1
+
+    avg_team_age = round(sum(team_ages) / len(team_ages), 1) if team_ages else 0
 
     demographics = {
         "total_teams": total,
@@ -55,8 +64,10 @@ async def get_event_summary(event_key: str) -> dict:
         "rookie_pct": round(100 * rookie_count / total, 1) if total else 0,
         "veteran_count": veteran_count,
         "veteran_pct": round(100 * veteran_count / total, 1) if total else 0,
+        "avg_team_age": avg_team_age,
         "foreign_count": foreign_count,
         "foreign_pct": round(100 * foreign_count / total, 1) if total else 0,
+        "event_country": event_country,
         "country_count": len(countries),
         "countries": sorted(countries),
     }
@@ -67,8 +78,8 @@ async def get_event_summary(event_key: str) -> dict:
     # ── Top 3 OPR contributors ──────────────────────────────
     top_scorers = _compute_top_scorers(teams, oprs, rankings)
 
-    # ── Prior playoff connections ───────────────────────────
-    connections = await _find_playoff_connections(teams, event_key, year)
+    # ── Prior playoff connections (default: last 3 years) ──
+    connections = await _find_playoff_connections(teams, event_key, year, lookback_years=3)
 
     return {
         "event_key": event_key,
@@ -143,6 +154,21 @@ async def _get_award_teams(client, teams: list[dict]) -> tuple[list[dict], list[
 
     results = await asyncio.gather(*[_awards_for(t) for t in teams])
 
+    # Collect all event keys where a type 0 or 69 award exists
+    candidate_events: set[str] = set()
+    for _t, awards in results:
+        for a in awards:
+            if a.get("award_type") in (0, 69):
+                candidate_events.add(a.get("event_key", ""))
+
+    # Batch-fetch event info to determine which are championship-level (type 3 or 4)
+    async def _event_type(ek: str):
+        ev = await _safe(client.get_event(ek))
+        return (ek, (ev or {}).get("event_type"))
+
+    event_types = dict(await asyncio.gather(*[_event_type(ek) for ek in candidate_events if ek]))
+    champ_events = {ek for ek, et in event_types.items() if et in (3, 4)}
+
     hof_teams: list[dict] = []
     impact_finalists: list[dict] = []
 
@@ -155,12 +181,12 @@ async def _get_award_teams(client, teams: list[dict]) -> tuple[list[dict], list[
             atype = a.get("award_type")
             ek = a.get("event_key", "")
             yr = a.get("year", 0)
-            # HoF = Chairman's/Impact Award (type 0) at Championship
-            if atype == 0 and "cmp" in ek:
+            # HoF = Chairman's/Impact Award (type 0) at Championship Division or Finals
+            if atype == 0 and ek in champ_events:
                 is_hof = True
                 impact_years.append(yr)
-            # Impact finalist (type 69) at Championship only
-            if atype == 69 and "cmp" in ek:
+            # Impact finalist (type 69) at Championship Division or Finals
+            if atype == 69 and ek in champ_events:
                 is_finalist = True
                 impact_years.append(yr)
 
@@ -182,16 +208,35 @@ async def _get_award_teams(client, teams: list[dict]) -> tuple[list[dict], list[
     return hof_teams, impact_finalists
 
 
+async def get_event_connections(event_key: str, all_time: bool = False) -> list[dict]:
+    """Public entry point to fetch connections with configurable lookback."""
+    client = get_tba_client()
+    year = int(event_key[:4])
+    teams = await client.get_event_teams_full(event_key)
+    if not teams:
+        return []
+    lookback = None if all_time else 3
+    return await _find_playoff_connections(teams, event_key, year, lookback_years=lookback)
+
+
 async def _find_playoff_connections(
-    teams: list[dict], event_key: str, year: int
+    teams: list[dict], event_key: str, year: int, lookback_years: int | None = 3
 ) -> list[dict]:
-    """Find pairs of teams at this event who have prior playoff history."""
+    """Find pairs of teams at this event who have prior playoff history.
+    
+    lookback_years: number of past seasons to check, or None for all-time (back to rookie year).
+    """
     client = get_tba_client()
     team_keys = [t["key"] for t in teams]
     name_map = {t["key"]: t.get("nickname", "") for t in teams}
 
-    # Only check last 3 years for performance
-    check_years = list(range(max(2015, year - 3), year))
+    if lookback_years is not None:
+        check_years = list(range(max(2015, year - lookback_years), year))
+    else:
+        # All-time: go back to the earliest rookie year among the teams
+        rookie_years = [t.get("rookie_year", year) for t in teams if t.get("rookie_year")]
+        earliest = min(rookie_years) if rookie_years else 2015
+        check_years = list(range(max(2000, earliest), year))
 
     if not check_years:
         return []
@@ -209,13 +254,18 @@ async def _find_playoff_connections(
     results = await asyncio.gather(*tasks)
 
     # team -> set of event_keys (excluding current)
+    # Also build event name map from fetched data
     team_events: dict[str, set[str]] = {}
+    event_name_map: dict[str, str] = {}  # event_key -> short/display name
     for tk, _y, events in results:
         if tk not in team_events:
             team_events[tk] = set()
         for ev in events:
-            if ev["key"] != event_key:
-                team_events[tk].add(ev["key"])
+            ek = ev["key"]
+            if ek != event_key:
+                team_events[tk].add(ek)
+            if ek not in event_name_map:
+                event_name_map[ek] = ev.get("short_name") or ev.get("name", ek)
 
     # Find pairs with common events
     common_events_to_fetch: set[str] = set()
@@ -267,10 +317,19 @@ async def _find_playoff_connections(
 
             # Check partnership (same alliance) — find highest stage reached together
             were_partners = False
+            alliance_result = None  # "winner", "finalist", or None
             for al in alliance_cache.get(ek, []):
                 picks = al.get("picks", [])
                 if ta in picks and tb in picks:
                     were_partners = True
+                    # Check alliance playoff result
+                    status = al.get("status", {})
+                    if isinstance(status, dict):
+                        s = status.get("status", "")
+                        if s == "won":
+                            alliance_result = "winner"
+                        elif status.get("level", "") == "f":
+                            alliance_result = "finalist"
                     break
 
             if were_partners:
@@ -291,8 +350,10 @@ async def _find_playoff_connections(
 
                 partner_events.append({
                     "event_key": ek,
+                    "event_name": event_name_map.get(ek, ek),
                     "year": event_year,
                     "stage": COMP_LEVEL_LABELS.get(partner_highest, "Playoffs") if partner_highest else "Alliance",
+                    "result": alliance_result,
                 })
 
             # Check playoff opponents — capture highest comp_level
@@ -313,6 +374,7 @@ async def _find_playoff_connections(
             if highest_level:
                 opponent_events.append({
                     "event_key": ek,
+                    "event_name": event_name_map.get(ek, ek),
                     "year": event_year,
                     "stage": COMP_LEVEL_LABELS.get(highest_level, highest_level),
                 })
