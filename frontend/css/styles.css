@@ -3217,6 +3217,14 @@ tr:hover .compare-cb,
         -webkit-overflow-scrolling: touch;
     }
 
+    /* ── Prevent iOS auto-zoom on focus (16px min) ── */
+    input[type=\"text\"],
+    select,
+    .season-search-wrap input,
+    .conn-search-input {
+        font-size: 16px !important;
+    }
+
     /* ── Compare modal ── */
     .compare-overlay { padding: .5rem; }
     .compare-modal { max-width: 100%; max-height: 92vh; }
@@ -3309,10 +3317,11 @@ tr:hover .compare-cb,
     .event-section-title { font-size: .88rem; }
     .event-section-desc { font-size: .75rem; }
 
-    /* ── Input / button sizing ── */
-    input[type="text"] {
+    /* ── Input / button sizing (16px min prevents iOS zoom) ── */
+    input[type="text"],
+    select {
+        font-size: 16px !important;
         padding: .55rem .85rem;
-        font-size: .85rem;
     }
     button {
         padding: .55rem 1.1rem;
@@ -3330,10 +3339,19 @@ tr:hover .compare-cb,
         width: 100%;
     }
 
-    /* ── Rankings table ── */
+    /* ── Rankings table: hide low-priority columns ── */
     .data-table { font-size: .76rem; }
-    .data-table th { padding: .5rem .5rem; font-size: .62rem; }
-    .data-table td { padding: .45rem .5rem; }
+    .data-table th { padding: .5rem .35rem; font-size: .62rem; }
+    .data-table td { padding: .45rem .35rem; }
+    .data-table .location,
+    .data-table .col-location,
+    .data-table .stat-dpr,
+    .data-table .col-dpr,
+    .data-table .team-avatar-cell { display: none; }
+    .data-table .team-num { font-size: .82rem; }
+    .data-table .rank { text-align: center; min-width: 2rem; }
+    .compare-td { padding: .3rem !important; }
+    .compare-cb { width: 18px; height: 18px; }
 
     /* ── Summary stat cards ── */
     .summary-stats-row { grid-template-columns: repeat(2, 1fr); gap: .5rem; }
@@ -3423,6 +3441,101 @@ tr:hover .compare-cb,
 
     /* ── Loading overlay ── */
     .loader { width: 32px; height: 32px; }
+
+    /* ── Rankings: row tap selects for compare ── */
+    .data-table tbody tr {
+        cursor: pointer;
+        -webkit-tap-highlight-color: rgba(99,102,241,.15);
+    }
+}
+
+/* ── Phone Landscape ─────────────────────────────────────── */
+@media (max-height: 500px) and (orientation: landscape) {
+    header {
+        padding: .4rem 1rem;
+    }
+    header h1 { font-size: .88rem; }
+    .brand-sub { display: none; }
+    .brand-icon { width: 20px; height: 20px; }
+
+    .tabs {
+        padding: 0 .5rem;
+    }
+    .tab {
+        padding: .4rem .7rem;
+        font-size: .72rem;
+        min-height: 36px;
+        flex-direction: row;
+        gap: .3rem;
+    }
+    .tab-icon { width: 14px; height: 14px; }
+
+    main {
+        padding: .6rem .85rem;
+    }
+
+    /* PBP: side-by-side in landscape */
+    .pbp-arena {
+        grid-template-columns: 1fr 1fr;
+        gap: .6rem;
+    }
+    .pbp-team {
+        padding: .5rem .65rem;
+    }
+    .pbp-team-top {
+        gap: .5rem;
+        margin-bottom: .25rem;
+    }
+    .pbp-team-number {
+        font-size: 1.1rem;
+        min-width: 50px;
+    }
+    .pbp-team-nickname { font-size: .85rem; }
+    .pbp-team-school { font-size: .68rem; }
+    .pbp-team-location { font-size: .66rem; }
+    .pbp-team-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: .3rem;
+    }
+    .pbp-stat { padding: .2rem .4rem; }
+    .pbp-stat-label { font-size: .55rem; }
+    .pbp-stat-value { font-size: .78rem; }
+    .pbp-alliance-score { font-size: 1.2rem; }
+    .pbp-alliance-header {
+        padding: .45rem .8rem;
+    }
+    .pbp-topbar {
+        padding: .5rem .8rem;
+        margin-bottom: .75rem;
+    }
+    .pbp-nav-btn {
+        padding: .35rem .8rem;
+        font-size: .78rem;
+    }
+    .pbp-match-label { font-size: .88rem; }
+
+    /* Breakdown in landscape */
+    .bd-content { flex-direction: row; }
+
+    /* Alliance grid: 2-col in landscape */
+    #alliance-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Active event banner: compact */
+    .active-event-banner { padding: .45rem .8rem; }
+    .aeb-name { font-size: .8rem; }
+    .aeb-meta { font-size: .65rem; }
+    .aeb-right { width: auto; }
+
+    /* Event cards compact */
+    .event-section-card { padding: .7rem .8rem; margin-bottom: .6rem; }
+
+    /* Compare modal - broader in landscape */
+    .compare-modal { max-height: 95vh; }
+
+    /* History panels side-by-side if wide enough */
+    .history-panels { grid-template-columns: 1fr 1fr; }
 }
 
 

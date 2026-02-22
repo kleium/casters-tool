@@ -1028,7 +1028,7 @@ function toggleRankingsCompact(on) {
 function renderTeamTable(teams, sortCol, asc) {
     const arrow = asc ? ' ▲' : ' ▼';
     const th = (key, label) =>
-        `<th class="sortable-th${sortCol === key ? ' sorted' : ''}" onclick="sortTeams('${key}')">${label}${sortCol === key ? arrow : ''}</th>`;
+        `<th class="sortable-th col-${key}${sortCol === key ? ' sorted' : ''}" onclick="sortTeams('${key}')">${label}${sortCol === key ? arrow : ''}</th>`;
     const compact = rankingsCompact;
 
     const toolbar = `<div class="rankings-toolbar">
@@ -3260,6 +3260,21 @@ async function compareCurrentMatch() {
 }
 
 // ── Compare from rankings selection ────────────────────────
+
+// Mobile: tapping anywhere on a row toggles comparison
+document.addEventListener('click', (e) => {
+    // Only on touch devices / narrow screens
+    if (window.innerWidth > 768) return;
+    const tr = e.target.closest('.data-table tbody tr');
+    if (!tr) return;
+    // Don't double-fire on the checkbox itself
+    if (e.target.closest('.compare-cb')) return;
+    const cb = tr.querySelector('.compare-cb');
+    if (cb) {
+        toggleCompareTeam(cb.dataset.team);
+    }
+});
+
 function toggleCompareTeam(teamKey) {
     if (compareSelection.has(teamKey)) {
         compareSelection.delete(teamKey);
