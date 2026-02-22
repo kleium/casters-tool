@@ -1988,7 +1988,7 @@ function renderPbpMatch() {
     $('pbp-arena').innerHTML = `
         <div class="pbp-alliance red-side ${redWon ? 'pbp-alliance-won' : ''}">
             <div class="pbp-alliance-header">
-                <span class="pbp-alliance-title">Red Alliance${redWon ? ' ★' : ''}</span>
+                <span class="pbp-alliance-title">Red Alliance</span>
                 <span class="pbp-alliance-opr">Σ OPR ${m.red.total_opr}</span>
                 <div class="pbp-score-group">
                     ${redWon ? '<span class="pbp-winner-label">WINNER</span>' : ''}
@@ -2006,7 +2006,7 @@ function renderPbpMatch() {
                     ${blueWon ? '<span class="pbp-winner-label">WINNER</span>' : ''}
                 </div>
                 <span class="pbp-alliance-opr">Σ OPR ${m.blue.total_opr}</span>
-                <span class="pbp-alliance-title">Blue Alliance${blueWon ? ' ★' : ''}</span>
+                <span class="pbp-alliance-title">Blue Alliance</span>
             </div>
             <div class="pbp-team-cards">
                 ${m.blue.teams.map(t => renderPbpTeam(t, 'blue-side')).join('')}
@@ -2422,8 +2422,8 @@ function renderBdAlliance(alliance, color, won, nickMap) {
                 <span class="bd-alliance-score">${alliance.score}</span>
                 ${won ? '<span class="bd-winner-label">WINNER</span>' : ''}
             </div>
-            <span>${title}${won ? ' ★' : ''}</span>`
-        : `<span>${title}${won ? ' ★' : ''}</span>
+            <span>${title}</span>`
+        : `<span>${title}</span>
             <div class="bd-alliance-score-group">
                 ${won ? '<span class="bd-winner-label">WINNER</span>' : ''}
                 <span class="bd-alliance-score">${alliance.score}</span>
@@ -2651,8 +2651,8 @@ function renderBdAlliance2026(alliance, color, won, nickMap) {
                 <span class="bd-alliance-score">${alliance.score}</span>
                 ${won ? '<span class="bd-winner-label">WINNER</span>' : ''}
             </div>
-            <span>${title}${won ? ' ★' : ''}</span>`
-        : `<span>${title}${won ? ' ★' : ''}</span>
+            <span>${title}</span>`
+        : `<span>${title}</span>
             <div class="bd-alliance-score-group">
                 ${won ? '<span class="bd-winner-label">WINNER</span>' : ''}
                 <span class="bd-alliance-score">${alliance.score}</span>
