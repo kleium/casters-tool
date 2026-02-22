@@ -97,7 +97,7 @@ async def _safe(coro):
 async def generate():
     client = get_tba_client()
     BATCH = 25
-    FIRST_YEAR, CURRENT_YEAR = 1992, 2025
+    FIRST_YEAR, CURRENT_YEAR = 1992, 2026
 
     # ── Phase 1 ───────────────────────────────────────────────
     print("Phase 1: Fetching events for all years...")
@@ -128,14 +128,13 @@ async def generate():
             "total_events": len(evs),
         }
 
-    # ── Phase 3: Fetch team rosters (4 recent seasons) ────────
-    print("\nPhase 3: Fetching team rosters (last 4 seasons)...")
+    # ── Phase 3: Fetch team rosters (5 recent seasons) ────────
+    print("\nPhase 3: Fetching team rosters (last 5 seasons)...")
     SAMPLE_YEARS = list(range(2022, CURRENT_YEAR + 1))
 
     team_info: dict[str, dict] = {}
     team_region_counts: dict[str, Counter] = defaultdict(Counter)
     region_visitors_raw: dict[str, Counter] = defaultdict(Counter)
-    active_current_season: set[str] = set()  # team keys active in CURRENT_YEAR
 
     for year in SAMPLE_YEARS:
         evs = year_events.get(year, [])
@@ -158,8 +157,6 @@ async def generate():
                         "state_prov": t.get("state_prov", ""),
                     }
                 team_region_counts[tk][region] += 1
-                if year == CURRENT_YEAR:
-                    active_current_season.add(tk)
                 if ev_country and tc and tc != ev_country:
                     region_visitors_raw[region][tk] += 1
         print(f"  {year}: done ({len(evs)} events)")
@@ -170,12 +167,25 @@ async def generate():
     }
     region_team_count = Counter(team_home.values())
 
-    # Current-season active teams per home region
-    current_season_by_region: Counter = Counter(
-        team_home[tk] for tk in active_current_season if tk in team_home
+    # ── Phase 3b: Active teams for CURRENT calendar year ──────
+    # "Active" = team from a region registered at ANY event in the current year
+    import datetime
+    ACTIVE_YEAR = datetime.date.today().year  # 2026
+    print(f"\nPhase 3b: Resolving {ACTIVE_YEAR} active team counts...")
+    # 2026 events are already fetched in Phase 3 — collect team keys from that year
+    active_team_keys: set[str] = set()
+    active_year_evs = year_events.get(ACTIVE_YEAR, [])
+    active_results = await asyncio.gather(
+        *[_safe(client.get_event_teams(e["key"])) for e in active_year_evs]
     )
+    for teams in active_results:
+        if teams:
+            for t in teams:
+                active_team_keys.add(t["key"])
+    print(f"  {ACTIVE_YEAR} events: {len(active_year_evs)}, "
+          f"active teams: {len(active_team_keys)}")
 
-    print(f"  Unique teams: {len(team_info)}, active {CURRENT_YEAR}: {len(active_current_season)}")
+    print(f"  Unique teams (5yr sample): {len(team_info)}")
 
     # ── Phase 4: Championship analysis ────────────────────────
     print("\nPhase 4: Championship awards & Einstein...")
@@ -335,6 +345,17 @@ async def generate():
         if items:
             r_vis[region] = items
 
+    # ── Phase 7b: Resolve active teams per region ──────────────
+    print(f"\nPhase 7b: Resolving {len(active_team_keys)} active {ACTIVE_YEAR} teams to home regions...")
+    current_season_by_region: Counter = Counter()
+    for tk in active_team_keys:
+        if tk in team_home:
+            current_season_by_region[team_home[tk]] += 1
+        else:
+            home = _true_home(tk)
+            if home:
+                current_season_by_region[home] += 1
+
     # ── Phase 8: Assemble ─────────────────────────────────────
     print("\nPhase 8: Assembling...")
     output = {}
@@ -351,6 +372,7 @@ async def generate():
             "total_events": m["total_events"],
             "team_count": region_team_count.get(rn, 0),
             "current_season_teams": current_season_by_region.get(rn, 0),
+            "active_year": ACTIVE_YEAR,
             "hof_teams": hof,
             "hof_count": len(hof),
             "impact_finalists": imp,

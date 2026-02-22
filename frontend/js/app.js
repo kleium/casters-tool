@@ -3531,7 +3531,7 @@ function renderRegionFacts(data) {
     let html = '<div class="history-stats-row">';
     html += _statCard('First Event', `${data.first_event_year || '—'}`, data.first_event_name || '');
     html += _statCard('Total Events', `${data.total_events}`, `${(data.active_years || []).length} seasons`);
-    html += _statCard('Active Teams', `${data.current_season_teams || data.team_count}`, `${new Date().getFullYear()} season`);
+    html += _statCard('Active Teams', `${data.current_season_teams || data.team_count}`, `${data.active_year || new Date().getFullYear()} season`);
     html += _statCard('Hall of Fame', `${data.hof_count}`, data.hof_count ? data.hof_teams.map(t => t.team_number).join(', ') : 'none yet');
     html += _statCard('Einstein Teams', `${data.einstein_count}`, data.einstein_count ? `top: ${data.einstein_teams.slice(0,3).map(t => t.team_number).join(', ')}` : 'none yet');
     html += '</div>';
@@ -3576,7 +3576,7 @@ function renderRegionFacts(data) {
     // International visitors
     if (data.top_international_visitors && data.top_international_visitors.length) {
         html += '<div class="history-detail-section">';
-        html += '<h4>Most International Visitors <span class="detail-note">(last 4 seasons)</span></h4>';
+        html += '<h4>Most International Visitors <span class="detail-note">(last 5 seasons)</span></h4>';
         html += '<div class="history-team-chips">';
         const vis = data.top_international_visitors;
         const SHOW = 5;

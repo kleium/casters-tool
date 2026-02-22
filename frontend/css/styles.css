@@ -4095,7 +4095,7 @@ tr:hover .compare-cb,
 .history-table { font-size: .8rem; }
 .history-table th { font-size: .72rem; }
 .history-table td { padding: .35rem .5rem; }
-.history-table .num { text-align: right; font-weight: 700; }
+.history-table .num { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
 .history-table .year-cell { font-weight: 700; color: var(--primary); }
 .history-table .years-cell {
     font-size: .7rem;
