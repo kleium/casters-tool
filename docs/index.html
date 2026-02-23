@@ -352,6 +352,9 @@
                        placeholder="Year (blank = current)" class="input-sm"/>
                 <button onclick="loadTeam()">Look Up</button>
             </div>
+            <div id="team-loading" class="hidden loading-msg">
+                Loading team data …
+            </div>
             <div id="team-stats"></div>
 
             <div class="h2h-section">
@@ -369,6 +372,9 @@
                     <span class="vs-label">vs</span>
                     <input type="text" id="h2h-team-b" placeholder="Team B" />
                     <button onclick="loadH2H()">Check</button>
+                </div>
+                <div id="h2h-loading" class="hidden loading-msg">
+                    Loading head-to-head data …
                 </div>
                 <div id="h2h-results"></div>
             </div>

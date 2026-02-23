@@ -1798,13 +1798,16 @@ async function loadTeam() {
     if (!num) return;
 
     loading(true);
+    $('team-stats').innerHTML = '';
+    show('team-loading');
     try {
         const data = await API.teamStats(num, year);
         $('team-stats').innerHTML = renderTeamStats(data);
     } catch (err) {
         alert(`Error loading team: ${err.message}`);
     } finally {
-        loading(false); // breathing dot only
+        hide('team-loading');
+        loading(false);
     }
 }
 
@@ -1894,12 +1897,15 @@ async function loadH2H() {
     if (!a || !b) return;
 
     loading(true);
+    $('h2h-results').innerHTML = '';
+    show('h2h-loading');
     try {
         const data = await API.headToHead(a, b, null, _h2hAllTime);
         $('h2h-results').innerHTML = renderH2H(data);
     } catch (err) {
         alert(`Error loading H2H: ${err.message}`);
     } finally {
+        hide('h2h-loading');
         loading(false);
     }
 }
