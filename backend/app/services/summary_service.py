@@ -224,12 +224,13 @@ async def _find_playoff_connections(
     name_map = {t["key"]: t.get("nickname", "") for t in teams}
 
     if lookback_years is not None:
-        check_years = list(range(max(2015, year - lookback_years), year))
+        # Include current year so earlier events in the same season count
+        check_years = list(range(max(2015, year - lookback_years), year + 1))
     else:
         # All-time: go back to the earliest rookie year among the teams
         rookie_years = [t.get("rookie_year", year) for t in teams if t.get("rookie_year")]
         earliest = min(rookie_years) if rookie_years else 2015
-        check_years = list(range(max(2000, earliest), year))
+        check_years = list(range(max(2000, earliest), year + 1))
 
     if not check_years:
         return []
@@ -375,14 +376,14 @@ async def _find_playoff_connections(
         if partner_events or opponent_events:
             seen_pairs.add(pair_id)
 
-            # Deduplicate per year — keep only the highest stage per year
-            def _dedup_by_year(events):
+            # Deduplicate per event — keep only the highest stage per event_key
+            def _dedup_by_event(events):
                 stage_order = {"Alliance": 0, "Playoffs": 0, "Eighths": 1, "Quarters": 2, "Semi-Finals": 3, "Finals": 4}
-                best: dict[int, dict] = {}
+                best: dict[str, dict] = {}
                 for e in events:
-                    y = e["year"]
-                    if y not in best or stage_order.get(e["stage"], 0) > stage_order.get(best[y]["stage"], 0):
-                        best[y] = e
+                    ek = e["event_key"]
+                    if ek not in best or stage_order.get(e["stage"], 0) > stage_order.get(best[ek]["stage"], 0):
+                        best[ek] = e
                 return sorted(best.values(), key=lambda x: x["year"], reverse=True)
 
             connections.append({
@@ -390,8 +391,8 @@ async def _find_playoff_connections(
                 "team_a_name": name_map.get(ta, ""),
                 "team_b": int(tb.replace("frc", "")),
                 "team_b_name": name_map.get(tb, ""),
-                "partnered_at": _dedup_by_year(partner_events),
-                "opponents_at": _dedup_by_year(opponent_events),
+                "partnered_at": _dedup_by_event(partner_events),
+                "opponents_at": _dedup_by_event(opponent_events),
             })
 
     # Sort by most connections

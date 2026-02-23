@@ -13,7 +13,7 @@ const API = {
     },
 
     // ── Events ──────────────────────────────────────────
-    seasonEvents:       (yr) => API.get(`/events/season/${yr}`),
+    seasonEvents:       (yr, includeOffseason) => API.get(`/events/season/${yr}${includeOffseason ? '?include_offseason=true' : ''}`),
     eventInfo:          (ek) => API.get(`/events/${ek}/info`),
     eventTeams:         (ek) => API.get(`/events/${ek}/teams`),
     eventSummary:       (ek) => API.get(`/events/${ek}/summary`),

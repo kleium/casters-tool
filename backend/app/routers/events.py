@@ -11,9 +11,9 @@ router = APIRouter()
 
 
 @router.get("/season/{year}")
-async def season_events(year: int):
+async def season_events(year: int, include_offseason: bool = Query(False)):
     try:
-        return await event_service.get_season_events(year)
+        return await event_service.get_season_events(year, include_offseason=include_offseason)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

@@ -59,6 +59,7 @@ let summaryData  = null;   // cached event summary
 let pbpData      = null;   // cached play-by-play data
 let pbpIndex     = 0;      // current match index
 let highlightForeign = false; // settings: highlight international teams
+let showOffseason = false;     // settings: show offseason events
 let rankingsCompact = false;      // toggle: compressed rankings view
 let allianceShowDpr = false;      // toggle: show DPR/CCWM in alliance cards
 let allianceShowPlayoff = false;  // toggle: show playoff ribbons/status
@@ -125,6 +126,30 @@ function toggleHighlightForeign(on) {
     if (allianceData) renderAlliances(allianceData);
     if (pbpData) renderPbpMatch();
 }
+
+function toggleShowOffseason(on) {
+    showOffseason = on;
+    localStorage.setItem('showOffseason', on ? 'true' : 'false');
+    // If turning on and we have no offseason events in the raw list, re-fetch from API
+    if (on && !seasonEventsRaw.some(e => e.event_type === 99)) {
+        refreshSeasonEventsFromAPI();
+    } else {
+        filterSeasonEvents();
+        populateSeasonFilters();
+    }
+}
+
+// Restore saved offseason preference on load
+(function initOffseason() {
+    const saved = localStorage.getItem('showOffseason');
+    if (saved === 'true') {
+        showOffseason = true;
+        document.addEventListener('DOMContentLoaded', () => {
+            const cb = document.getElementById('toggle-offseason');
+            if (cb) cb.checked = true;
+        });
+    }
+})();
 
 function applyForeignHighlight() {
     document.querySelectorAll('[data-country]').forEach(el => {
@@ -378,13 +403,13 @@ async function refreshSeasonEventsFromAPI() {
     btn.classList.add('spinning');
     status.textContent = 'Refreshing from TBA…';
     try {
-        seasonEventsRaw = await API.seasonEvents(2026);
+        seasonEventsRaw = await API.seasonEvents(2026, true);
         populateSeasonFilters();
         filterSeasonEvents();
         status.textContent = 'Updated from TBA ✓';
         setTimeout(() => { if (status.textContent === 'Updated from TBA ✓') status.textContent = ''; }, 3000);
         const badge = $('season-count-badge');
-        if (badge) badge.textContent = `${seasonEventsRaw.length} events`;
+        if (badge) badge.textContent = `${seasonEventsFiltered.length} events`;
     } catch (err) {
         status.textContent = `Refresh failed: ${err.message}`;
     } finally {
@@ -412,6 +437,8 @@ function filterSeasonEvents() {
     const search = ($('season-search').value || '').toLowerCase().trim();
 
     seasonEventsFiltered = seasonEventsRaw.filter(e => {
+        // Hide offseason events unless the setting is on
+        if (!showOffseason && e.event_type === 99) return false;
         if (region && e.region !== region) return false;
         if (week !== '' && String(e.week) !== week) return false;
         if (search && !e.name.toLowerCase().includes(search) && !e.key.toLowerCase().includes(search)) return false;
@@ -423,7 +450,8 @@ function filterSeasonEvents() {
         renderSeasonDropdown();
     }
 
-    $('season-status').textContent = `${seasonEventsFiltered.length} of ${seasonEventsRaw.length} events`;
+    const totalVisible = showOffseason ? seasonEventsRaw.length : seasonEventsRaw.filter(e => e.event_type !== 99).length;
+    $('season-status').textContent = `${seasonEventsFiltered.length} of ${totalVisible} events`;
 }
 
 function renderSeasonDropdown() {
@@ -1812,6 +1840,12 @@ async function loadTeam() {
 }
 
 function renderTeamStats(d) {
+    // Filter offseason events unless the setting is on
+    const OFFSEASON_TYPE = 'Offseason';
+    const eventsThisYear = showOffseason
+        ? d.events_this_year
+        : (d.events_this_year || []).filter(e => e.event_type !== OFFSEASON_TYPE);
+
     const avatarHtml = d.avatar
         ? `<img class="team-avatar" src="${d.avatar}" alt="Team ${d.team_number} avatar">`
         : '';
@@ -1896,7 +1930,7 @@ function renderTeamStats(d) {
         </div>
 
         <h3>Event Results — ${d.year}</h3>
-        ${d.events_this_year.length ? `
+        ${eventsThisYear.length ? `
         <table class="data-table compact">
             <thead>
                 <tr>
@@ -1905,7 +1939,7 @@ function renderTeamStats(d) {
                 </tr>
             </thead>
             <tbody>
-                ${d.events_this_year.map(e => `
+                ${eventsThisYear.map(e => `
                 <tr>
                     <td>${e.event_name}</td>
                     <td class="muted">${e.event_type}</td>

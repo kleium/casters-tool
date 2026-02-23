@@ -43,6 +43,72 @@ _AWARD_EI = 9            # Engineering Inspiration Award
 _AWARD_RAS = 10          # Rookie All-Star Award
 _AWARD_WF = 3            # Woodie Flowers Finalist Award
 
+# ── Event code aliases — maps event lineages that changed codes over the years ──
+# Each entry: canonical current code -> set of all historical codes for the same event.
+# This handles the ~2012–2013 TBA code migration and other renames.
+_EVENT_CODE_ALIASES: dict[str, set[str]] = {
+    # Florida
+    "flor":  {"fl", "flor"},                              # Orlando / Kennedy Space Center / Florida Regional
+    "flwp":  {"sfl", "flbr", "flfo", "flwp"},             # South Florida Regional
+    # Ohio
+    "ohcl":  {"oh", "ohcl"},                              # Buckeye Regional
+    # Louisiana
+    "lake":  {"la", "lake"},                               # Bayou Regional
+    # South Carolina
+    "scmb":  {"sc", "scmb"},                               # Palmetto Regional
+    # Georgia / Peachtree
+    "gadu":  {"ga", "gadu"},                               # Peachtree Regional
+    # California
+    "cala":  {"ca", "calb", "capo", "cala"},               # Los Angeles Regional
+    "casj":  {"ca2", "sj", "casj"},                        # Silicon Valley Regional
+    "cada":  {"sac", "casa", "cada"},                      # Sacramento Regional
+    # Pennsylvania
+    "paca":  {"papi", "paca"},                             # Greater Pittsburgh Regional
+    # Maryland / Chesapeake (Regional era only)
+    "mdba":  {"md", "mdba", "mdcp"},                       # Chesapeake Regional
+    # Illinois
+    "ilch":  {"il", "ilch"},                               # Midwest Regional
+    # Michigan
+    "gl":    {"mi", "mi1", "gl"},                          # Great Lakes Regional
+    # Texas
+    "txsa":  {"stx", "txsa"},                              # Alamo Regional
+    # New Hampshire
+    "nhgrs": {"nh", "nhgrs", "nhsal"},                     # Granite State
+    # New York
+    "nyro":  {"roc", "nyro"},                              # Finger Lakes Regional
+    "nyli2": {"li", "nyli", "nyli2"},                      # Long Island Regional
+    "nyny":  {"ny2", "nyny"},                              # New York City Regional
+    "nytr":  {"ny", "nyal", "nytr"},                       # New York Tech Valley Regional
+    # Massachusetts
+    "mabos": {"ma", "mabos"},                              # Boston / Greater Boston
+    # Connecticut
+    "ctha":  {"ct", "ctha"},                               # Connecticut Regional
+    # Colorado
+    "code":  {"co", "code"},                               # Colorado Regional
+    # Hawaii
+    "hiho":  {"hi", "hiho"},                               # Hawaii Regional
+    # Utah
+    "utwv":  {"ut", "utwv"},                               # Utah Regional
+    # Wisconsin
+    "wimi":  {"wi", "wimi"},                               # Wisconsin Regional
+    # Minnesota
+    "mnmi":  {"mn", "mnmi"},                               # Minnesota Regional
+    # Oklahoma
+    "okok":  {"ok", "okok"},                               # Oklahoma Regional
+    # Arkansas
+    "arli":  {"arfa", "arli"},                             # Arkansas Regional
+    # Arizona
+    "azva":  {"az", "azva"},                               # Arizona Regional
+    # Waterloo
+    "onwat": {"wat", "onwat"},                             # Waterloo Regional
+}
+
+# Build reverse lookup: any code -> set of all sibling codes
+_CODE_TO_FAMILY: dict[str, set[str]] = {}
+for _canonical, _aliases in _EVENT_CODE_ALIASES.items():
+    for _code in _aliases:
+        _CODE_TO_FAMILY[_code] = _aliases
+
 
 async def _safe(coro):
     try:
@@ -54,7 +120,7 @@ async def _safe(coro):
 async def get_event_history(event_key: str) -> dict:
     """
     Build the history for a recurring event.
-    Uses the event's first_event_code to find all past instances,
+    Uses event code aliases and name matching to find all past instances,
     then aggregates award data across years.
     """
     client = get_tba_client()
@@ -64,36 +130,46 @@ async def get_event_history(event_key: str) -> dict:
     if not event:
         return {"error": "Event not found"}
 
-    event_code = event.get("first_event_code", "")
+    event_code = event.get("first_event_code", "") or event_key[4:]
     event_country = event.get("country", "") or ""
     event_name = event.get("name", event_key)
     event_short = (event.get("short_name") or "").lower().strip()
     current_year = int(event_key[:4])
 
-    # Find all historical instances of this event via first_event_code
+    # Determine the full set of codes that belong to this event's lineage
+    key_code = event_key[4:]
+    alias_codes = _CODE_TO_FAMILY.get(key_code, {key_code})
+    if event_code and event_code != key_code:
+        alias_codes = alias_codes | _CODE_TO_FAMILY.get(event_code, {event_code})
+
+    # Find all historical instances of this event
     all_instances: list[dict] = []
 
-    # Scan FRC event lists in parallel — start from 2005 when codes became reliable
+    # Scan from 1992 (first FRC season) through current year
     year_tasks = []
-    for year in range(2005, current_year + 1):
+    for year in range(1992, current_year + 1):
         year_tasks.append((year, client.get_events_by_year(year)))
 
     year_results = await asyncio.gather(*[t[1] for t in year_tasks])
+
+    # Determine whether we matched via a curated alias map
+    used_alias_map = key_code in _CODE_TO_FAMILY
 
     for (year, _), events in zip(year_tasks, year_results):
         if not events:
             continue
         for ev in events:
             ec = ev.get("first_event_code", "") or ""
-            # Match by first_event_code (primary) or by stripping year from key
-            key_code = ev["key"][4:]  # remove year prefix
-            if (event_code and ec == event_code) or key_code == event_code:
+            ev_key_code = ev["key"][4:]  # remove year prefix
+            # Match by alias family, first_event_code, or direct key code
+            if ev_key_code in alias_codes or (ec and ec in alias_codes):
                 all_instances.append(ev)
 
     # Filter out events that reused the same code but are actually different
     # (e.g. tuis3 was Izmir in 2022-2023 then Marmara in 2024-2025).
-    # Match by short_name similarity to the current event.
-    if event_short and len(all_instances) > 1:
+    # Skip this filter when matches came from a curated alias map — those
+    # intentionally span name changes (e.g. "Florida Regional" → "Orlando Regional").
+    if not used_alias_map and event_short and len(all_instances) > 1:
         filtered = []
         for ev in all_instances:
             ev_short = (ev.get("short_name") or "").lower().strip()

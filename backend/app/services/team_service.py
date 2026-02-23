@@ -58,9 +58,11 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
 
     # Build event_key -> event_name lookup
     event_name_map: dict[str, str] = {}
+    event_type_map: dict[str, int] = {}   # event_key -> TBA event_type
     if all_events_simple:
         for ev in all_events_simple:
             event_name_map[ev["key"]] = ev.get("name", ev["key"])
+            event_type_map[ev["key"]] = ev.get("event_type", -1)
 
     # Extract avatar (base64-encoded PNG from TBA)
     avatar_base64 = None
@@ -151,8 +153,10 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
     #   0 = Chairman's Award / FIRST Impact Award
     #   1 = Regional/District Event Winner
     #   3 = Woodie Flowers Finalist Award
-    #  71 = District Event Winner (modern)
-    BLUE_BANNER_TYPES = {0, 1, 3, 71}
+    # Note: type 71 is Autonomous Award (NOT district winner) — excluded.
+    BLUE_BANNER_TYPES = {0, 1, 3}
+    # Offseason / preseason events don't grant real blue banners
+    _OFFSEASON_TYPES = {99, 100, -1}
     if all_awards:
         for aw in all_awards:
             aw_type = aw.get("award_type")
@@ -167,7 +171,9 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
                 "event_name": event_name_map.get(aw_event, aw_event),
             }
             if aw_type in BLUE_BANNER_TYPES:
-                blue_banners.append(entry)
+                # Skip offseason events — they don't award real blue banners
+                if event_type_map.get(aw_event, -1) not in _OFFSEASON_TYPES:
+                    blue_banners.append(entry)
             awards_by_year.setdefault(aw_year, []).append(entry)
 
     # Build a flat sorted list (newest first) for the response

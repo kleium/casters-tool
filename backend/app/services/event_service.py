@@ -55,15 +55,22 @@ def _resolve_region(country: str, state_prov: str, district: dict | None) -> str
     return "Other"
 
 
-async def get_season_events(year: int) -> list[dict]:
-    """Return a lightweight list of all official events for *year*."""
+async def get_season_events(year: int, include_offseason: bool = False) -> list[dict]:
+    """Return a lightweight list of events for *year*.
+
+    By default off-season / preseason events are excluded.
+    Pass *include_offseason=True* to include event_type 99.
+    """
     client = get_tba_client()
     raw = await client.get_events_by_year(year)
+
+    # When including offseason, only exclude truly junk types (-1, 100)
+    exclude = {100, -1} if include_offseason else _EXCLUDE_TYPES
 
     events = []
     for ev in raw:
         etype = ev.get("event_type", -1)
-        if etype in _EXCLUDE_TYPES:
+        if etype in exclude:
             continue
 
         events.append({
