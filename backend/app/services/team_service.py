@@ -47,12 +47,20 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
     if year is None:
         year = date.today().year
 
-    team_info, years, events, media = await asyncio.gather(
+    team_info, years, events, media, all_awards, all_events_simple = await asyncio.gather(
         client.get_team(team_key),
         _safe(client.get_team_years_participated(team_key)),
         client.get_team_events(team_key, year),
         _safe(client.get_team_media(team_key, year)),
+        _safe(client.get_team_awards(team_key)),
+        _safe(client.get_team_events_simple(team_key)),
     )
+
+    # Build event_key -> event_name lookup
+    event_name_map: dict[str, str] = {}
+    if all_events_simple:
+        for ev in all_events_simple:
+            event_name_map[ev["key"]] = ev.get("name", ev["key"])
 
     # Extract avatar (base64-encoded PNG from TBA)
     avatar_base64 = None
@@ -136,6 +144,38 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
             "playoff_status": ev_playoff_status or "-",
         })
 
+    # ── Process awards ──────────────────────────────────────
+    blue_banners = []
+    awards_by_year: dict[int, list[dict]] = {}
+    # TBA blue-banner award types:
+    #   0 = Chairman's Award / FIRST Impact Award
+    #   1 = Regional/District Event Winner
+    #   3 = Woodie Flowers Finalist Award
+    #  71 = District Event Winner (modern)
+    BLUE_BANNER_TYPES = {0, 1, 3, 71}
+    if all_awards:
+        for aw in all_awards:
+            aw_type = aw.get("award_type")
+            aw_year = aw.get("year")
+            aw_name = aw.get("name", "")
+            aw_event = aw.get("event_key", "")
+            entry = {
+                "award_type": aw_type,
+                "name": aw_name,
+                "year": aw_year,
+                "event_key": aw_event,
+                "event_name": event_name_map.get(aw_event, aw_event),
+            }
+            if aw_type in BLUE_BANNER_TYPES:
+                blue_banners.append(entry)
+            awards_by_year.setdefault(aw_year, []).append(entry)
+
+    # Build a flat sorted list (newest first) for the response
+    awards_list = []
+    for y in sorted(awards_by_year.keys(), reverse=True):
+        for aw in awards_by_year[y]:
+            awards_list.append(aw)
+
     result = {
         "team_number": team_number,
         "team_key": team_key,
@@ -151,6 +191,9 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
         "year": year,
         "season_achievements": None,
         "avatar": avatar_base64,
+        "blue_banners": blue_banners,
+        "blue_banner_count": len(blue_banners),
+        "awards": awards_list,
     }
 
     # If no explicit year was given, compute per-season achievements

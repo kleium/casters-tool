@@ -1958,6 +1958,74 @@ input.input-loading {
     letter-spacing: -.01em;
 }
 
+/* ── Blue banner highlight card accent ─────────────────── */
+.highlight-banner {
+    border-color: rgba(59, 130, 246, .25);
+}
+.highlight-banner .highlight-value {
+    color: var(--blue);
+}
+.highlight-banner::after {
+    background: var(--blue);
+}
+.banner-icon {
+    font-size: 1rem;
+    vertical-align: -1px;
+}
+
+/* ── Banner chips ──────────────────────────────────────── */
+.banner-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+}
+.banner-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    background: var(--blue-bg);
+    border: 1px solid var(--blue-border);
+    border-radius: 999px;
+    padding: .35rem .85rem;
+    font-size: .78rem;
+    color: var(--text);
+    transition: var(--transition);
+}
+.banner-chip:hover {
+    border-color: var(--blue);
+    background: rgba(59, 130, 246, .12);
+}
+.banner-chip-icon {
+    font-size: .85rem;
+}
+.banner-chip-text {
+    font-weight: 600;
+}
+.banner-chip-meta {
+    color: var(--text-muted);
+    font-size: .72rem;
+}
+.banner-more-btn {
+    display: inline-flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 999px;
+    padding: .35rem .85rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--primary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+.banner-more-btn:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+}
+.banner-extra {
+    display: contents;
+}
+
 /* ═══ HEAD TO HEAD ═════════════════════════════════════════ */
 .h2h-section {
     margin-top: 2.5rem;

@@ -1815,6 +1815,61 @@ function renderTeamStats(d) {
     const avatarHtml = d.avatar
         ? `<img class="team-avatar" src="${d.avatar}" alt="Team ${d.team_number} avatar">`
         : '';
+
+    // ── Blue banners highlight ──
+    const bannerCount = d.blue_banner_count || 0;
+    const bannerCard = `
+        <div class="highlight-card${bannerCount > 0 ? ' highlight-banner' : ''}">
+            <div class="highlight-label">Blue Banners (All Time)</div>
+            <div class="highlight-value">${bannerCount > 0
+                ? '<span class="banner-icon">🏆</span> ' + bannerCount
+                : '0'}</div>
+        </div>`;
+
+    // ── Blue banner detail list ──
+    let bannerHtml = '';
+    if (d.blue_banners && d.blue_banners.length) {
+        const sorted = [...d.blue_banners].sort((a, b) => b.year - a.year);
+        const VISIBLE = 6;
+        const visible = sorted.slice(0, VISIBLE);
+        const hidden = sorted.slice(VISIBLE);
+        const chipHtml = (b) => `
+            <div class="banner-chip">
+                <span class="banner-chip-icon">🏆</span>
+                <span class="banner-chip-text">${b.name}</span>
+                <span class="banner-chip-meta">${b.event_name || b.event_key} · ${b.year}</span>
+            </div>`;
+        bannerHtml = `
+        <h3>Blue Banners</h3>
+        <div class="banner-list">
+            ${visible.map(chipHtml).join('')}${hidden.length ? `
+            <button class="banner-more-btn" onclick="this.nextElementSibling.classList.toggle('hidden');this.textContent=this.textContent.startsWith('+')?'− collapse':'+${hidden.length} more'">+${hidden.length} more</button>
+            <span class="banner-extra hidden">${hidden.map(chipHtml).join('')}</span>` : ''}
+        </div>`;
+    }
+
+    // ── Awards table (exclude blue banners to avoid duplication) ──
+    const BLUE_BANNER_TYPES = new Set([0, 1, 3, 71]);
+    const nonBannerAwards = (d.awards || []).filter(a => !BLUE_BANNER_TYPES.has(a.award_type));
+    let awardsHtml = '';
+    if (nonBannerAwards.length) {
+        awardsHtml = `
+        <h3>Awards</h3>
+        <table class="data-table compact">
+            <thead>
+                <tr><th>Year</th><th>Award</th><th>Event</th></tr>
+            </thead>
+            <tbody>
+                ${nonBannerAwards.map(a => `
+                <tr>
+                    <td class="stat">${a.year}</td>
+                    <td>${a.name}</td>
+                    <td class="muted">${a.event_name || a.event_key}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>`;
+    }
+
     return `
     <div class="team-card">
         <div class="team-header">
@@ -1837,6 +1892,7 @@ function renderTeamStats(d) {
                 <div class="highlight-label">Highest Event Level (${d.year})</div>
                 <div class="highlight-value">${d.highest_event_level}</div>
             </div>
+            ${bannerCard}
         </div>
 
         <h3>Event Results — ${d.year}</h3>
@@ -1863,6 +1919,8 @@ function renderTeamStats(d) {
             </tbody>
         </table>` : '<p class="empty">No events yet this year.</p>'}
 
+        ${bannerHtml}
+
         ${d.season_achievements && d.season_achievements.length ? `
         <h3>Season-by-Season Achievements (since ${d.rookie_year || '?'})</h3>
         <table class="data-table compact">
@@ -1882,6 +1940,8 @@ function renderTeamStats(d) {
                 </tr>`).join('')}
             </tbody>
         </table>` : ''}
+
+        ${awardsHtml}
     </div>`;
 }
 

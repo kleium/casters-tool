@@ -97,6 +97,9 @@ class TBAClient:
     async def get_team_awards(self, team_key: str):
         return await self.get(f"/team/{team_key}/awards")
 
+    async def get_team_events_simple(self, team_key: str):
+        return await self.get(f"/team/{team_key}/events/simple")
+
     async def get_team_media(self, team_key: str, year: int):
         return await self.get(f"/team/{team_key}/media/{year}")
 
