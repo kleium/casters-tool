@@ -74,6 +74,7 @@ let bdIndex      = 0;      // current breakdown match index
 let bdCache      = {};     // match_key -> breakdown data
 let bdPollTimer  = null;   // auto-poll timer for pending breakdowns
 let bdListTimer  = null;   // timer for refreshing match list has_breakdown flags
+let lastTeamData = null;   // cached last team lookup data for re-render
 const BD_POLL_INTERVAL = 10_000;      // 10s — poll for breakdown availability
 const BD_LIST_REFRESH  = 30_000;      // 30s — refresh match list flags
 
@@ -136,6 +137,10 @@ function toggleShowOffseason(on) {
     } else {
         filterSeasonEvents();
         populateSeasonFilters();
+    }
+    // Re-render team lookup if one is displayed
+    if (lastTeamData) {
+        $('team-stats').innerHTML = renderTeamStats(lastTeamData);
     }
 }
 
@@ -1830,6 +1835,7 @@ async function loadTeam() {
     show('team-loading');
     try {
         const data = await API.teamStats(num, year);
+        lastTeamData = data;
         $('team-stats').innerHTML = renderTeamStats(data);
     } catch (err) {
         alert(`Error loading team: ${err.message}`);
@@ -1883,7 +1889,7 @@ function renderTeamStats(d) {
     }
 
     // ── Awards table (exclude blue banners to avoid duplication) ──
-    const BLUE_BANNER_TYPES = new Set([0, 1, 3, 71]);
+    const BLUE_BANNER_TYPES = new Set([0, 1, 3]);
     const nonBannerAwards = (d.awards || []).filter(a => !BLUE_BANNER_TYPES.has(a.award_type));
     let awardsHtml = '';
     if (nonBannerAwards.length) {
