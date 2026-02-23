@@ -148,13 +148,6 @@
     "impact_count": 1,
     "einstein_teams": [
       {
-        "team_number": 383,
-        "nickname": "Brazilian Machine",
-        "years": [
-          2000
-        ]
-      },
-      {
         "team_number": 1156,
         "nickname": "Under Control",
         "years": [
@@ -162,7 +155,7 @@
         ]
       }
     ],
-    "einstein_count": 2,
+    "einstein_count": 1,
     "top_international_visitors": []
   },
   "Canada": {
@@ -259,16 +252,6 @@
         ]
       },
       {
-        "team_number": 188,
-        "nickname": "Blizzard",
-        "years": [
-          1998,
-          1999,
-          2000,
-          2016
-        ]
-      },
-      {
         "team_number": 1241,
         "nickname": "THEORY6",
         "years": [
@@ -278,10 +261,16 @@
         ]
       },
       {
+        "team_number": 188,
+        "nickname": "Blizzard",
+        "years": [
+          2016
+        ]
+      },
+      {
         "team_number": 296,
         "nickname": "Northern Knights",
         "years": [
-          1999,
           2006
         ]
       },
@@ -600,10 +589,6 @@
         "team_number": 22,
         "nickname": "Double Deuce",
         "years": [
-          1997,
-          1998,
-          1999,
-          2000,
           2001
         ]
       }
@@ -713,34 +698,6 @@
     "impact_count": 2,
     "einstein_teams": [
       {
-        "team_number": 116,
-        "nickname": "Epsilon Delta",
-        "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 122,
-        "nickname": "NASA Knights",
-        "years": [
-          1997,
-          1998,
-          1999
-        ]
-      },
-      {
-        "team_number": 346,
-        "nickname": "RoboHawks",
-        "years": [
-          2000,
-          2019
-        ]
-      },
-      {
         "team_number": 1086,
         "nickname": "Blue Cheese",
         "years": [
@@ -757,17 +714,17 @@
         ]
       },
       {
+        "team_number": 346,
+        "nickname": "RoboHawks",
+        "years": [
+          2019
+        ]
+      },
+      {
         "team_number": 384,
         "nickname": "SPARKY 384",
         "years": [
           2017
-        ]
-      },
-      {
-        "team_number": 449,
-        "nickname": "The Blair Robot Project",
-        "years": [
-          2000
         ]
       },
       {
@@ -799,7 +756,7 @@
         ]
       }
     ],
-    "einstein_count": 11,
+    "einstein_count": 8,
     "top_international_visitors": []
   },
   "FIRST In Texas": {
@@ -870,33 +827,9 @@
     "impact_count": 3,
     "einstein_teams": [
       {
-        "team_number": 148,
-        "nickname": "Robowranglers",
-        "years": [
-          1993,
-          1994,
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
-          2008,
-          2013,
-          2015,
-          2016,
-          2018,
-          2019,
-          2023
-        ]
-      },
-      {
         "team_number": 118,
         "nickname": "Robonauts",
         "years": [
-          1997,
-          1998,
-          1999,
           2002,
           2012,
           2015,
@@ -907,12 +840,16 @@
         ]
       },
       {
-        "team_number": 317,
-        "nickname": "Mechanical Geek Squad",
+        "team_number": 148,
+        "nickname": "Robowranglers",
         "years": [
-          1999,
-          2000,
-          2001
+          2008,
+          2013,
+          2015,
+          2016,
+          2018,
+          2019,
+          2023
         ]
       },
       {
@@ -922,14 +859,6 @@
           2013,
           2014,
           2024
-        ]
-      },
-      {
-        "team_number": 231,
-        "nickname": "High Voltage",
-        "years": [
-          1999,
-          2000
         ]
       },
       {
@@ -957,10 +886,10 @@
         ]
       },
       {
-        "team_number": 215,
-        "nickname": "Team 215",
+        "team_number": 317,
+        "nickname": "Mechanical Geek Squad",
         "years": [
-          1999
+          2001
         ]
       },
       {
@@ -968,13 +897,6 @@
         "nickname": "Chips",
         "years": [
           2025
-        ]
-      },
-      {
-        "team_number": 434,
-        "nickname": "Kraken",
-        "years": [
-          2000
         ]
       },
       {
@@ -1020,7 +942,7 @@
         ]
       }
     ],
-    "einstein_count": 17,
+    "einstein_count": 14,
     "top_international_visitors": [
       {
         "team_number": 5985,
@@ -1645,58 +1567,13 @@
     "impact_count": 0,
     "einstein_teams": [
       {
-        "team_number": 45,
-        "nickname": "TechnoKats Robotics Team",
-        "years": [
-          1992,
-          1993,
-          1994,
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
         "team_number": 71,
         "nickname": "Team Hammond",
         "years": [
-          1996,
-          1997,
-          1998,
-          1999,
           2001,
           2002,
           2004,
           2007
-        ]
-      },
-      {
-        "team_number": 135,
-        "nickname": "Penn Robotics Black Knights",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 292,
-        "nickname": "PantherTech",
-        "years": [
-          1999,
-          2000,
-          2003
-        ]
-      },
-      {
-        "team_number": 234,
-        "nickname": "Cyber Blue",
-        "years": [
-          2000,
-          2001
         ]
       },
       {
@@ -1705,6 +1582,20 @@
         "years": [
           2004,
           2018
+        ]
+      },
+      {
+        "team_number": 234,
+        "nickname": "Cyber Blue",
+        "years": [
+          2001
+        ]
+      },
+      {
+        "team_number": 292,
+        "nickname": "PantherTech",
+        "years": [
+          2003
         ]
       },
       {
@@ -1743,7 +1634,7 @@
         ]
       }
     ],
-    "einstein_count": 11,
+    "einstein_count": 9,
     "top_international_visitors": []
   },
   "FIRST Israel": {
@@ -1931,78 +1822,11 @@
         "team_number": 25,
         "nickname": "Raider Robotix",
         "years": [
-          2000,
           2002,
           2003,
           2006,
           2011,
           2012
-        ]
-      },
-      {
-        "team_number": 56,
-        "nickname": "R.O.B.B.E.",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000,
-          2005
-        ]
-      },
-      {
-        "team_number": 321,
-        "nickname": "RoboLancers",
-        "years": [
-          1999,
-          2000,
-          2024,
-          2026
-        ]
-      },
-      {
-        "team_number": 11,
-        "nickname": "MORT",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 41,
-        "nickname": "RoboWarriors",
-        "years": [
-          1997,
-          1998,
-          1999
-        ]
-      },
-      {
-        "team_number": 103,
-        "nickname": "Cybersonics",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 204,
-        "nickname": "Eastern Robotic Vikings",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 222,
-        "nickname": "Tigertrons",
-        "years": [
-          1999,
-          2000,
-          2009
         ]
       },
       {
@@ -2015,43 +1839,11 @@
         ]
       },
       {
-        "team_number": 75,
-        "nickname": "RoboRaiders",
+        "team_number": 321,
+        "nickname": "RoboLancers",
         "years": [
-          1998,
-          1999
-        ]
-      },
-      {
-        "team_number": 102,
-        "nickname": "The Gearheads",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 303,
-        "nickname": "The T.E.S.T. Team",
-        "years": [
-          2000,
-          2013
-        ]
-      },
-      {
-        "team_number": 341,
-        "nickname": "Miss Daisy",
-        "years": [
-          2000,
-          2003
-        ]
-      },
-      {
-        "team_number": 365,
-        "nickname": "Miracle Workerz",
-        "years": [
-          2000,
-          2001
+          2024,
+          2026
         ]
       },
       {
@@ -2079,24 +1871,38 @@
         ]
       },
       {
-        "team_number": 223,
-        "nickname": "Xtreme Heat",
+        "team_number": 56,
+        "nickname": "R.O.B.B.E.",
         "years": [
-          1999
+          2005
         ]
       },
       {
-        "team_number": 293,
-        "nickname": "SPIKE",
+        "team_number": 222,
+        "nickname": "Tigertrons",
         "years": [
-          2000
+          2009
         ]
       },
       {
-        "team_number": 316,
-        "nickname": "LUNATECS",
+        "team_number": 303,
+        "nickname": "The T.E.S.T. Team",
         "years": [
-          2000
+          2013
+        ]
+      },
+      {
+        "team_number": 341,
+        "nickname": "Miss Daisy",
+        "years": [
+          2003
+        ]
+      },
+      {
+        "team_number": 365,
+        "nickname": "Miracle Workerz",
+        "years": [
+          2001
         ]
       },
       {
@@ -2135,7 +1941,7 @@
         ]
       }
     ],
-    "einstein_count": 25,
+    "einstein_count": 16,
     "top_international_visitors": []
   },
   "FIRST North Carolina": {
@@ -2175,7 +1981,6 @@
         "team_number": 435,
         "nickname": "Robodogs",
         "years": [
-          2000,
           2004
         ]
       },
@@ -2312,27 +2117,9 @@
     "impact_count": 1,
     "einstein_teams": [
       {
-        "team_number": 67,
-        "nickname": "The HOT Team",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2004,
-          2005,
-          2008,
-          2009,
-          2010,
-          2014,
-          2017
-        ]
-      },
-      {
         "team_number": 217,
         "nickname": "ThunderChickens",
         "years": [
-          1999,
-          2000,
           2005,
           2006,
           2008,
@@ -2344,115 +2131,27 @@
         ]
       },
       {
-        "team_number": 33,
-        "nickname": "Killer Bees",
+        "team_number": 67,
+        "nickname": "The HOT Team",
         "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
-          2001,
+          2004,
           2005,
-          2013
-        ]
-      },
-      {
-        "team_number": 74,
-        "nickname": "Team CHAOS",
-        "years": [
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 141,
-        "nickname": "WOBOT",
-        "years": [
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
+          2008,
+          2009,
+          2010,
+          2014,
+          2017
         ]
       },
       {
         "team_number": 469,
         "nickname": "Las Guerrillas",
         "years": [
-          2000,
           2003,
           2004,
           2010,
           2013,
           2014
-        ]
-      },
-      {
-        "team_number": 27,
-        "nickname": "Team RUSH",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000,
-          2018
-        ]
-      },
-      {
-        "team_number": 85,
-        "nickname": "B.O.B. (Built on Brains)",
-        "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 1,
-        "nickname": "The Juggernauts",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2001
-        ]
-      },
-      {
-        "team_number": 68,
-        "nickname": "Truck Town Thunder",
-        "years": [
-          1998,
-          1999,
-          2000,
-          2009
-        ]
-      },
-      {
-        "team_number": 107,
-        "nickname": "Team R.O.B.O.T.I.C.S.",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 123,
-        "nickname": "Team - Cosmos",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
         ]
       },
       {
@@ -2466,57 +2165,12 @@
         ]
       },
       {
-        "team_number": 66,
-        "nickname": "Grizzly Robotics",
+        "team_number": 33,
+        "nickname": "Killer Bees",
         "years": [
-          1999,
-          2000,
-          2002
-        ]
-      },
-      {
-        "team_number": 70,
-        "nickname": "More Martians",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 201,
-        "nickname": "The FEDS",
-        "years": [
-          1998,
-          2000,
-          2006
-        ]
-      },
-      {
-        "team_number": 245,
-        "nickname": "Adambots",
-        "years": [
-          1999,
-          2000,
-          2005
-        ]
-      },
-      {
-        "team_number": 247,
-        "nickname": "Da Bears",
-        "years": [
-          1999,
-          2000,
-          2009
-        ]
-      },
-      {
-        "team_number": 308,
-        "nickname": "Monsters",
-        "years": [
-          1999,
-          2000,
-          2002
+          2001,
+          2005,
+          2013
         ]
       },
       {
@@ -2555,23 +2209,125 @@
         ]
       },
       {
-        "team_number": 94,
-        "nickname": "The  TechnoJays",
+        "team_number": 548,
+        "nickname": "Robostangs",
         "years": [
-          1998,
-          1999
+          2012,
+          2019
         ]
       },
       {
-        "team_number": 226,
-        "nickname": "Hammerheads",
+        "team_number": 3357,
+        "nickname": "COMETS",
         "years": [
-          1999,
-          2000
+          2010,
+          2018
+        ]
+      },
+      {
+        "team_number": 3538,
+        "nickname": "RoboJackets",
+        "years": [
+          2016,
+          2019
+        ]
+      },
+      {
+        "team_number": 3707,
+        "nickname": "TechnoDogs",
+        "years": [
+          2018,
+          2019
+        ]
+      },
+      {
+        "team_number": 4003,
+        "nickname": "TriSonics",
+        "years": [
+          2018,
+          2019
+        ]
+      },
+      {
+        "team_number": 5050,
+        "nickname": "Cow Town Robotics",
+        "years": [
+          2016,
+          2019
+        ]
+      },
+      {
+        "team_number": 1,
+        "nickname": "The Juggernauts",
+        "years": [
+          2001
+        ]
+      },
+      {
+        "team_number": 27,
+        "nickname": "Team RUSH",
+        "years": [
+          2018
+        ]
+      },
+      {
+        "team_number": 66,
+        "nickname": "Grizzly Robotics",
+        "years": [
+          2002
+        ]
+      },
+      {
+        "team_number": 68,
+        "nickname": "Truck Town Thunder",
+        "years": [
+          2009
+        ]
+      },
+      {
+        "team_number": 201,
+        "nickname": "The FEDS",
+        "years": [
+          2006
+        ]
+      },
+      {
+        "team_number": 245,
+        "nickname": "Adambots",
+        "years": [
+          2005
+        ]
+      },
+      {
+        "team_number": 247,
+        "nickname": "Da Bears",
+        "years": [
+          2009
+        ]
+      },
+      {
+        "team_number": 288,
+        "nickname": "The RoboDawgs",
+        "years": [
+          2001
+        ]
+      },
+      {
+        "team_number": 302,
+        "nickname": "The Dragons",
+        "years": [
+          2003
+        ]
+      },
+      {
+        "team_number": 308,
+        "nickname": "Monsters",
+        "years": [
+          2002
         ]
       }
     ],
-    "einstein_count": 54,
+    "einstein_count": 41,
     "top_international_visitors": []
   },
   "Mexico": {
@@ -2702,178 +2458,6 @@
     "impact_count": 3,
     "einstein_teams": [
       {
-        "team_number": 191,
-        "nickname": "X-CATS",
-        "years": [
-          1992,
-          1993,
-          1994,
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
-          2001
-        ]
-      },
-      {
-        "team_number": 20,
-        "nickname": "The Rocketeers",
-        "years": [
-          1992,
-          1993,
-          1994,
-          1996,
-          1997,
-          1998
-        ]
-      },
-      {
-        "team_number": 28,
-        "nickname": "Pierson Whalers",
-        "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 106,
-        "nickname": "Team 106",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 63,
-        "nickname": "McDowell Robotics Team 63",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 145,
-        "nickname": "T-Rx",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 165,
-        "nickname": "Das Goat",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 7,
-        "nickname": "Team007",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 30,
-        "nickname": "FURY",
-        "years": [
-          1998,
-          2000
-        ]
-      },
-      {
-        "team_number": 84,
-        "nickname": "Chuck 84",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 117,
-        "nickname": "Steel Dragons",
-        "years": [
-          1998,
-          1999
-        ]
-      },
-      {
-        "team_number": 153,
-        "nickname": "Team 153",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 211,
-        "nickname": "MAK",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 250,
-        "nickname": "The Dynamos",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 268,
-        "nickname": "Team 268",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 300,
-        "nickname": "AAME",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 311,
-        "nickname": "Red Jammers",
-        "years": [
-          2000,
-          2002
-        ]
-      },
-      {
-        "team_number": 340,
-        "nickname": "G.R.R. (Greater Rochester Robotics)",
-        "years": [
-          2000,
-          2004
-        ]
-      },
-      {
-        "team_number": 378,
-        "nickname": "The Circuit Stompers",
-        "years": [
-          2000,
-          2003
-        ]
-      },
-      {
         "team_number": 1126,
         "nickname": "SPARX",
         "years": [
@@ -2882,31 +2466,17 @@
         ]
       },
       {
-        "team_number": 248,
-        "nickname": "Team 248",
+        "team_number": 191,
+        "nickname": "X-CATS",
         "years": [
-          1999
+          2001
         ]
       },
       {
-        "team_number": 271,
-        "nickname": "Mechanical Marauders",
+        "team_number": 311,
+        "nickname": "Red Jammers",
         "years": [
-          2000
-        ]
-      },
-      {
-        "team_number": 284,
-        "nickname": "The Crew",
-        "years": [
-          1999
-        ]
-      },
-      {
-        "team_number": 329,
-        "nickname": "Mohawks",
-        "years": [
-          2000
+          2002
         ]
       },
       {
@@ -2915,9 +2485,100 @@
         "years": [
           2018
         ]
+      },
+      {
+        "team_number": 340,
+        "nickname": "G.R.R. (Greater Rochester Robotics)",
+        "years": [
+          2004
+        ]
+      },
+      {
+        "team_number": 378,
+        "nickname": "The Circuit Stompers",
+        "years": [
+          2003
+        ]
+      },
+      {
+        "team_number": 643,
+        "nickname": "Team 643",
+        "years": [
+          2001
+        ]
+      },
+      {
+        "team_number": 694,
+        "nickname": "StuyPulse",
+        "years": [
+          2016
+        ]
+      },
+      {
+        "team_number": 870,
+        "nickname": "TEAM  R. I. C. E.",
+        "years": [
+          2023
+        ]
+      },
+      {
+        "team_number": 1405,
+        "nickname": "Finney Falcons",
+        "years": [
+          2016
+        ]
+      },
+      {
+        "team_number": 1507,
+        "nickname": "Warlocks",
+        "years": [
+          2009
+        ]
+      },
+      {
+        "team_number": 1796,
+        "nickname": "RoboTigers",
+        "years": [
+          2017
+        ]
+      },
+      {
+        "team_number": 2753,
+        "nickname": "Team Overdrive",
+        "years": [
+          2009
+        ]
+      },
+      {
+        "team_number": 2869,
+        "nickname": "Regal Eagles",
+        "years": [
+          2018
+        ]
+      },
+      {
+        "team_number": 3015,
+        "nickname": "Ranger Robotics",
+        "years": [
+          2016
+        ]
+      },
+      {
+        "team_number": 3504,
+        "nickname": "Girls of Steel",
+        "years": [
+          2021
+        ]
+      },
+      {
+        "team_number": 4027,
+        "nickname": "Centre Punch",
+        "years": [
+          2018
+        ]
       }
     ],
-    "einstein_count": 41,
+    "einstein_count": 17,
     "top_international_visitors": [
       {
         "team_number": 8595,
@@ -3191,12 +2852,6 @@
         "team_number": 111,
         "nickname": "WildStang",
         "years": [
-          1992,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
           2001,
           2003,
           2009,
@@ -3209,171 +2864,9 @@
         "team_number": 144,
         "nickname": "Operation Orange",
         "years": [
-          1994,
-          1995,
-          1996,
-          1997,
-          1999,
           2001,
           2002,
           2015
-        ]
-      },
-      {
-        "team_number": 6,
-        "nickname": "The CogSquad",
-        "years": [
-          1994,
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 120,
-        "nickname": "Youth Tech Academy Red Dragons",
-        "years": [
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
-          2016
-        ]
-      },
-      {
-        "team_number": 47,
-        "nickname": "Chief Delphi",
-        "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
-          2001
-        ]
-      },
-      {
-        "team_number": 171,
-        "nickname": "Cheese Curd Herd",
-        "years": [
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 65,
-        "nickname": "The Huskie Brigade",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2001,
-          2003
-        ]
-      },
-      {
-        "team_number": 158,
-        "nickname": "The Cobras",
-        "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 49,
-        "nickname": "Robotic Knights",
-        "years": [
-          1998,
-          1999,
-          2000,
-          2001
-        ]
-      },
-      {
-        "team_number": 101,
-        "nickname": "Striker",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 109,
-        "nickname": "Team 109",
-        "years": [
-          1996,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 128,
-        "nickname": "The Botcats",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 48,
-        "nickname": "Team E.L.I.T.E.",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 93,
-        "nickname": "NEW Apple Corps",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 167,
-        "nickname": "Children of the Corn",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 182,
-        "nickname": "ThunderQuest",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 184,
-        "nickname": "F.R.E.D.",
-        "years": [
-          1998,
-          1999,
-          2000
         ]
       },
       {
@@ -3386,63 +2879,167 @@
         ]
       },
       {
-        "team_number": 5,
-        "nickname": "Robocards",
+        "team_number": 65,
+        "nickname": "The Huskie Brigade",
         "years": [
-          1999,
-          2000
+          2001,
+          2003
         ]
       },
       {
-        "team_number": 9,
-        "nickname": "Roosevelt RoboRiders",
+        "team_number": 1625,
+        "nickname": "Winnovation",
         "years": [
-          1998,
-          1999
+          2010,
+          2014
         ]
       },
       {
-        "team_number": 10,
-        "nickname": "Red Knights",
+        "team_number": 1986,
+        "nickname": "Team Titanium",
         "years": [
-          1998,
-          2000
+          2016,
+          2017
         ]
       },
       {
-        "team_number": 35,
-        "nickname": "Sigma Squared",
+        "team_number": 2052,
+        "nickname": "KnightKrawler",
         "years": [
-          1997,
-          1998
+          2016,
+          2019
         ]
       },
       {
-        "team_number": 112,
-        "nickname": "Plus One",
+        "team_number": 3061,
+        "nickname": "Huskie Robotics",
         "years": [
-          1999,
-          2000
+          2020,
+          2024
         ]
       },
       {
-        "team_number": 235,
-        "nickname": "Motown Live Wires",
+        "team_number": 4607,
+        "nickname": "C.I.S.",
         "years": [
-          1999,
-          2000
+          2019,
+          2023
         ]
       },
       {
-        "team_number": 274,
-        "nickname": "Rhodes Maniacs",
+        "team_number": 47,
+        "nickname": "Chief Delphi",
         "years": [
-          1999,
-          2000
+          2001
+        ]
+      },
+      {
+        "team_number": 49,
+        "nickname": "Robotic Knights",
+        "years": [
+          2001
+        ]
+      },
+      {
+        "team_number": 120,
+        "nickname": "Youth Tech Academy Red Dragons",
+        "years": [
+          2016
+        ]
+      },
+      {
+        "team_number": 349,
+        "nickname": "Team 349",
+        "years": [
+          2001
+        ]
+      },
+      {
+        "team_number": 379,
+        "nickname": "The RoboCats",
+        "years": [
+          2016
+        ]
+      },
+      {
+        "team_number": 451,
+        "nickname": "Cat Attack Robotics",
+        "years": [
+          2006
+        ]
+      },
+      {
+        "team_number": 930,
+        "nickname": "Mukwonago BEARs",
+        "years": [
+          2019
+        ]
+      },
+      {
+        "team_number": 931,
+        "nickname": "Perpetual Chaos",
+        "years": [
+          2021
+        ]
+      },
+      {
+        "team_number": 1270,
+        "nickname": "Red Dragons",
+        "years": [
+          2007
+        ]
+      },
+      {
+        "team_number": 1706,
+        "nickname": "Ratchet Rockers",
+        "years": [
+          2022
+        ]
+      },
+      {
+        "team_number": 1730,
+        "nickname": "Team Driven",
+        "years": [
+          2022
+        ]
+      },
+      {
+        "team_number": 1816,
+        "nickname": "\"The Green Machine\"",
+        "years": [
+          2026
+        ]
+      },
+      {
+        "team_number": 1939,
+        "nickname": "THE KUHNIGHTS",
+        "years": [
+          2019
+        ]
+      },
+      {
+        "team_number": 2041,
+        "nickname": "(RC)2",
+        "years": [
+          2010
+        ]
+      },
+      {
+        "team_number": 2194,
+        "nickname": "Fondy Fire",
+        "years": [
+          2012
+        ]
+      },
+      {
+        "team_number": 2202,
+        "nickname": "BEAST Robotics",
+        "years": [
+          2020
         ]
       }
     ],
-    "einstein_count": 71,
+    "einstein_count": 40,
     "top_international_visitors": [
       {
         "team_number": 5996,
@@ -3567,32 +3164,6 @@
     "impact_count": 1,
     "einstein_teams": [
       {
-        "team_number": 60,
-        "nickname": "Kingman FIRST Robotics Team 60 (The Bionic Bulldogs)",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000,
-          2001,
-          2002,
-          2008
-        ]
-      },
-      {
-        "team_number": 80,
-        "nickname": "Robocolt",
-        "years": [
-          1994,
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
         "team_number": 987,
         "nickname": "HIGHROLLERS",
         "years": [
@@ -3606,23 +3177,12 @@
         ]
       },
       {
-        "team_number": 64,
-        "nickname": "Gila Monsters",
+        "team_number": 60,
+        "nickname": "Kingman FIRST Robotics Team 60 (The Bionic Bulldogs)",
         "years": [
-          1998,
-          1999,
-          2000,
+          2001,
           2002,
-          2005
-        ]
-      },
-      {
-        "team_number": 159,
-        "nickname": "Alpine Robotics",
-        "years": [
-          1998,
-          1999,
-          2000
+          2008
         ]
       },
       {
@@ -3632,6 +3192,14 @@
           2016,
           2017,
           2019
+        ]
+      },
+      {
+        "team_number": 64,
+        "nickname": "Gila Monsters",
+        "years": [
+          2002,
+          2005
         ]
       },
       {
@@ -3648,13 +3216,6 @@
         "years": [
           2018,
           2022
-        ]
-      },
-      {
-        "team_number": 443,
-        "nickname": "Freelance Robotics",
-        "years": [
-          2000
         ]
       },
       {
@@ -3707,7 +3268,7 @@
         ]
       }
     ],
-    "einstein_count": 16,
+    "einstein_count": 13,
     "top_international_visitors": [
       {
         "team_number": 7645,
@@ -3894,11 +3455,6 @@
         "team_number": 177,
         "nickname": "Bobcat Robotics",
         "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
           2006,
           2007,
           2008,
@@ -3908,239 +3464,13 @@
         ]
       },
       {
-        "team_number": 126,
-        "nickname": "Gael Force",
-        "years": [
-          1992,
-          1993,
-          1994,
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
         "team_number": 175,
         "nickname": "Buzz Robotics",
         "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
           2001,
           2003,
           2004,
           2005
-        ]
-      },
-      {
-        "team_number": 151,
-        "nickname": "Tough Techs",
-        "years": [
-          1993,
-          1994,
-          1995,
-          1996,
-          1998,
-          1999,
-          2000,
-          2001
-        ]
-      },
-      {
-        "team_number": 190,
-        "nickname": "Gompei and the HERD",
-        "years": [
-          1992,
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
-          2007
-        ]
-      },
-      {
-        "team_number": 131,
-        "nickname": "CHAOS",
-        "years": [
-          1992,
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 42,
-        "nickname": "P.A.R.T.S. (Precision Alvirne Robotics Team Systems)",
-        "years": [
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 121,
-        "nickname": "Rhode Warriors",
-        "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
-          2009
-        ]
-      },
-      {
-        "team_number": 125,
-        "nickname": "NUTRONs",
-        "years": [
-          1998,
-          1999,
-          2000,
-          2001,
-          2017,
-          2023
-        ]
-      },
-      {
-        "team_number": 157,
-        "nickname": "AZTECHS",
-        "years": [
-          1994,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 166,
-        "nickname": "Chop Shop",
-        "years": [
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 173,
-        "nickname": "RAGE Robotics ⚙️",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000,
-          2002,
-          2007
-        ]
-      },
-      {
-        "team_number": 176,
-        "nickname": "Aces High",
-        "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
-          2001
-        ]
-      },
-      {
-        "team_number": 19,
-        "nickname": "Big Red",
-        "years": [
-          1994,
-          1996,
-          1997,
-          1998,
-          1999
-        ]
-      },
-      {
-        "team_number": 38,
-        "nickname": "Nonnebots",
-        "years": [
-          1998,
-          1999,
-          2000,
-          2001
-        ]
-      },
-      {
-        "team_number": 61,
-        "nickname": "BVT Robotics",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 88,
-        "nickname": "TJ²",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 96,
-        "nickname": "JESTER",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 97,
-        "nickname": "Bionic Beef",
-        "years": [
-          1996,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 138,
-        "nickname": "Entropy",
-        "years": [
-          1996,
-          1997,
-          1998,
-          1999
-        ]
-      },
-      {
-        "team_number": 155,
-        "nickname": "The TechnoNuts",
-        "years": [
-          1994,
-          1995,
-          1998,
-          1999
         ]
       },
       {
@@ -4154,34 +3484,166 @@
         ]
       },
       {
-        "team_number": 69,
-        "nickname": "HYPER",
+        "team_number": 125,
+        "nickname": "NUTRONs",
         "years": [
-          1996,
-          1998,
-          1999
+          2001,
+          2017,
+          2023
         ]
       },
       {
-        "team_number": 95,
-        "nickname": "Grasshoppers",
+        "team_number": 6328,
+        "nickname": "Mechanical Advantage",
         "years": [
-          1998,
-          1999,
-          2000
+          2022,
+          2023,
+          2024
         ]
       },
       {
-        "team_number": 124,
-        "nickname": "Team 124",
+        "team_number": 173,
+        "nickname": "RAGE Robotics ⚙️",
         "years": [
-          1998,
-          1999,
-          2000
+          2002,
+          2007
+        ]
+      },
+      {
+        "team_number": 38,
+        "nickname": "Nonnebots",
+        "years": [
+          2001
+        ]
+      },
+      {
+        "team_number": 78,
+        "nickname": "AIR STRIKE",
+        "years": [
+          2024
+        ]
+      },
+      {
+        "team_number": 121,
+        "nickname": "Rhode Warriors",
+        "years": [
+          2009
+        ]
+      },
+      {
+        "team_number": 133,
+        "nickname": "B.E.R.T.",
+        "years": [
+          2019
+        ]
+      },
+      {
+        "team_number": 151,
+        "nickname": "Tough Techs",
+        "years": [
+          2001
+        ]
+      },
+      {
+        "team_number": 176,
+        "nickname": "Aces High",
+        "years": [
+          2001
+        ]
+      },
+      {
+        "team_number": 190,
+        "nickname": "Gompei and the HERD",
+        "years": [
+          2007
+        ]
+      },
+      {
+        "team_number": 236,
+        "nickname": "Techno-Ticks",
+        "years": [
+          2003
+        ]
+      },
+      {
+        "team_number": 348,
+        "nickname": "Norwell Robotics",
+        "years": [
+          2008
+        ]
+      },
+      {
+        "team_number": 1058,
+        "nickname": "PVC Pirates",
+        "years": [
+          2017
+        ]
+      },
+      {
+        "team_number": 1073,
+        "nickname": "The Force Team",
+        "years": [
+          2019
+        ]
+      },
+      {
+        "team_number": 1124,
+        "nickname": "UberBots",
+        "years": [
+          2008
+        ]
+      },
+      {
+        "team_number": 1768,
+        "nickname": "Nashoba Robotics",
+        "years": [
+          2025
+        ]
+      },
+      {
+        "team_number": 2084,
+        "nickname": "Robots by the C",
+        "years": [
+          2017
+        ]
+      },
+      {
+        "team_number": 2877,
+        "nickname": "LigerBots",
+        "years": [
+          2025
+        ]
+      },
+      {
+        "team_number": 3719,
+        "nickname": "STEM Whalers",
+        "years": [
+          2017
+        ]
+      },
+      {
+        "team_number": 5687,
+        "nickname": "The Outliers",
+        "years": [
+          2017
+        ]
+      },
+      {
+        "team_number": 5813,
+        "nickname": "Morpheus",
+        "years": [
+          2024
+        ]
+      },
+      {
+        "team_number": 6329,
+        "nickname": "The Bucks' Wrath",
+        "years": [
+          2023
         ]
       }
     ],
-    "einstein_count": 55,
+    "einstein_count": 26,
     "top_international_visitors": []
   },
   "Other": {
@@ -4238,8 +3700,6 @@
         "team_number": 330,
         "nickname": "The Beach Bots",
         "years": [
-          1999,
-          2000,
           2005,
           2007,
           2015,
@@ -4247,214 +3707,77 @@
         ]
       },
       {
-        "team_number": 23,
-        "nickname": "PNTA Pilgrim Nuclear Technology Alliance",
-        "years": [
-          1995,
-          1996,
-          1997,
-          1998,
-          1999
-        ]
-      },
-      {
-        "team_number": 73,
-        "nickname": "The Illumination",
-        "years": [
-          1994,
-          1995,
-          1996,
-          1997,
-          1998
-        ]
-      },
-      {
-        "team_number": 81,
-        "nickname": "MetalHeads",
-        "years": [
-          1994,
-          1995,
-          1996,
-          1998,
-          1999
-        ]
-      },
-      {
-        "team_number": 31,
-        "nickname": "Jenks Prime Movers",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 89,
-        "nickname": "Team 89",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 146,
-        "nickname": "Team 146",
-        "years": [
-          1995,
-          1996,
-          1997,
-          2000
-        ]
-      },
-      {
-        "team_number": 15,
-        "nickname": "Mustechs",
-        "years": [
-          1997,
-          1999,
-          2000
-        ]
-      },
-      {
         "team_number": 53,
         "nickname": "Area 53",
         "years": [
-          1998,
-          1999,
           2001
-        ]
-      },
-      {
-        "team_number": 57,
-        "nickname": "Leopards",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 136,
-        "nickname": "Killer Kardinals",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 174,
-        "nickname": "Arctic Warriors",
-        "years": [
-          1998,
-          1999,
-          2000
         ]
       },
       {
         "team_number": 279,
         "nickname": "Tech Fusion",
         "years": [
-          1999,
-          2000,
           2001
-        ]
-      },
-      {
-        "team_number": 98,
-        "nickname": "Team 98",
-        "years": [
-          1994,
-          2000
-        ]
-      },
-      {
-        "team_number": 161,
-        "nickname": "Team 161",
-        "years": [
-          1995,
-          1996
-        ]
-      },
-      {
-        "team_number": 213,
-        "nickname": "The Dirty Birds",
-        "years": [
-          1994,
-          2000
-        ]
-      },
-      {
-        "team_number": 264,
-        "nickname": "Team 264",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 315,
-        "nickname": "Team 315",
-        "years": [
-          1999,
-          2000
         ]
       },
       {
         "team_number": 476,
         "nickname": "Wildcats",
         "years": [
-          2000,
           2001
         ]
       },
       {
-        "team_number": 13,
-        "nickname": "Triskadekamanics",
+        "team_number": 522,
+        "nickname": "ROBO WIZARDS",
         "years": [
-          1997
+          2006
         ]
       },
       {
-        "team_number": 14,
-        "nickname": "The Rulers",
+        "team_number": 1519,
+        "nickname": "Mechanical Mayhem",
         "years": [
-          1996
+          2013
         ]
       },
       {
-        "team_number": 46,
-        "nickname": "Category5",
+        "team_number": 4910,
+        "nickname": "East Cobb Robotics",
         "years": [
-          1998
+          2017
         ]
       },
       {
-        "team_number": 55,
-        "nickname": "Team 55",
+        "team_number": 7179,
+        "nickname": "Crossfire",
         "years": [
-          1995
+          2019
         ]
       },
       {
-        "team_number": 110,
-        "nickname": "",
+        "team_number": 7435,
+        "nickname": "CYBERTRONICS",
         "years": [
-          2000
+          2020
         ]
       },
       {
-        "team_number": 152,
-        "nickname": "",
+        "team_number": 8002,
+        "nickname": "The Knack",
         "years": [
-          2000
+          2020
+        ]
+      },
+      {
+        "team_number": 8603,
+        "nickname": "The Discord Droids",
+        "years": [
+          2021
         ]
       }
     ],
-    "einstein_count": 51,
+    "einstein_count": 11,
     "top_international_visitors": [
       {
         "team_number": 9244,
@@ -4552,8 +3875,6 @@
         "team_number": 254,
         "nickname": "The Cheesy Poofs",
         "years": [
-          1999,
-          2000,
           2001,
           2005,
           2010,
@@ -4607,39 +3928,6 @@
         ]
       },
       {
-        "team_number": 8,
-        "nickname": "Paly Robotics",
-        "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 100,
-        "nickname": "The Wildhats",
-        "years": [
-          1995,
-          1996,
-          1997,
-          1998,
-          1999
-        ]
-      },
-      {
-        "team_number": 294,
-        "nickname": "Beach Cities Robotics",
-        "years": [
-          1999,
-          2000,
-          2001,
-          2010,
-          2024
-        ]
-      },
-      {
         "team_number": 3476,
         "nickname": "Code Orange",
         "years": [
@@ -4648,16 +3936,6 @@
           2016,
           2018,
           2023
-        ]
-      },
-      {
-        "team_number": 114,
-        "nickname": "Eaglestrike",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
         ]
       },
       {
@@ -4671,21 +3949,12 @@
         ]
       },
       {
-        "team_number": 115,
-        "nickname": "MVRT",
+        "team_number": 294,
+        "nickname": "Beach Cities Robotics",
         "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 192,
-        "nickname": "GRT",
-        "years": [
-          1997,
-          1998,
-          1999
+          2001,
+          2010,
+          2024
         ]
       },
       {
@@ -4707,38 +3976,6 @@
         ]
       },
       {
-        "team_number": 207,
-        "nickname": "METALCRAFTERS",
-        "years": [
-          1999,
-          2012
-        ]
-      },
-      {
-        "team_number": 232,
-        "nickname": "Team 232",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 255,
-        "nickname": "Team 255",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 298,
-        "nickname": "Team 298",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
         "team_number": 971,
         "nickname": "Spartan Robotics",
         "years": [
@@ -4754,10 +3991,10 @@
         ]
       },
       {
-        "team_number": 253,
-        "nickname": "Boba Bots",
+        "team_number": 207,
+        "nickname": "METALCRAFTERS",
         "years": [
-          1999
+          2012
         ]
       },
       {
@@ -4775,21 +4012,84 @@
         ]
       },
       {
-        "team_number": 374,
-        "nickname": "The IceBreakers",
+        "team_number": 606,
+        "nickname": "Cyber Eagles",
         "years": [
-          2000
+          2001
         ]
       },
       {
-        "team_number": 409,
-        "nickname": "Team 409",
+        "team_number": 687,
+        "nickname": "The Nerd Herd",
         "years": [
-          2000
+          2023
+        ]
+      },
+      {
+        "team_number": 766,
+        "nickname": "M-A Bears",
+        "years": [
+          2005
+        ]
+      },
+      {
+        "team_number": 972,
+        "nickname": "Iron Claw",
+        "years": [
+          2023
+        ]
+      },
+      {
+        "team_number": 1072,
+        "nickname": "Harker Robotics",
+        "years": [
+          2018
+        ]
+      },
+      {
+        "team_number": 1197,
+        "nickname": "TorBots",
+        "years": [
+          2016
+        ]
+      },
+      {
+        "team_number": 1388,
+        "nickname": "Eagle Robotics",
+        "years": [
+          2004
+        ]
+      },
+      {
+        "team_number": 1622,
+        "nickname": "Team Spyder",
+        "years": [
+          2020
+        ]
+      },
+      {
+        "team_number": 1671,
+        "nickname": "Buchanan Bird Brains",
+        "years": [
+          2015
+        ]
+      },
+      {
+        "team_number": 2073,
+        "nickname": "EagleForce",
+        "years": [
+          2025
+        ]
+      },
+      {
+        "team_number": 3965,
+        "nickname": "Sultan Robotics Team 3965",
+        "years": [
+          2018
         ]
       }
     ],
-    "einstein_count": 42,
+    "einstein_count": 30,
     "top_international_visitors": [
       {
         "team_number": 4481,
@@ -5032,13 +4332,6 @@
         ]
       },
       {
-        "team_number": 488,
-        "nickname": "Team XBOT",
-        "years": [
-          2000
-        ]
-      },
-      {
         "team_number": 948,
         "nickname": "NRG (Newport Robotics Group)",
         "years": [
@@ -5137,7 +4430,7 @@
         ]
       }
     ],
-    "einstein_count": 18,
+    "einstein_count": 17,
     "top_international_visitors": []
   },
   "Peachtree": {
@@ -5182,26 +4475,11 @@
     "impact_count": 1,
     "einstein_teams": [
       {
-        "team_number": 281,
-        "nickname": "The GreenVillains",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
         "team_number": 343,
         "nickname": "Metal-In-Motion",
         "years": [
           2001,
           2003
-        ]
-      },
-      {
-        "team_number": 342,
-        "nickname": "Burning Magnetos",
-        "years": [
-          2000
         ]
       },
       {
@@ -5240,7 +4518,7 @@
         ]
       }
     ],
-    "einstein_count": 8,
+    "einstein_count": 6,
     "top_international_visitors": []
   },
   "Southeast": {
@@ -5314,39 +4592,9 @@
     "impact_count": 1,
     "einstein_teams": [
       {
-        "team_number": 16,
-        "nickname": "Bomb Squad",
-        "years": [
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
-          2008,
-          2012,
-          2025
-        ]
-      },
-      {
-        "team_number": 108,
-        "nickname": "SigmaC@T Robotics Team",
-        "years": [
-          1995,
-          1996,
-          1997,
-          1998,
-          1999,
-          2000,
-          2001,
-          2005
-        ]
-      },
-      {
         "team_number": 233,
         "nickname": "The Pink Team",
         "years": [
-          1999,
-          2000,
           2002,
           2007,
           2008,
@@ -5355,153 +4603,37 @@
         ]
       },
       {
+        "team_number": 16,
+        "nickname": "Bomb Squad",
+        "years": [
+          2008,
+          2012,
+          2025
+        ]
+      },
+      {
         "team_number": 180,
         "nickname": "S.P.A.M.",
         "years": [
-          1998,
-          1999,
-          2000,
           2002,
           2012,
           2025
         ]
       },
       {
-        "team_number": 59,
-        "nickname": "RamTech",
+        "team_number": 108,
+        "nickname": "SigmaC@T Robotics Team",
         "years": [
-          1997,
-          1998,
-          1999,
-          2000,
-          2023
+          2001,
+          2005
         ]
       },
       {
         "team_number": 179,
         "nickname": "Children of the Swamp",
         "years": [
-          1998,
-          1999,
-          2000,
           2007,
           2019
-        ]
-      },
-      {
-        "team_number": 34,
-        "nickname": "Rockets",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 37,
-        "nickname": "Junior Plaids",
-        "years": [
-          1996,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 147,
-        "nickname": "Deep Thunder",
-        "years": [
-          1997,
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 186,
-        "nickname": "The Alliance",
-        "years": [
-          1998,
-          1999,
-          2000,
-          2001
-        ]
-      },
-      {
-        "team_number": 86,
-        "nickname": "Team Resistance",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 132,
-        "nickname": "Radioactive Mustangs",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 168,
-        "nickname": "Flashbacks",
-        "years": [
-          1998,
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 312,
-        "nickname": "HeatWave",
-        "years": [
-          1999,
-          2000,
-          2001
-        ]
-      },
-      {
-        "team_number": 21,
-        "nickname": "ComBBAT",
-        "years": [
-          1998,
-          1999
-        ]
-      },
-      {
-        "team_number": 79,
-        "nickname": "Team 79 Krunch",
-        "years": [
-          1998,
-          1999
-        ]
-      },
-      {
-        "team_number": 212,
-        "nickname": "Robotics And Creative Engineering",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 267,
-        "nickname": "Demolition Squad",
-        "years": [
-          1999,
-          2000
-        ]
-      },
-      {
-        "team_number": 282,
-        "nickname": "Team 282",
-        "years": [
-          1999,
-          2000
         ]
       },
       {
@@ -5513,42 +4645,91 @@
         ]
       },
       {
-        "team_number": 278,
-        "nickname": "Team 278",
+        "team_number": 59,
+        "nickname": "RamTech",
         "years": [
-          1999
+          2023
         ]
       },
       {
-        "team_number": 338,
-        "nickname": "Pandemic",
+        "team_number": 186,
+        "nickname": "The Alliance",
         "years": [
-          2000
+          2001
         ]
       },
       {
-        "team_number": 351,
-        "nickname": "Team 351",
+        "team_number": 312,
+        "nickname": "HeatWave",
         "years": [
-          2000
+          2001
         ]
       },
       {
-        "team_number": 364,
-        "nickname": "Team Fusion 364",
+        "team_number": 547,
+        "nickname": "Falcon Engineering And Robotics",
         "years": [
-          2000
+          2001
         ]
       },
       {
-        "team_number": 386,
-        "nickname": "Team Voltage",
+        "team_number": 1038,
+        "nickname": "Lakota Robotics",
         "years": [
-          2000
+          2004
+        ]
+      },
+      {
+        "team_number": 1139,
+        "nickname": "The Chamblee Gear Grinders",
+        "years": [
+          2006
+        ]
+      },
+      {
+        "team_number": 2383,
+        "nickname": "Ninjineers",
+        "years": [
+          2020
+        ]
+      },
+      {
+        "team_number": 3932,
+        "nickname": "The Dirty Mechanics",
+        "years": [
+          2021
+        ]
+      },
+      {
+        "team_number": 4265,
+        "nickname": "Secret City Wildbots",
+        "years": [
+          2020
+        ]
+      },
+      {
+        "team_number": 5006,
+        "nickname": "Apophis",
+        "years": [
+          2018
+        ]
+      },
+      {
+        "team_number": 5454,
+        "nickname": "Obsidian",
+        "years": [
+          2022
+        ]
+      },
+      {
+        "team_number": 8044,
+        "nickname": "Denham Venom",
+        "years": [
+          2025
         ]
       }
     ],
-    "einstein_count": 39,
+    "einstein_count": 18,
     "top_international_visitors": [
       {
         "team_number": 7403,

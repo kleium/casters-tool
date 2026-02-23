@@ -190,7 +190,10 @@ async def generate():
     # ── Phase 4: Championship analysis ────────────────────────
     print("\nPhase 4: Championship awards & Einstein...")
     champ_keys = [e["key"] for e in all_events if e.get("event_type") in (3, 4)]
-    einstein_keys = [e["key"] for e in all_events if e.get("event_type") == 4]
+    # Einstein/CMP Finals only meaningful from 2001+ (divisions introduced);
+    # pre-2001 had no divisions so every attendee would incorrectly count.
+    einstein_keys = [e["key"] for e in all_events
+                     if e.get("event_type") == 4 and int(e["key"][:4]) >= 2001]
     print(f"  CMP events: {len(champ_keys)}, Einstein: {len(einstein_keys)}")
 
     hof_by_team: dict[str, list[int]] = defaultdict(list)
