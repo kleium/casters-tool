@@ -166,6 +166,9 @@ document.querySelectorAll('.tab').forEach(btn => {
         // Stop breakdown polling when leaving the breakdown tab
         if (btn.dataset.tab !== 'breakdown') { stopBdPolling(); stopBdListRefresh(); }
 
+        // Clear compare selection when leaving Rankings tab
+        if (btn.dataset.tab !== 'rankings') { clearCompareSelection(); }
+
         // Auto-load data when switching to dependent tabs
         if (btn.dataset.tab === 'summary' && currentEvent) {
             if (summaryData) {
@@ -453,12 +456,10 @@ function selectSeasonEvent(idx) {
     $('season-dropdown').classList.add('hidden');
     $('season-search').value = ev.name;
     $('season-search').classList.add('input-loading');
-    // Fill manual fields too for consistency
-    const year = ev.key.substring(0, 4);
-    const code = ev.key.substring(4);
-    $('event-year').value = year;
-    $('event-code').value = code;
-    loadEvent();
+    // Show loading indicator in header
+    const lb = $('season-loading-btn');
+    if (lb) { lb.classList.remove('hidden'); lb.classList.add('btn-loading'); }
+    loadEvent(ev.key);
 }
 
 // Keyboard navigation in season dropdown
@@ -560,14 +561,22 @@ async function refreshRankings() {
 }
 
 // ── Manual event load ─────────────────────────────────────
-async function loadEvent() {
-    const year = $('event-year').value.trim();
-    const eventCode = $('event-code').value.trim().toLowerCase();
-    if (!year || !eventCode) return;
-    const code = `${year}${eventCode}`;
+async function loadEvent(eventKey) {
+    let code, year, eventCode;
+    const fromSeason = !!eventKey; // true when called from season dropdown
+    if (eventKey) {
+        code = eventKey;
+        year = eventKey.substring(0, 4);
+        eventCode = eventKey.substring(4);
+    } else {
+        year = $('event-year').value.trim();
+        eventCode = $('event-code').value.trim().toLowerCase();
+        if (!year || !eventCode) return;
+        code = `${year}${eventCode}`;
+    }
 
-    // Show inline loading indicator on the button
-    const btn = $('btn-load-event');
+    // Show inline loading indicator on the manual button (only for manual entry)
+    const btn = fromSeason ? null : $('btn-load-event');
     if (btn) { btn.disabled = true; btn.dataset.origText = btn.textContent; btn.textContent = 'Loading…'; btn.classList.add('btn-loading'); }
 
     // Reset state
@@ -598,6 +607,8 @@ async function loadEvent() {
         // Restore the load button and season search
         if (btn) { btn.disabled = false; btn.textContent = btn.dataset.origText || 'Load Event'; btn.classList.remove('btn-loading'); }
         $('season-search')?.classList.remove('input-loading');
+        const _lb = $('season-loading-btn');
+        if (_lb) { _lb.classList.add('hidden'); _lb.classList.remove('btn-loading'); }
 
         currentEvent = code;
         currentEventYear = parseInt(year, 10);
@@ -703,6 +714,8 @@ async function loadEvent() {
     } catch (err) {
         if (btn) { btn.disabled = false; btn.textContent = btn.dataset.origText || 'Load Event'; btn.classList.remove('btn-loading'); }
         $('season-search')?.classList.remove('input-loading');
+        const _lb2 = $('season-loading-btn');
+        if (_lb2) { _lb2.classList.add('hidden'); _lb2.classList.remove('btn-loading'); }
         alert(`Error loading event: ${err.message}`);
         loading(false);
     }
@@ -1510,6 +1523,17 @@ function renderBracketTree() {
     });
     const gf = finals.length ? finals.reduce((a, b) => b.match_number > a.match_number ? b : a) : null;
 
+    // Build team_number -> nickname map from loaded teamsData
+    const _nickMap = {};
+    if (teamsData) teamsData.forEach(t => { if (t.nickname) _nickMap[t.team_number] = t.nickname; });
+    const _teamSpan = (num) => {
+        const nick = _nickMap[num];
+        return nick
+            ? `<span class="has-tooltip bkt-team-num">${num}<span class="custom-tooltip">${nick}</span></span>`
+            : `<span class="bkt-team-num">${num}</span>`;
+    };
+    const _teamsHtml = (nums) => nums.map(_teamSpan).join(' · ');
+
     // Render helpers
     const slot = (setNum, label) => {
         const m = setNum === 'f' ? gf : bySet[setNum];
@@ -1531,12 +1555,12 @@ function renderBracketTree() {
                     <div class="bkt-slot-header">${label}${replay}</div>
                     <div class="bkt-row bkt-red ${redWon ? 'bkt-won' : ''}">
                         ${redSeed}
-                        <span class="bkt-teams">${m.red.team_numbers.join(' · ')}</span>
+                        <span class="bkt-teams">${_teamsHtml(m.red.team_numbers)}</span>
                         <span class="bkt-score">${upcoming ? '–' : m.red.score}</span>
                     </div>
                     <div class="bkt-row bkt-blue ${blueWon ? 'bkt-won' : ''}">
                         ${blueSeed}
-                        <span class="bkt-teams">${m.blue.team_numbers.join(' · ')}</span>
+                        <span class="bkt-teams">${_teamsHtml(m.blue.team_numbers)}</span>
                         <span class="bkt-score">${upcoming ? '–' : m.blue.score}</span>
                     </div>
                     ${desc ? `<div class="bkt-slot-desc">${desc}</div>` : ''}
@@ -3329,10 +3353,8 @@ async function compareCurrentMatch() {
 
 // ── Compare from rankings selection ────────────────────────
 
-// Mobile: tapping anywhere on a row toggles comparison
+// Clicking anywhere on a rankings row toggles comparison selection
 document.addEventListener('click', (e) => {
-    // Only on touch devices / narrow screens
-    if (window.innerWidth > 768) return;
     const tr = e.target.closest('.data-table tbody tr');
     if (!tr) return;
     // Don't double-fire on the checkbox itself
