@@ -247,8 +247,9 @@ async def _find_playoff_connections(
 
     results = await asyncio.gather(*tasks)
 
-    # team -> set of event_keys (excluding current)
+    # team -> set of event_keys (excluding current and offseason/preseason)
     # Also build event name map from fetched data
+    _SKIP_EVENT_TYPES = {99, 100, -1}  # Offseason, Preseason, Unknown
     team_events: dict[str, set[str]] = {}
     event_name_map: dict[str, str] = {}  # event_key -> short/display name
     for tk, _y, events in results:
@@ -256,6 +257,8 @@ async def _find_playoff_connections(
             team_events[tk] = set()
         for ev in events:
             ek = ev["key"]
+            if ev.get("event_type", -1) in _SKIP_EVENT_TYPES:
+                continue
             if ek != event_key:
                 team_events[tk].add(ek)
             if ek not in event_name_map:
