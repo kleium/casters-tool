@@ -4071,7 +4071,7 @@ tr:hover .compare-cb,
     border-top: 0 solid transparent;
 }
 .conn-row.expanded .conn-row-details {
-    max-height: 300px;
+    max-height: 2000px;
     border-top: 1px solid var(--border-subtle);
 }
 .conn-detail-line {
