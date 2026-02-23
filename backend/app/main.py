@@ -38,7 +38,7 @@ class NoCacheStaticMiddleware(BaseHTTPMiddleware):
 app.add_middleware(NoCacheStaticMiddleware)
 
 # ── Serve frontend ──────────────────────────────────────────
-frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
+frontend_dir = Path(__file__).resolve().parent.parent.parent / "docs"
 app.mount("/css", StaticFiles(directory=str(frontend_dir / "css")), name="css")
 app.mount("/js", StaticFiles(directory=str(frontend_dir / "js")), name="js")
 app.mount("/data", StaticFiles(directory=str(frontend_dir / "data")), name="data")

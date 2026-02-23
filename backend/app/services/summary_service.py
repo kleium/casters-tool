@@ -3,7 +3,38 @@ from __future__ import annotations
 
 import asyncio
 from datetime import date
+from .region_service import _load_region_stats
 from .tba_client import get_tba_client
+
+
+# ── Static HoF / Impact lookup (built once from region_stats.json) ───
+_HOF_BY_NUM: dict[int, dict] | None = None
+_IMPACT_BY_NUM: dict[int, dict] | None = None
+
+
+def _ensure_award_lookups():
+    """Flatten region_stats.json into dicts keyed by team_number."""
+    global _HOF_BY_NUM, _IMPACT_BY_NUM
+    if _HOF_BY_NUM is not None:
+        return
+    _HOF_BY_NUM = {}
+    _IMPACT_BY_NUM = {}
+    for _region, data in _load_region_stats().items():
+        for entry in data.get("hof_teams", []):
+            num = entry["team_number"]
+            if num not in _HOF_BY_NUM:
+                _HOF_BY_NUM[num] = entry
+            else:
+                # merge years from another region listing
+                existing = _HOF_BY_NUM[num]
+                existing["years"] = sorted(set(existing["years"]) | set(entry.get("years", [])))
+        for entry in data.get("impact_finalists", []):
+            num = entry["team_number"]
+            if num not in _IMPACT_BY_NUM:
+                _IMPACT_BY_NUM[num] = entry
+            else:
+                existing = _IMPACT_BY_NUM[num]
+                existing["years"] = sorted(set(existing["years"]) | set(entry.get("years", [])))
 
 
 async def _safe(coro):
@@ -72,14 +103,26 @@ async def get_event_summary(event_key: str) -> dict:
         "countries": sorted(countries),
     }
 
-    # ── Hall of Fame & Impact Award ─────────────────────────
-    hof_teams, impact_finalists = await _get_award_teams(client, teams)
+    # ── Hall of Fame & Impact Award (instant lookup from region_stats.json) ─
+    _ensure_award_lookups()
+    hof_teams = []
+    impact_finalists = []
+    for t in teams:
+        num = t.get("team_number")
+        info = {
+            "team_number": num,
+            "nickname": t.get("nickname", ""),
+            "city": t.get("city", ""),
+            "state_prov": t.get("state_prov", ""),
+            "country": t.get("country", ""),
+        }
+        if num in _HOF_BY_NUM:
+            hof_teams.append({**info, "impact_years": _HOF_BY_NUM[num].get("years", [])})
+        elif num in _IMPACT_BY_NUM:
+            impact_finalists.append({**info, "impact_years": _IMPACT_BY_NUM[num].get("years", [])})
 
     # ── Top 3 OPR contributors ──────────────────────────────
     top_scorers = _compute_top_scorers(teams, oprs, rankings)
-
-    # ── Prior playoff connections (default: last 3 years) ──
-    connections = await _find_playoff_connections(teams, event_key, year, lookback_years=3)
 
     return {
         "event_key": event_key,
@@ -87,7 +130,6 @@ async def get_event_summary(event_key: str) -> dict:
         "hall_of_fame": hof_teams,
         "impact_finalists": impact_finalists,
         "top_scorers": top_scorers,
-        "connections": connections,
     }
 
 
@@ -144,75 +186,26 @@ COMP_LEVEL_LABELS = {
 }
 
 
-async def _get_award_teams(client, teams: list[dict]) -> tuple[list[dict], list[dict]]:
-    """Fetch awards for every team; return (hof_teams, impact_finalists)."""
-
-    async def _awards_for(t: dict):
-        tk = t["key"]
-        awards = await _safe(client.get_team_awards(tk))
-        return (t, awards or [])
-
-    results = await asyncio.gather(*[_awards_for(t) for t in teams])
-
-    # Collect all event keys where a type 0 or 69 award exists
-    candidate_events: set[str] = set()
-    for _t, awards in results:
-        for a in awards:
-            if a.get("award_type") in (0, 69):
-                candidate_events.add(a.get("event_key", ""))
-
-    # Batch-fetch event info to determine which are championship-level (type 3 or 4)
-    async def _event_type(ek: str):
-        ev = await _safe(client.get_event(ek))
-        return (ek, (ev or {}).get("event_type"))
-
-    event_types = dict(await asyncio.gather(*[_event_type(ek) for ek in candidate_events if ek]))
-    champ_events = {ek for ek, et in event_types.items() if et in (3, 4)}
-
-    hof_teams: list[dict] = []
-    impact_finalists: list[dict] = []
-
-    for t, awards in results:
-        is_hof = False
-        is_finalist = False
-        impact_years: list[int] = []
-
-        for a in awards:
-            atype = a.get("award_type")
-            ek = a.get("event_key", "")
-            yr = a.get("year", 0)
-            # HoF = Chairman's/Impact Award (type 0) at Championship Division or Finals
-            if atype == 0 and ek in champ_events:
-                is_hof = True
-                impact_years.append(yr)
-            # Impact finalist (type 69) at Championship Division or Finals
-            if atype == 69 and ek in champ_events:
-                is_finalist = True
-                impact_years.append(yr)
-
-        info = {
-            "team_number": t.get("team_number"),
-            "nickname": t.get("nickname", ""),
-            "city": t.get("city", ""),
-            "state_prov": t.get("state_prov", ""),
-            "country": t.get("country", ""),
-        }
-
-        if is_hof:
-            hof_teams.append({**info, "impact_years": sorted(set(impact_years))})
-        elif is_finalist:
-            impact_finalists.append({**info, "impact_years": sorted(set(impact_years))})
-
-    hof_teams.sort(key=lambda x: x["team_number"])
-    impact_finalists.sort(key=lambda x: x["team_number"])
-    return hof_teams, impact_finalists
-
-
 async def get_event_connections(event_key: str, all_time: bool = False) -> list[dict]:
     """Public entry point to fetch connections with configurable lookback."""
     client = get_tba_client()
     year = int(event_key[:4])
     teams = await client.get_event_teams_full(event_key)
+    if not teams:
+        return []
+    lookback = None if all_time else 3
+    return await _find_playoff_connections(teams, event_key, year, lookback_years=lookback)
+
+
+async def get_match_connections(event_key: str, team_numbers: list[int], all_time: bool = False) -> list[dict]:
+    """Fetch prior playoff connections for a specific set of teams (e.g. the 6 on the field)."""
+    client = get_tba_client()
+    year = int(event_key[:4])
+    # Build minimal team dicts from team numbers
+    team_keys = [f"frc{n}" for n in team_numbers]
+    tasks = [client.get_team(tk) for tk in team_keys]
+    raw_teams = await asyncio.gather(*tasks)
+    teams = [t for t in raw_teams if t]
     if not teams:
         return []
     lookback = None if all_time else 3

@@ -10,7 +10,7 @@ from .tba_client import get_tba_client
 
 # ── Static region data (pre-generated) ──────────────────────
 _REGION_STATS: dict | None = None
-_REGION_STATS_PATH = Path(__file__).resolve().parent.parent.parent.parent / "frontend" / "data" / "region_stats.json"
+_REGION_STATS_PATH = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "data" / "region_stats.json"
 
 
 def _load_region_stats() -> dict:

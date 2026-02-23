@@ -298,7 +298,17 @@ document.addEventListener('keydown', e => {
 const $ = id => document.getElementById(id);
 const show = (id) => $(id)?.classList.remove('hidden');
 const hide = (id) => $(id)?.classList.add('hidden');
-const loading = (on) => on ? show('loading-overlay') : hide('loading-overlay');
+
+// Breathing indicator on the banner dot instead of fullscreen overlay
+function loading(on) {
+    const dot = document.querySelector('.aeb-dot');
+    if (on) {
+        // Add the breathing/loading class to the dot
+        if (dot) dot.classList.add('aeb-dot-loading');
+    } else {
+        if (dot) dot.classList.remove('aeb-dot-loading');
+    }
+}
 
 // ── API Status Polling ────────────────────────────────────
 async function checkApiStatus() {
@@ -336,7 +346,7 @@ async function loadSeasonEvents() {
     status.textContent = 'Loading 2026 events…';
     try {
         // Load from bundled static JSON (instant, no API call)
-        const resp = await fetch('/data/season_2026.json');
+        const resp = await fetch('data/season_2026.json');
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         seasonEventsRaw = await resp.json();
         populateSeasonFilters();
@@ -442,6 +452,7 @@ function selectSeasonEvent(idx) {
     if (!ev) return;
     $('season-dropdown').classList.add('hidden');
     $('season-search').value = ev.name;
+    $('season-search').classList.add('input-loading');
     // Fill manual fields too for consistency
     const year = ev.key.substring(0, 4);
     const code = ev.key.substring(4);
@@ -555,7 +566,11 @@ async function loadEvent() {
     if (!year || !eventCode) return;
     const code = `${year}${eventCode}`;
 
-    loading(true);
+    // Show inline loading indicator on the button
+    const btn = $('btn-load-event');
+    if (btn) { btn.disabled = true; btn.dataset.origText = btn.textContent; btn.textContent = 'Loading…'; btn.classList.add('btn-loading'); }
+
+    // Reset state
     playoffData = null;
     allianceData = null;
     summaryData = null;
@@ -569,16 +584,20 @@ async function loadEvent() {
     regionData = null;
     stopBdPolling();
     stopBdListRefresh();
-    _pbpConnectionsCache = null;
-    _pbpConnectionsAlltimeCache = null;
+    _pbpConnCache = {};
     _pbpConnAllTime = false;
     renderedTabs = { playoff: false, alliance: false, playbyplay: false, breakdown: false, history: false };
 
     try {
+        // ── Phase 1: Fetch essentials, show UI immediately ──
         const [info, teams] = await Promise.all([
             API.eventInfo(code),
             API.eventTeams(code),
         ]);
+
+        // Restore the load button and season search
+        if (btn) { btn.disabled = false; btn.textContent = btn.dataset.origText || 'Load Event'; btn.classList.remove('btn-loading'); }
+        $('season-search')?.classList.remove('input-loading');
 
         currentEvent = code;
         currentEventYear = parseInt(year, 10);
@@ -655,37 +674,36 @@ async function loadEvent() {
         $('history-empty')?.classList.remove('hidden');
         $('history-container')?.classList.add('hidden');
 
-        // ── Preload lightweight data in parallel ───────────
-        const [matchData, playoffResult, allianceResult] = await Promise.all([
-            API.allMatches(code).catch(() => null),
-            API.playoffMatches(code).catch(() => null),
-            API.alliances(code).catch(() => null),
-        ]);
-
-        // Stash matches (shared by PBP + Breakdown)
-        if (matchData) {
-            pbpData = matchData;
-            bdData  = matchData;
-            autoCacheTab('matches', matchData);
-        }
-
-        // Stash playoffs
-        if (playoffResult && playoffResult.matches) {
-            playoffData = playoffResult.matches;
-        }
-
-        // Stash alliances
-        if (allianceResult) {
-            allianceData = allianceResult;
-            autoCacheTab('alliances', allianceResult);
-        }
-
         // Hide cache badge for fresh loads
         $('aeb-cache-badge')?.classList.add('hidden');
 
+        // ── Phase 2: Preload secondary data in background (non-blocking) ──
+        loading(true); // breathing dot while background data loads
+        Promise.all([
+            API.allMatches(code).catch(() => null),
+            API.playoffMatches(code).catch(() => null),
+            API.alliances(code).catch(() => null),
+        ]).then(([matchData, playoffResult, allianceResult]) => {
+            if (currentEvent !== code) return; // user switched events
+
+            if (matchData) {
+                pbpData = matchData;
+                bdData  = matchData;
+                autoCacheTab('matches', matchData);
+            }
+            if (playoffResult && playoffResult.matches) {
+                playoffData = playoffResult.matches;
+            }
+            if (allianceResult) {
+                allianceData = allianceResult;
+                autoCacheTab('alliances', allianceResult);
+            }
+        }).catch(() => {}).finally(() => loading(false));
+
     } catch (err) {
+        if (btn) { btn.disabled = false; btn.textContent = btn.dataset.origText || 'Load Event'; btn.classList.remove('btn-loading'); }
+        $('season-search')?.classList.remove('input-loading');
         alert(`Error loading event: ${err.message}`);
-    } finally {
         loading(false);
     }
 }
@@ -714,8 +732,8 @@ async function saveCurrentEvent() {
             matches:    pbpData || null,
             playoffs:   playoffData ? { matches: playoffData } : null,
             alliances:  allianceData || null,
-            connections: (_pbpConnectionsCache && !_pbpConnAllTime) ? _pbpConnectionsCache : null,
-            connections_alltime: _pbpConnectionsAlltimeCache || null,
+            connections: null,
+            connections_alltime: null,
         };
 
         // Store in browser IndexedDB (per-user, per-browser)
@@ -745,14 +763,12 @@ async function saveCurrentEvent() {
 
 /** Load an event from saved cache (instant) — used by saved events list */
 async function loadSavedEvent(eventKey) {
-    loading(true);
-
     // Reset state
     playoffData = null; allianceData = null; summaryData = null; eventInfoData = null;
     pbpData = null; pbpIndex = 0; bdData = null; bdIndex = 0; bdCache = {};
     historyData = null; regionData = null;
     stopBdPolling(); stopBdListRefresh();
-    _pbpConnectionsCache = null; _pbpConnectionsAlltimeCache = null; _pbpConnAllTime = false;
+    _pbpConnCache = {}; _pbpConnAllTime = false;
     renderedTabs = { playoff: false, alliance: false, playbyplay: false, breakdown: false, history: false };
 
     try {
@@ -868,8 +884,9 @@ async function loadSavedEvent(eventKey) {
             summaryData = data.summary;
             if (data.summary.connections) summaryData._connections_past3 = data.summary.connections;
         }
-        if (data.connections) _pbpConnectionsCache = data.connections;
-        if (data.connections_alltime) _pbpConnectionsAlltimeCache = data.connections_alltime;
+        if (data.connections) {
+            // Pre-populate cache but don't block — this is from a saved snapshot
+        }
 
         // For ongoing events, do a background refresh
         if (currentEventStatus === 'ongoing') {
@@ -878,8 +895,6 @@ async function loadSavedEvent(eventKey) {
 
     } catch (err) {
         alert(`Error loading saved event: ${err.message}`);
-    } finally {
-        loading(false);
     }
 }
 
@@ -1136,7 +1151,6 @@ async function loadSummary() {
     try {
         const data = await API.eventSummary(currentEvent);
         summaryData = data;
-        if (data.connections) summaryData._connections_past3 = data.connections;
         renderSummary(data);
         autoCacheTab('summary', data);
     } catch (err) {
@@ -1144,6 +1158,28 @@ async function loadSummary() {
         show('summary-empty');
     } finally {
         hide('summary-loading');
+    }
+}
+
+/** Lazy-load prior playoff connections for the summary tab */
+async function loadSummaryConnections() {
+    if (!currentEvent || !summaryData) return;
+    try {
+        const connections = await API.eventConnections(currentEvent, false);
+        if (!summaryData) return; // user switched events
+        summaryData.connections = connections;
+        summaryData._connections_past3 = connections;
+        const histEl = $('summary-history');
+        if (connections.length > 0) {
+            renderConnections(connections, 'all');
+            document.querySelectorAll('.conn-filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.conn-filter-btn[data-conn-filter="all"]')?.classList.add('active');
+            histEl.classList.remove('hidden');
+        } else {
+            histEl.classList.add('hidden');
+        }
+    } catch {
+        $('summary-history-list').innerHTML = '<p class="empty" style="margin:.5rem 0;font-size:.82rem">Could not load connections.</p>';
     }
 }
 
@@ -1223,14 +1259,18 @@ function renderSummary(data) {
         impactEl.classList.add('hidden');
     }
 
-    // Prior connections
+    // Prior connections — lazy-load on demand
     const histEl = $('summary-history');
-    if (data.connections.length > 0) {
+    histEl.classList.remove('hidden');
+    if (data.connections && data.connections.length > 0) {
+        // Connections came from cache — render immediately
         renderConnections(data.connections, 'all');
-        // Reset filter to "All"
         document.querySelectorAll('.conn-filter-btn').forEach(b => b.classList.remove('active'));
         document.querySelector('.conn-filter-btn[data-conn-filter="all"]')?.classList.add('active');
-        histEl.classList.remove('hidden');
+    } else if (!data.connections) {
+        // Not loaded yet — show placeholder, fetch in background
+        $('summary-history-list').innerHTML = '<p class="empty" style="margin:.5rem 0;font-size:.82rem">Loading connections…</p>';
+        loadSummaryConnections();
     } else {
         histEl.classList.add('hidden');
     }
@@ -1283,12 +1323,12 @@ async function toggleConnRange(allTime) {
         let connections;
         if (allTime) {
             // Try cached all-time data first
-            if (_pbpConnectionsAlltimeCache) {
-                connections = _pbpConnectionsAlltimeCache;
+            if (summaryData._connections_alltime) {
+                connections = summaryData._connections_alltime;
             } else {
                 list.innerHTML = '<p class="empty" style="margin:.5rem 0;font-size:.82rem">Loading connections…</p>';
                 connections = await API.eventConnections(currentEvent, true);
-                _pbpConnectionsAlltimeCache = connections;
+                summaryData._connections_alltime = connections;
             }
         } else {
             // Past 3: use the original connections that came with the summary
@@ -1418,7 +1458,6 @@ function renderTopScorers(scorers) {
 // ═══════════════════════════════════════════════════════════
 async function loadPlayoffs() {
     if (!currentEvent) return;
-    loading(true);
     try {
         const data = await API.playoffMatches(currentEvent);
         playoffData = data.matches;
@@ -1426,8 +1465,6 @@ async function loadPlayoffs() {
         renderBracketTree();
     } catch (err) {
         alert(`Error loading playoffs: ${err.message}`);
-    } finally {
-        loading(false);
     }
 }
 
@@ -1743,7 +1780,7 @@ async function loadTeam() {
     } catch (err) {
         alert(`Error loading team: ${err.message}`);
     } finally {
-        loading(false);
+        loading(false); // breathing dot only
     }
 }
 
@@ -1944,7 +1981,6 @@ function renderH2H(d) {
 // ═══════════════════════════════════════════════════════════
 async function loadPlayByPlay() {
     if (!currentEvent) return;
-    loading(true);
     try {
         const data = await API.allMatches(currentEvent);
         pbpData = data;
@@ -1955,8 +1991,6 @@ async function loadPlayByPlay() {
         renderPbpMatch();
     } catch (err) {
         alert(`Error loading matches: ${err.message}`);
-    } finally {
-        loading(false);
     }
 }
 
@@ -2048,34 +2082,33 @@ function renderPbpMatch() {
     renderPbpConnections(m);
 }
 
-let _pbpConnectionsCache = null; // cached connections for PBP
-let _pbpConnectionsAlltimeCache = null; // cached all-time connections
-let _pbpConnAllTime = false; // current range toggle state
+let _pbpConnCache = {};           // keyed by "teamA,teamB,...,teamF|allTime" → connections array
+let _pbpConnAllTime = false;      // current range toggle state
 
-async function ensurePbpConnections(forceAllTime) {
+function _connCacheKey(teamNums, allTime) {
+    return [...teamNums].sort((a, b) => a - b).join(',') + '|' + (allTime ? '1' : '0');
+}
+
+async function fetchMatchConnections(teamNums, forceAllTime) {
     const wantAllTime = forceAllTime !== undefined ? forceAllTime : _pbpConnAllTime;
-    // Reuse summaryData if already loaded and range matches
-    if (!wantAllTime && summaryData && summaryData.connections) {
-        _pbpConnectionsCache = summaryData.connections;
-        return;
-    }
-    // Use pre-loaded all-time cache from saved event if available
-    if (wantAllTime && _pbpConnectionsAlltimeCache) {
-        _pbpConnectionsCache = _pbpConnectionsAlltimeCache;
-        _pbpConnAllTime = true;
-        return;
-    }
-    if (_pbpConnectionsCache && _pbpConnAllTime === wantAllTime) return;
-    // Fetch connections
+    const key = _connCacheKey(teamNums, wantAllTime);
+    if (_pbpConnCache[key]) return _pbpConnCache[key];
     try {
-        _pbpConnectionsCache = await API.eventConnections(currentEvent, wantAllTime);
+        const result = await API.eventConnections(currentEvent, wantAllTime, teamNums);
+        _pbpConnCache[key] = result;
+        return result;
     } catch {
-        _pbpConnectionsCache = [];
+        _pbpConnCache[key] = [];
+        return [];
     }
-    _pbpConnAllTime = wantAllTime;
 }
 
 async function renderPbpConnections(match) {
+    // Collect team numbers on each side
+    const redNums = new Set(match.red.teams.map(t => t.team_number));
+    const blueNums = new Set(match.blue.teams.map(t => t.team_number));
+    const allTeamNums = [...redNums, ...blueNums];
+
     // Show loading spinner while connections are being fetched
     let container = $('pbp-connections');
     if (!container) {
@@ -2085,7 +2118,12 @@ async function renderPbpConnections(match) {
         $('pbp-footer').insertAdjacentElement('afterend', container);
     }
     const wasExpanded = container.classList.contains('pbp-conn-expanded');
-    if (!_pbpConnectionsCache) {
+
+    // Check if we already have cached data for these exact teams
+    const cacheKey = _connCacheKey(allTeamNums, _pbpConnAllTime);
+    const cached = _pbpConnCache[cacheKey];
+
+    if (!cached) {
         container.innerHTML = `
             <div class="pbp-conn-header pbp-conn-loading-header" onclick="togglePbpConnections(event)">
                 <svg class="pbp-conn-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -2098,18 +2136,17 @@ async function renderPbpConnections(match) {
         if (wasExpanded) container.classList.add('pbp-conn-expanded');
     }
 
-    await ensurePbpConnections();
-    const connections = _pbpConnectionsCache || [];
+    // Fetch connections for only the 6 teams on the field (cached if revisited)
+    const connections = await fetchMatchConnections(allTeamNums);
 
-    // Collect team numbers on each side
-    const redNums = new Set(match.red.teams.map(t => t.team_number));
-    const blueNums = new Set(match.blue.teams.map(t => t.team_number));
-    const allNums = new Set([...redNums, ...blueNums]);
+    // Guard: user may have navigated away during fetch
+    if (pbpData && pbpData.matches[pbpIndex] !== match) return;
 
     const svgPartner = '<svg class="conn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17a4 4 0 0 1-4 4H5a4 4 0 0 1-4-4 4 4 0 0 1 4-4h1"/><path d="M13 17a4 4 0 0 0 4 4h2a4 4 0 0 0 4-4 4 4 0 0 0-4-4h-1"/><path d="M7 13 5 3l4 2 3-2 3 2 4-2-2 10"/></svg>';
     const svgOpponent = '<svg class="conn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5"/><path d="m5 14 4 4"/><path d="m7 17-2 2"/></svg>';
 
     // Find relevant connections
+    const allNums = new Set(allTeamNums);
     const items = [];
     for (const c of connections) {
         if (!allNums.has(c.team_a) || !allNums.has(c.team_b)) continue;
@@ -2187,7 +2224,6 @@ function togglePbpConnections(e) {
 
 async function togglePbpConnRange(allTime) {
     _pbpConnAllTime = allTime;
-    _pbpConnectionsCache = null; // force re-fetch
     // Update toggle label styling
     const container = $('pbp-connections');
     if (container) {
@@ -2274,7 +2310,6 @@ function updateBreakdownTabState() {
 
 async function loadBreakdownTab() {
     if (!currentEvent) return;
-    loading(true);
     try {
         // Reuse the same all-matches data as PBP (or fetch if needed)
         if (!pbpData) {
@@ -2291,8 +2326,6 @@ async function loadBreakdownTab() {
         startBdListRefresh();
     } catch (err) {
         alert(`Error loading matches: ${err.message}`);
-    } finally {
-        loading(false);
     }
 }
 

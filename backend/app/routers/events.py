@@ -1,5 +1,6 @@
 """Event endpoints — info, teams with stats, summary, season list, compare."""
 from fastapi import APIRouter, HTTPException, Query
+from typing import List
 from ..services import event_service
 from ..services import summary_service
 from ..services import region_service
@@ -53,8 +54,12 @@ async def event_summary_refresh_stats(event_key: str):
 async def event_connections(
     event_key: str,
     all_time: bool = Query(False, description="Search all-time instead of last 3 years"),
+    teams: str = Query(None, description="Comma-separated team numbers to check (e.g. '254,1678,118'). If omitted, checks all teams at the event."),
 ):
     try:
+        if teams:
+            team_numbers = [int(t.strip()) for t in teams.split(",") if t.strip()]
+            return await summary_service.get_match_connections(event_key, team_numbers, all_time=all_time)
         return await summary_service.get_event_connections(event_key, all_time=all_time)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

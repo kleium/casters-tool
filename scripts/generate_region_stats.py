@@ -460,7 +460,7 @@ async def generate():
 
     print(f"  Final regions: {len(output)}")
 
-    out_path = Path(__file__).resolve().parent.parent / "frontend" / "data" / "region_stats.json"
+    out_path = Path(__file__).resolve().parent.parent / "docs" / "data" / "region_stats.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
