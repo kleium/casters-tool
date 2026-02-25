@@ -325,6 +325,15 @@ document.addEventListener('keydown', e => {
             e.key === 'ArrowLeft' ? bdPrev() : bdNext();
         }
     }
+
+    // C key — Compare Teams on Play by Play
+    if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const pbpActive = $('tab-playbyplay')?.classList.contains('active');
+        if (pbpActive && pbpData && pbpData.matches.length) {
+            e.preventDefault();
+            compareCurrentMatch();
+        }
+    }
 });
 
 
@@ -629,7 +638,22 @@ async function loadEvent(eventKey) {
     stopBdListRefresh();
     _pbpConnCache = {};
     _pbpConnAllTime = false;
+    _h2hAllTime = false;
     renderedTabs = { playoff: false, alliance: false, playbyplay: false, breakdown: false, history: false };
+
+    // Reset the connections "All Time" toggle to "Past 3 Seasons"
+    const connToggle = $('conn-alltime-toggle');
+    if (connToggle) connToggle.checked = false;
+    const connCard = $('summary-history');
+    if (connCard) {
+        const connSides = connCard.querySelectorAll('.conn-range-side');
+        if (connSides.length === 2) { connSides[0].classList.add('active'); connSides[1].classList.remove('active'); }
+    }
+    // Reset the H2H "All Time" toggle to "Past 3 Seasons"
+    const h2hToggle = $('h2h-all-time-toggle');
+    if (h2hToggle) h2hToggle.checked = false;
+    const h2hSides = document.querySelectorAll('.h2h-range-side');
+    if (h2hSides.length === 2) { h2hSides[0].classList.add('active'); h2hSides[1].classList.remove('active'); }
 
     try {
         // ── Phase 1: Fetch essentials, show UI immediately ──
@@ -816,7 +840,22 @@ async function loadSavedEvent(eventKey) {
     historyData = null; regionData = null;
     stopBdPolling(); stopBdListRefresh();
     _pbpConnCache = {}; _pbpConnAllTime = false;
+    _h2hAllTime = false;
     renderedTabs = { playoff: false, alliance: false, playbyplay: false, breakdown: false, history: false };
+
+    // Reset the connections "All Time" toggle to "Past 3 Seasons"
+    const connToggle = $('conn-alltime-toggle');
+    if (connToggle) connToggle.checked = false;
+    const connCard = $('summary-history');
+    if (connCard) {
+        const connSides = connCard.querySelectorAll('.conn-range-side');
+        if (connSides.length === 2) { connSides[0].classList.add('active'); connSides[1].classList.remove('active'); }
+    }
+    // Reset the H2H "All Time" toggle to "Past 3 Seasons"
+    const h2hToggle = $('h2h-all-time-toggle');
+    if (h2hToggle) h2hToggle.checked = false;
+    const h2hSides = document.querySelectorAll('.h2h-range-side');
+    if (h2hSides.length === 2) { h2hSides[0].classList.add('active'); h2hSides[1].classList.remove('active'); }
 
     try {
         // Load from browser IndexedDB
@@ -1373,11 +1412,14 @@ function applyConnFilters() {
 
 async function toggleConnRange(allTime) {
     if (!currentEvent || !summaryData) return;
-    // Update toggle label styling
-    const sides = document.querySelectorAll('.conn-range-side');
-    if (sides.length === 2) {
-        sides[0].classList.toggle('active', !allTime);
-        sides[1].classList.toggle('active', allTime);
+    // Update toggle label styling (scoped to the summary connections card only)
+    const card = $('summary-history');
+    if (card) {
+        const sides = card.querySelectorAll('.conn-range-side');
+        if (sides.length === 2) {
+            sides[0].classList.toggle('active', !allTime);
+            sides[1].classList.toggle('active', allTime);
+        }
     }
     const list = $('summary-history-list');
 
