@@ -3,10 +3,18 @@ from __future__ import annotations
 
 import asyncio
 import json
+import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 
 from .tba_client import get_tba_client
+
+
+def _normalize_name(s: str) -> str:
+    """Normalize a name for comparison: lowercase, strip combining marks (İ→i)."""
+    decomposed = unicodedata.normalize("NFKD", s.lower().strip())
+    return "".join(c for c in decomposed if not unicodedata.combining(c))
+
 
 # ── Static region data (pre-generated) ──────────────────────
 _REGION_STATS: dict | None = None
@@ -133,7 +141,7 @@ async def get_event_history(event_key: str) -> dict:
     event_code = event.get("first_event_code", "") or event_key[4:]
     event_country = event.get("country", "") or ""
     event_name = event.get("name", event_key)
-    event_short = (event.get("short_name") or "").lower().strip()
+    event_short = _normalize_name(event.get("short_name") or "")
     current_year = int(event_key[:4])
 
     # Determine the full set of codes that belong to this event's lineage
@@ -172,7 +180,7 @@ async def get_event_history(event_key: str) -> dict:
     if not used_alias_map and event_short and len(all_instances) > 1:
         filtered = []
         for ev in all_instances:
-            ev_short = (ev.get("short_name") or "").lower().strip()
+            ev_short = _normalize_name(ev.get("short_name") or "")
             if ev_short == event_short:
                 filtered.append(ev)
         # Only use the filtered list if it kept at least the current event
