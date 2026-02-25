@@ -3404,8 +3404,13 @@ function closeCompare() {
 
 // Close on Escape
 document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('lookup-overlay')?.classList.contains('hidden')) {
+        closeLookup();
+        return;
+    }
     if (e.key === 'Escape' && !$('compare-overlay')?.classList.contains('hidden')) {
         closeCompare();
+        return;
     }
 });
 
@@ -3487,6 +3492,9 @@ function updateCompareBar() {
     if (n > 0) {
         show('compare-bar');
         $('compare-bar-count').textContent = `${n} team${n > 1 ? 's' : ''} selected`;
+        // Show Lookup button only when exactly 1 team is selected
+        const lkBtn = $('compare-bar-lookup');
+        if (lkBtn) { n === 1 ? show('compare-bar-lookup') : hide('compare-bar-lookup'); }
     } else {
         hide('compare-bar');
     }
@@ -3509,6 +3517,59 @@ async function launchCompareFromSelection() {
     const keys = [...compareSelection];
     await showComparison(keys, {});
 }
+
+// ── Team lookup from rankings selection ────────────────────
+function openLookup() {
+    show('lookup-overlay');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLookup() {
+    hide('lookup-overlay');
+    document.body.style.overflow = '';
+}
+
+async function launchLookupFromSelection() {
+    if (compareSelection.size !== 1) return;
+    const teamKey = [...compareSelection][0];
+    const num = parseInt(teamKey.replace('frc', ''), 10);
+    if (!num) return;
+
+    openLookup();
+    $('lookup-title').textContent = `Team Lookup — ${num}`;
+    $('lookup-body').innerHTML = '<p class="loading-msg">Loading team data\u2026</p>';
+
+    try {
+        const year = currentEventYear || null;
+        const data = await API.teamStats(num, year);
+        $('lookup-body').innerHTML = renderTeamStats(data);
+    } catch (err) {
+        $('lookup-body').innerHTML = `<p class="empty">Error: ${err.message}</p>`;
+    }
+}
+
+// ── Keyboard shortcuts on Rankings tab ─────────────────────
+document.addEventListener('keydown', e => {
+    // Skip if user is typing in an input / textarea / select
+    if (e.target.matches('input, textarea, select')) return;
+    // Skip if any overlay is open
+    if (!$('compare-overlay')?.classList.contains('hidden')) return;
+    if (!$('lookup-overlay')?.classList.contains('hidden')) return;
+    // Only active on the Rankings tab
+    if (!$('tab-rankings')?.classList.contains('active')) return;
+    if (compareSelection.size === 0) return;
+
+    if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        launchCompareFromSelection();
+    }
+    if ((e.key === 'l' || e.key === 'L') && !e.ctrlKey && !e.metaKey) {
+        if (compareSelection.size === 1) {
+            e.preventDefault();
+            launchLookupFromSelection();
+        }
+    }
+});
 
 // ── Core comparison renderer ───────────────────────────────
 async function showComparison(teamKeys, opts = {}) {
