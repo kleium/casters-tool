@@ -1968,13 +1968,28 @@ function renderTeamStats(d) {
         </table>`;
     }
 
+    // ── HoF & Einstein Winner badges ──
+    let prestigeBadges = '';
+    if (d.is_hof) {
+        const hofYears = d.hof_awards.map(a => a.year).join(', ');
+        prestigeBadges += `<span class="team-badge hof-badge has-tooltip">🏛️ Hall of Fame<span class="custom-tooltip">Chairman's / FIRST Impact Award Winner at Championship (${hofYears})</span></span>`;
+    }
+    if (d.is_einstein_winner) {
+        const einsteinYears = d.einstein_wins.map(a => a.year).join(', ');
+        prestigeBadges += `<span class="team-badge einstein-badge has-tooltip">⭐ Einstein Winner<span class="custom-tooltip">FIRST Championship Winner (${einsteinYears})</span></span>`;
+    }
+    const badgesRow = prestigeBadges
+        ? `<div class="team-prestige-badges">${prestigeBadges}</div>`
+        : '';
+
     return `
-    <div class="team-card">
+    <div class="team-card${d.is_hof ? ' team-card-hof' : ''}${d.is_einstein_winner ? ' team-card-einstein' : ''}">
         <div class="team-header">
             <div class="team-header-top">
                 ${avatarHtml}
                 <div class="team-header-text">
                     <h2>${d.team_number} — ${d.nickname}</h2>
+                    ${badgesRow}
                     <p>${[d.city, d.state_prov, d.country].filter(Boolean).join(', ')}</p>
                     <p class="muted">Rookie: ${d.rookie_year || '?'} &nbsp;|&nbsp; ${d.years_active} season${d.years_active !== 1 ? 's' : ''} &nbsp;|&nbsp; Viewing: ${d.year}</p>
                 </div>

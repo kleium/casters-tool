@@ -2026,6 +2026,55 @@ input.input-loading {
     display: contents;
 }
 
+/* ── Team prestige badges (HoF / Einstein) ─────────────── */
+.team-prestige-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    margin: .25rem 0 .15rem;
+}
+.team-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .22rem .7rem;
+    border-radius: 999px;
+    font-size: .73rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    cursor: default;
+    transition: var(--transition);
+}
+.hof-badge {
+    background: linear-gradient(135deg, rgba(251, 191, 36, .13), rgba(245, 158, 11, .13));
+    border: 1px solid rgba(251, 191, 36, .35);
+    color: #f5b731;
+}
+.hof-badge:hover {
+    border-color: rgba(251, 191, 36, .55);
+    background: linear-gradient(135deg, rgba(251, 191, 36, .2), rgba(245, 158, 11, .2));
+}
+.einstein-badge {
+    background: linear-gradient(135deg, rgba(168, 85, 247, .13), rgba(139, 92, 246, .13));
+    border: 1px solid rgba(168, 85, 247, .35);
+    color: #c084fc;
+}
+.einstein-badge:hover {
+    border-color: rgba(168, 85, 247, .55);
+    background: linear-gradient(135deg, rgba(168, 85, 247, .2), rgba(139, 92, 246, .2));
+}
+
+/* Accent top-bar glow for prestige teams */
+.team-card-hof::before {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b);
+}
+.team-card-einstein::before {
+    background: linear-gradient(90deg, #8b5cf6, #a855f7, #8b5cf6);
+}
+.team-card-hof.team-card-einstein::before {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24, #a855f7, #8b5cf6);
+}
+
 /* ═══ HEAD TO HEAD ═════════════════════════════════════════ */
 .h2h-section {
     margin-top: 2.5rem;

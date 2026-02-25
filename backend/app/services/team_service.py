@@ -176,6 +176,31 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
                     blue_banners.append(entry)
             awards_by_year.setdefault(aw_year, []).append(entry)
 
+    # ── Detect HoF (Chairman's/FIA at Championship) & Einstein Winners ──
+    # Chairman's Award (0) and FIRST Impact Award (69) at Championship (event_type 4)
+    CHAIRMANS_TYPES = {0, 69}
+    hof_awards = []
+    einstein_wins = []
+    if all_awards:
+        for aw in all_awards:
+            aw_type = aw.get("award_type")
+            aw_event = aw.get("event_key", "")
+            ev_type = event_type_map.get(aw_event, -1)
+            # HoF = Chairman's / FIRST Impact at Championship Finals (Einstein)
+            if aw_type in CHAIRMANS_TYPES and ev_type == 4:
+                hof_awards.append({
+                    "year": aw.get("year"),
+                    "event_key": aw_event,
+                    "event_name": event_name_map.get(aw_event, aw_event),
+                })
+            # Einstein Winner = Event Winner (type 1) at Championship Finals
+            if aw_type == 1 and ev_type == 4:
+                einstein_wins.append({
+                    "year": aw.get("year"),
+                    "event_key": aw_event,
+                    "event_name": event_name_map.get(aw_event, aw_event),
+                })
+
     # Build a flat sorted list (newest first) for the response
     awards_list = []
     for y in sorted(awards_by_year.keys(), reverse=True):
@@ -200,6 +225,10 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
         "blue_banners": blue_banners,
         "blue_banner_count": len(blue_banners),
         "awards": awards_list,
+        "is_hof": len(hof_awards) > 0,
+        "hof_awards": hof_awards,
+        "einstein_wins": einstein_wins,
+        "is_einstein_winner": len(einstein_wins) > 0,
     }
 
     # If no explicit year was given, compute per-season achievements
