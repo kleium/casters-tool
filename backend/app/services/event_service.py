@@ -209,6 +209,7 @@ async def get_event_teams_with_stats(event_key: str) -> list[dict]:
                 "team_key": tk,
                 "team_number": t["team_number"],
                 "nickname": t.get("nickname", ""),
+                "school_name": t.get("school_name", ""),
                 "city": t.get("city", ""),
                 "state_prov": t.get("state_prov", ""),
                 "country": t.get("country", ""),

@@ -61,6 +61,7 @@ let pbpIndex     = 0;      // current match index
 let highlightForeign = false; // settings: highlight international teams
 let showOffseason = false;     // settings: show offseason events
 let rankingsCompact = false;      // toggle: compressed rankings view
+let rankingsShowSchool = false;   // toggle: show school/org column
 let allianceShowDpr = false;      // toggle: show DPR/CCWM in alliance cards
 let allianceShowPlayoff = false;  // toggle: show playoff ribbons/status
 let allianceShowAvatars = true;  // toggle: show team avatars
@@ -1083,6 +1084,10 @@ function sortTeamsData() {
                 va = [a.city, a.state_prov, a.country].filter(Boolean).join(', ').toLowerCase();
                 vb = [b.city, b.state_prov, b.country].filter(Boolean).join(', ').toLowerCase();
                 return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+            case 'school_name':
+                va = (a.school_name || '').toLowerCase();
+                vb = (b.school_name || '').toLowerCase();
+                return asc ? va.localeCompare(vb) : vb.localeCompare(va);
             case 'record':
                 va = a.wins - a.losses;
                 vb = b.wins - b.losses;
@@ -1107,14 +1112,23 @@ function toggleRankingsCompact(on) {
     }
 }
 
+function toggleRankingsSchool(on) {
+    rankingsShowSchool = on;
+    if (teamsData) {
+        $('event-teams').innerHTML = renderTeamTable(teamsData, teamsSortCol, teamsSortAsc);
+    }
+}
+
 function renderTeamTable(teams, sortCol, asc) {
     const arrow = asc ? ' ▲' : ' ▼';
     const th = (key, label) =>
         `<th class="sortable-th col-${key}${sortCol === key ? ' sorted' : ''}" onclick="sortTeams('${key}')">${label}${sortCol === key ? arrow : ''}</th>`;
     const compact = rankingsCompact;
 
+    const school = rankingsShowSchool;
     const toolbar = `<div class="rankings-toolbar">
         <label class="toggle-label"><input type="checkbox" ${compact ? 'checked' : ''} onchange="toggleRankingsCompact(this.checked)"> Compact</label>
+        <label class="toggle-label"><input type="checkbox" ${school ? 'checked' : ''} onchange="toggleRankingsSchool(this.checked)"> School / Org</label>
     </div>`;
 
     return toolbar + `
@@ -1127,6 +1141,7 @@ function renderTeamTable(teams, sortCol, asc) {
                 ${th('team_number', 'Team')}
                 ${th('nickname', 'Name')}
                 ${compact ? '' : th('location', 'Location')}
+                ${school ? th('school_name', 'School / Org') : ''}
                 ${th('record', 'Record')}
                 ${th('opr', 'OPR')}
                 ${compact ? '' : th('dpr', 'DPR')}
@@ -1150,6 +1165,7 @@ function renderTeamTable(teams, sortCol, asc) {
                 <td class="team-num">${t.team_number}</td>
                 <td>${name}</td>
                 ${compact ? '' : `<td class="location">${loc}</td>`}
+                ${school ? `<td class="location">${t.school_name || ''}</td>` : ''}
                 <td class="stat">${t.wins}-${t.losses}-${t.ties}</td>
                 <td class="stat stat-opr">${t.opr}</td>
                 ${compact ? '' : `<td class="stat stat-dpr">${t.dpr}</td>`}
