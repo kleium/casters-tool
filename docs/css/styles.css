@@ -349,7 +349,7 @@ header h1 {
     outline-offset: 1px;
     border-radius: 4px;
 }
-tr.foreign-team-row {
+.foreign-team-row {
     background: rgba(250, 204, 21, .10) !important;
     box-shadow: inset 3px 0 0 var(--yellow);
 }
@@ -1680,10 +1680,7 @@ input.input-loading {
     background: var(--primary-soft);
 }
 
-.alliance-team-row.intl-highlight {
-    background: rgba(250, 204, 21, .10);
-    box-shadow: inset 3px 0 0 var(--yellow);
-}
+
 
 .team-role {
     font-size: .68rem;
