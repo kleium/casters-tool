@@ -1659,87 +1659,58 @@ function renderBracketTree() {
     };
 
     $('playoff-bracket').innerHTML = `
-        <div class="bracket-tree">
-            <!-- ── Upper Bracket ─────────────────────────── -->
-            <div class="bracket-section bracket-upper-section">
-                <div class="bracket-section-label upper-label">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-                    Upper Bracket
-                </div>
-                <div class="bracket-flow">
-                    <div class="bkt-round">
-                        <div class="bkt-pair">
-                            ${slot(1, 'M1')}
-                            ${slot(2, 'M2')}
-                        </div>
-                        <div class="bkt-pair">
-                            ${slot(3, 'M3')}
-                            ${slot(4, 'M4')}
-                        </div>
-                    </div>
-                    <div class="bkt-connectors bkt-conn-4to2">
-                        <div class="bkt-conn-pair"><div class="bkt-conn-top"></div><div class="bkt-conn-bot"></div></div>
-                        <div class="bkt-conn-pair"><div class="bkt-conn-top"></div><div class="bkt-conn-bot"></div></div>
-                    </div>
-                    <div class="bkt-round">
-                        <div class="bkt-pair">
-                            ${slot(7, 'M7')}
-                            ${slot(8, 'M8')}
-                        </div>
-                    </div>
-                    <div class="bkt-connectors bkt-conn-2to1">
-                        <div class="bkt-conn-pair"><div class="bkt-conn-top"></div><div class="bkt-conn-bot"></div></div>
-                    </div>
-                    <div class="bkt-round">
-                        ${slot(11, 'M11')}
-                    </div>
-                </div>
+        <div class="bracket-grid">
+            <!-- ── Round headers ─────────────────── -->
+            <div class="bg-corner"></div>
+            <div class="bg-rnd-hdr">Round 1</div>
+            <div class="bg-rnd-hdr">Round 2</div>
+            <div class="bg-rnd-hdr">Round 3</div>
+            <div class="bg-rnd-hdr">Round 4</div>
+            <div class="bg-rnd-hdr">Round 5</div>
+            <div class="bg-rnd-hdr bg-rnd-hdr-final">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Finals
             </div>
 
-            <!-- ── Grand Final ─────────────────────────── -->
-            <div class="bracket-section bracket-final-section">
-                <div class="bracket-section-label final-label">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    Grand Final
-                </div>
-                <div class="bracket-flow bracket-flow-single">
-                    ${slot('f', 'Final')}
-                </div>
+            <!-- ── Upper bracket row ─────────────── -->
+            <div class="bg-side-label bg-upper-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                Upper
+            </div>
+            <div class="bg-cell bg-cell-upper">
+                ${slot(1, 'M1')}${slot(2, 'M2')}${slot(3, 'M3')}${slot(4, 'M4')}
+            </div>
+            <div class="bg-cell bg-cell-upper">
+                ${slot(7, 'M7')}${slot(8, 'M8')}
+            </div>
+            <div class="bg-cell bg-cell-upper bg-cell-empty"></div>
+            <div class="bg-cell bg-cell-upper">
+                ${slot(11, 'M11')}
+            </div>
+            <div class="bg-cell bg-cell-upper bg-cell-empty"></div>
+            <div class="bg-cell bg-cell-final">
+                ${slot('f', 'Final')}
             </div>
 
-            <!-- ── Lower Bracket ─────────────────────────── -->
-            <div class="bracket-section bracket-lower-section">
-                <div class="bracket-section-label lower-label">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                    Lower Bracket
-                </div>
-                <div class="bracket-flow">
-                    <div class="bkt-round">
-                        ${slot(5, 'M5')}
-                        ${slot(6, 'M6')}
-                    </div>
-                    <div class="bkt-connectors bkt-conn-straight">
-                        <div class="bkt-conn-horiz"></div>
-                        <div class="bkt-conn-horiz"></div>
-                    </div>
-                    <div class="bkt-round">
-                        ${slot(9, 'M9')}
-                        ${slot(10, 'M10')}
-                    </div>
-                    <div class="bkt-connectors bkt-conn-2to1">
-                        <div class="bkt-conn-pair"><div class="bkt-conn-top"></div><div class="bkt-conn-bot"></div></div>
-                    </div>
-                    <div class="bkt-round">
-                        ${slot(12, 'M12')}
-                    </div>
-                    <div class="bkt-connectors bkt-conn-straight bkt-conn-single">
-                        <div class="bkt-conn-horiz"></div>
-                    </div>
-                    <div class="bkt-round">
-                        ${slot(13, 'M13')}
-                    </div>
-                </div>
+            <!-- ── Lower bracket row ─────────────── -->
+            <div class="bg-side-label bg-lower-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                Lower
             </div>
+            <div class="bg-cell bg-cell-lower bg-cell-empty"></div>
+            <div class="bg-cell bg-cell-lower">
+                ${slot(5, 'M5')}${slot(6, 'M6')}
+            </div>
+            <div class="bg-cell bg-cell-lower">
+                ${slot(9, 'M9')}${slot(10, 'M10')}
+            </div>
+            <div class="bg-cell bg-cell-lower">
+                ${slot(12, 'M12')}
+            </div>
+            <div class="bg-cell bg-cell-lower">
+                ${slot(13, 'M13')}
+            </div>
+            <!-- Finals column already spans into this row -->
         </div>
     `;
 }
@@ -1968,11 +1939,15 @@ function renderTeamStats(d) {
         </table>`;
     }
 
-    // ── HoF & Einstein Winner badges ──
+    // ── HoF, Impact Finalist & Einstein Winner badges ──
     let prestigeBadges = '';
     if (d.is_hof) {
         const hofYears = d.hof_awards.map(a => a.year).join(', ');
         prestigeBadges += `<span class="team-badge hof-badge has-tooltip">🏛️ Hall of Fame<span class="custom-tooltip">Chairman's / FIRST Impact Award Winner at Championship (${hofYears})</span></span>`;
+    }
+    if (d.is_impact_finalist) {
+        const impactYears = d.impact_finalist_awards.map(a => a.year).join(', ');
+        prestigeBadges += `<span class="team-badge impact-badge has-tooltip">🏆 Impact Finalist<span class="custom-tooltip">FIRST Impact Award Finalist at Championship (${impactYears})</span></span>`;
     }
     if (d.is_einstein_winner) {
         const einsteinYears = d.einstein_wins.map(a => a.year).join(', ');

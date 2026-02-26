@@ -1246,76 +1246,112 @@ input.input-loading {
 
 .winner-text { color: var(--green); font-weight: 700; }
 
-/* ═══ BRACKET TREE ═════════════════════════════════════════ */
-.bracket-tree {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
+/* ═══ BRACKET GRID ═════════════════════════════════════════ */
+/*  7 columns: label | R1 | R2 | R3 | R4 | R5 | Finals
+    3 rows:    header | upper | lower                        */
+.bracket-grid {
+    display: grid;
+    grid-template-columns: 36px repeat(6, 280px);
+    grid-template-rows: auto 1fr 1fr;
+    gap: 0;
+    overflow-x: auto;
+    width: max-content;
+    min-width: 100%;
 }
 
-/* ── Section labels ─────────────────────────────────────── */
-.bracket-section-label {
+/* ── Round header cells (row 1) ─────────────────────────── */
+.bg-corner {
+    grid-row: 1; grid-column: 1;
+    background: var(--card);
+    border-bottom: 2px solid var(--border);
+    border-right: 1px solid var(--border);
+}
+.bg-rnd-hdr {
     display: flex;
     align-items: center;
-    gap: .5rem;
-    font-size: .82rem;
+    justify-content: center;
+    gap: .3rem;
+    font-size: .72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .06em;
-    margin-bottom: 1rem;
-    padding: .4rem .8rem;
-    border-radius: 6px;
-    width: fit-content;
+    color: var(--text-muted);
+    padding: .5rem .4rem;
+    background: var(--card);
+    border-bottom: 2px solid var(--border);
+    border-right: 1px solid rgba(255,255,255,.04);
 }
-.upper-label {
-    color: #818cf8;
-    background: rgba(99, 102, 241, .1);
-    border: 1px solid rgba(99, 102, 241, .2);
-}
-.lower-label {
-    color: #fbbf24;
-    background: rgba(245, 158, 11, .1);
-    border: 1px solid rgba(245, 158, 11, .2);
-}
-.final-label {
+.bg-rnd-hdr-final {
     color: #34d399;
-    background: rgba(16, 185, 129, .1);
-    border: 1px solid rgba(16, 185, 129, .2);
+    background: rgba(16, 185, 129, .04);
 }
 
-/* ── Bracket flow: rounds flow left → right ─────────────── */
-.bracket-flow {
+/* ── Side labels (col 1) ────────────────────────────────── */
+.bg-side-label {
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
     display: flex;
-    align-items: stretch;
-    gap: 0;
+    align-items: center;
+    justify-content: center;
+    gap: .3rem;
+    font-size: .62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: .4rem .15rem;
+    border-right: 1px solid var(--border);
 }
-.bracket-upper-section .bracket-flow {
-    min-height: 420px;
+.bg-side-label svg { transform: rotate(90deg); }
+.bg-upper-label {
+    grid-row: 2; grid-column: 1;
+    color: #818cf8;
+    background: rgba(99, 102, 241, .04);
+    border-bottom: 1px solid var(--border);
 }
-.bracket-lower-section .bracket-flow {
-    min-height: 210px;
-}
-.bracket-flow-single {
-    min-height: auto !important;
+.bg-lower-label {
+    grid-row: 3; grid-column: 1;
+    color: #fbbf24;
+    background: rgba(245, 158, 11, .04);
 }
 
-/* ── Round column ────────────────────────────────────────── */
-.bkt-round {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    min-width: 220px;
-    gap: .5rem;
-    padding: .5rem 0;
-}
-
-/* ── Pair wrapper (groups two slots that merge) ──────────── */
-.bkt-pair {
+/* ── Grid cells (match containers) ──────────────────────── */
+.bg-cell {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    flex: 1;
-    gap: .5rem;
+    gap: .4rem;
+    padding: .5rem .4rem;
+    border-right: 1px solid rgba(255,255,255,.04);
+}
+.bg-cell-upper {
+    border-bottom: 1px solid var(--border);
+}
+.bg-cell-empty {
+    opacity: .3;
+}
+
+/* ── Finals cell (spans upper + lower rows) ──────────────── */
+.bg-cell-final {
+    grid-column: 7;
+    grid-row: 2 / 4;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    gap: .4rem;
+    padding: .6rem .6rem;
+    background: rgba(16, 185, 129, .02);
+    border-left: 2px solid rgba(52, 211, 153, .2);
+}
+.bg-cell-final .bkt-slot {
+    border-color: rgba(52, 211, 153, .25);
+    box-shadow: 0 0 12px rgba(52, 211, 153, .06);
+}
+.bg-cell-final .bkt-teams {
+    white-space: normal;
+}
+.bg-cell-final .bkt-row {
+    flex-wrap: wrap;
 }
 
 /* ── Match slot ──────────────────────────────────────────── */
@@ -1423,6 +1459,11 @@ input.input-loading {
     font-size: .92rem;
     white-space: nowrap;
     position: relative;
+    min-width: 0;
+}
+.bracket-gf .bkt-teams {
+    white-space: normal;
+    word-break: break-word;
 }
 .bkt-team-num {
     position: relative;
@@ -1441,112 +1482,33 @@ input.input-loading {
 .bkt-row.bkt-red .bkt-score { color: var(--red); }
 .bkt-row.bkt-blue .bkt-score { color: var(--blue); }
 
-/* ═══ CONNECTOR LINES between rounds ═════════════════════ */
-.bkt-connectors {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    width: 28px;
-    min-width: 28px;
-    position: relative;
-}
-
-/* Merge connector: 2 inputs → 1 output (the "]" bracket) */
-.bkt-conn-pair {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-}
-.bkt-conn-top, .bkt-conn-bot {
-    flex: 1;
-    position: relative;
-}
-.bkt-conn-top::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 50%;
-    bottom: 0;
-    border-top: 2px solid var(--border);
-    border-right: 2px solid var(--border);
-    border-top-right-radius: 4px;
-}
-.bkt-conn-bot::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 50%;
-    bottom: 50%;
-    border-bottom: 2px solid var(--border);
-    border-right: 2px solid var(--border);
-    border-bottom-right-radius: 4px;
-}
-/* Output horizontal line from merge point */
-.bkt-conn-pair::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    right: 0;
-    height: 0;
-    border-top: 2px solid var(--border);
-}
-
-/* Straight connector: 1 → 1 (horizontal lines) */
-.bkt-conn-straight {
-    justify-content: space-around;
-}
-.bkt-conn-horiz {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    position: relative;
-}
-.bkt-conn-horiz::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 0;
-    border-top: 2px solid var(--border);
-}
-.bkt-conn-single {
-    justify-content: center;
-}
-.bkt-conn-single .bkt-conn-horiz {
-    flex: none;
-    height: 2px;
-    width: 100%;
-}
-
-/* ═══ Responsive bracket ════════════════════════════════════ */
+/* ═══ Responsive bracket grid ══════════════════════════════ */
 @media (max-width: 900px) {
-    .bracket-flow {
-        flex-direction: column;
-        align-items: stretch;
-        gap: .5rem;
-        min-height: auto;
+    .bracket-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
     }
-    .bkt-round {
-        flex-direction: row;
-        flex-wrap: wrap;
-        min-width: auto;
-        gap: .5rem;
+    .bg-corner { display: none; }
+    .bg-rnd-hdr { display: none; }
+    .bg-side-label {
+        writing-mode: horizontal-tb;
+        transform: none;
+        grid-column: 1;
+        border-right: none;
+        border-bottom: 2px solid var(--border);
+        padding: .4rem .8rem;
     }
-    .bkt-pair {
-        flex-direction: row;
-        flex-wrap: wrap;
+    .bg-side-label svg { transform: none; }
+    .bg-cell, .bg-cell-final {
+        grid-column: 1;
+        border-right: none;
+        border-left: none;
+    }
+    .bg-cell-final {
+        grid-row: auto !important;
     }
     .bkt-slot {
-        flex: 1;
         min-width: 160px;
-    }
-    .bkt-connectors {
-        display: none;
     }
 }
 
@@ -2062,6 +2024,15 @@ input.input-loading {
 .einstein-badge:hover {
     border-color: rgba(168, 85, 247, .55);
     background: linear-gradient(135deg, rgba(168, 85, 247, .2), rgba(139, 92, 246, .2));
+}
+.impact-badge {
+    background: linear-gradient(135deg, rgba(59, 130, 246, .13), rgba(37, 99, 235, .13));
+    border: 1px solid rgba(59, 130, 246, .35);
+    color: #60a5fa;
+}
+.impact-badge:hover {
+    border-color: rgba(59, 130, 246, .55);
+    background: linear-gradient(135deg, rgba(59, 130, 246, .2), rgba(37, 99, 235, .2));
 }
 
 /* Accent top-bar glow for prestige teams */

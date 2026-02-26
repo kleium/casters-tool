@@ -176,19 +176,27 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
                     blue_banners.append(entry)
             awards_by_year.setdefault(aw_year, []).append(entry)
 
-    # ── Detect HoF (Chairman's/FIA at Championship) & Einstein Winners ──
-    # Chairman's Award (0) and FIRST Impact Award (69) at Championship (event_type 4)
-    CHAIRMANS_TYPES = {0, 69}
+    # ── Detect HoF (Chairman's/Impact winner at CMP) & Einstein Winners ──
+    # Award type 0 = Chairman's / FIRST Impact Award *winner* → HoF
+    # Award type 69 = FIRST Impact Award *finalist* → NOT HoF
     hof_awards = []
+    impact_finalist_awards = []
     einstein_wins = []
     if all_awards:
         for aw in all_awards:
             aw_type = aw.get("award_type")
             aw_event = aw.get("event_key", "")
             ev_type = event_type_map.get(aw_event, -1)
-            # HoF = Chairman's / FIRST Impact at Championship Finals (Einstein)
-            if aw_type in CHAIRMANS_TYPES and ev_type == 4:
+            # HoF = Chairman's / FIRST Impact *winner* at Championship Finals
+            if aw_type == 0 and ev_type == 4:
                 hof_awards.append({
+                    "year": aw.get("year"),
+                    "event_key": aw_event,
+                    "event_name": event_name_map.get(aw_event, aw_event),
+                })
+            # Impact finalist (type 69) at Championship Finals
+            if aw_type == 69 and ev_type == 4:
+                impact_finalist_awards.append({
                     "year": aw.get("year"),
                     "event_key": aw_event,
                     "event_name": event_name_map.get(aw_event, aw_event),
@@ -227,6 +235,8 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
         "awards": awards_list,
         "is_hof": len(hof_awards) > 0,
         "hof_awards": hof_awards,
+        "is_impact_finalist": len(impact_finalist_awards) > 0,
+        "impact_finalist_awards": impact_finalist_awards,
         "einstein_wins": einstein_wins,
         "is_einstein_winner": len(einstein_wins) > 0,
     }
