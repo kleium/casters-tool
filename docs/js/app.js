@@ -1720,7 +1720,73 @@ function renderBracketTree() {
             </div>
             <!-- Finals column already spans into this row -->
         </div>
+        ${_buildMobileBracket(slot)}
     `;
+}
+
+/* ── Mobile bracket: vertical stacked rounds ────────────── */
+function _buildMobileBracket(slot) {
+    const rounds = [
+        {
+            label: 'Round 1',
+            tag: 'upper', tagLabel: 'Upper',
+            matches: [[1,'M1'],[2,'M2'],[3,'M3'],[4,'M4']],
+        },
+        {
+            label: 'Round 2',
+            tag: 'mixed',
+            sections: [
+                { tag: 'upper', tagLabel: 'Upper', matches: [[7,'M7'],[8,'M8']] },
+                { tag: 'lower', tagLabel: 'Lower', matches: [[5,'M5'],[6,'M6']] },
+            ],
+        },
+        {
+            label: 'Round 3',
+            tag: 'lower', tagLabel: 'Lower',
+            matches: [[9,'M9'],[10,'M10']],
+        },
+        {
+            label: 'Round 4',
+            tag: 'mixed',
+            sections: [
+                { tag: 'upper', tagLabel: 'Upper', matches: [[11,'M11']] },
+                { tag: 'lower', tagLabel: 'Lower', matches: [[12,'M12']] },
+            ],
+        },
+        {
+            label: 'Round 5',
+            tag: 'lower', tagLabel: 'Lower',
+            matches: [[13,'M13']],
+        },
+        {
+            label: 'Finals',
+            tag: 'final',
+            matches: [['f','Final']],
+            isFinal: true,
+        },
+    ];
+
+    const chevron = '<svg class="bkt-m-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>';
+
+    return `<div class="bracket-mobile">${rounds.map(r => {
+        const hdrCls = r.isFinal ? ' bkt-m-round-hdr-final' : '';
+        let bodyHtml = '';
+        if (r.sections) {
+            bodyHtml = r.sections.map(s => {
+                const tag = `<span class="bkt-m-bracket-tag bkt-m-tag-${s.tag}">${s.tagLabel}</span>`;
+                return tag + s.matches.map(([set, lbl]) => slot(set, lbl)).join('');
+            }).join('');
+        } else {
+            bodyHtml = r.matches.map(([set, lbl]) => slot(set, lbl)).join('');
+        }
+        return `<div class="bkt-m-round">
+            <div class="bkt-m-round-hdr${hdrCls}" onclick="this.parentElement.classList.toggle('collapsed')">
+                <span>${r.label}</span>
+                ${chevron}
+            </div>
+            <div class="bkt-m-round-body">${bodyHtml}</div>
+        </div>`;
+    }).join('')}</div>`;
 }
 
 

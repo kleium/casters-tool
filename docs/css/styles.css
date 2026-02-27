@@ -1508,6 +1508,100 @@ input.input-loading {
     }
 }
 
+/* ── Mobile bracket (stacked vertical layout) ──────────── */
+.bracket-mobile {
+    display: none;
+    flex-direction: column;
+    gap: .5rem;
+}
+.bkt-m-round {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    overflow: hidden;
+}
+.bkt-m-round-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .55rem .75rem;
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-muted);
+    background: linear-gradient(180deg, rgba(99,102,241,.06) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.bkt-m-round-hdr .bkt-m-chevron {
+    transition: transform .2s ease;
+    opacity: .5;
+}
+.bkt-m-round.collapsed .bkt-m-chevron {
+    transform: rotate(-90deg);
+}
+.bkt-m-round.collapsed .bkt-m-round-body {
+    display: none;
+}
+.bkt-m-round-hdr-final {
+    color: #34d399;
+    background: linear-gradient(180deg, rgba(16,185,129,.08) 0%, transparent 100%);
+}
+.bkt-m-bracket-tag {
+    font-size: .65rem;
+    padding: .1rem .35rem;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+.bkt-m-tag-upper {
+    color: #818cf8;
+    background: rgba(99,102,241,.12);
+}
+.bkt-m-tag-lower {
+    color: #fbbf24;
+    background: rgba(245,158,11,.12);
+}
+.bkt-m-round-body {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    padding: .4rem;
+}
+.bkt-m-round-body .bkt-slot {
+    margin: 0;
+}
+.bkt-m-round-body .bkt-teams {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.bkt-m-round-body .bkt-row {
+    padding: .4rem .6rem;
+    gap: .45rem;
+    font-size: .88rem;
+}
+.bkt-m-round-body .bkt-score {
+    font-size: .92rem;
+    min-width: 28px;
+}
+.bkt-m-round-body .bkt-slot-header {
+    padding: .3rem .6rem;
+    font-size: .78rem;
+}
+.bkt-m-round-body .bkt-slot-desc {
+    padding: .2rem .6rem .25rem;
+    font-size: .72rem;
+}
+
+@media (max-width: 768px) {
+    .bracket-grid { display: none !important; }
+    .bracket-mobile { display: flex; }
+}
+
 .red-text  { color: var(--red); }
 .blue-text { color: var(--blue); }
 
