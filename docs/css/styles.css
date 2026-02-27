@@ -1602,6 +1602,66 @@ input.input-loading {
     .bracket-mobile { display: flex; }
 }
 
+/* ── Landscape phones: show the real bracket grid, compacted ── */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+    .bracket-grid {
+        display: grid !important;
+        grid-template-columns: 22px repeat(6, minmax(120px, 1fr));
+        grid-template-rows: auto 1fr 1fr;
+        font-size: .72em;
+        width: 100%;
+        min-width: 0;
+    }
+    .bracket-mobile { display: none !important; }
+
+    .bg-corner { padding: .15rem; }
+    .bg-rnd-hdr {
+        padding: .25rem .2rem;
+        font-size: .6rem;
+        gap: .15rem;
+    }
+    .bg-rnd-hdr svg { width: 9px; height: 9px; }
+    .bg-side-label {
+        font-size: .5rem;
+        padding: .2rem .08rem;
+        letter-spacing: .04em;
+    }
+    .bg-side-label svg { width: 9px; height: 9px; }
+    .bg-cell, .bg-cell-final {
+        padding: .25rem .2rem;
+        gap: .2rem;
+    }
+    .bkt-slot { border-radius: 4px; }
+    .bkt-slot-header {
+        padding: .15rem .35rem;
+        font-size: .62rem;
+    }
+    .bkt-slot-desc {
+        padding: .1rem .35rem .15rem;
+        font-size: .58rem;
+    }
+    .bkt-row {
+        padding: .2rem .35rem;
+        gap: .25rem;
+        font-size: .78rem;
+    }
+    .bkt-seed {
+        font-size: .72rem;
+        min-width: 16px;
+    }
+    .bkt-teams {
+        font-size: .76rem;
+    }
+    .bkt-score {
+        font-size: .8rem;
+        min-width: 22px;
+    }
+    .bkt-replay {
+        font-size: .6rem;
+        padding: .05rem .2rem;
+    }
+}
+
 .red-text  { color: var(--red); }
 .blue-text { color: var(--blue); }
 
@@ -3362,6 +3422,15 @@ tr:hover .compare-cb,
     padding: .15rem .55rem;
     border-radius: 999px;
     border: 1px solid var(--border);
+}
+.footer-about-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+}
+.footer-about-link:hover {
+    color: var(--primary);
 }
 .footer-attribution {
     display: flex;

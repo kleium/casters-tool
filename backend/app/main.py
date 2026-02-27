@@ -9,7 +9,7 @@ from starlette.responses import Response
 
 from .routers import events, matches, alliances, teams
 
-app = FastAPI(title="FRC Caster's Tool", version="1.0.0")
+app = FastAPI(title="FRC Caster's Tool", version="1.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -47,6 +47,11 @@ app.mount("/data", StaticFiles(directory=str(frontend_dir / "data")), name="data
 @app.get("/")
 async def serve_frontend():
     return FileResponse(str(frontend_dir / "index.html"))
+
+
+@app.get("/about")
+async def serve_about():
+    return FileResponse(str(frontend_dir / "about.html"))
 
 
 @app.get("/favicon.svg")

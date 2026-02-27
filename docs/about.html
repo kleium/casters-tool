@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About — Caster's Tool</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* ── About page layout ─────────────────────────── */
+        .about-page {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 3rem;
+        }
+        .about-back {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+        }
+        .about-back:hover { color: var(--primary-hover); }
+        .about-hero {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .about-hero h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary) 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0 0 .4rem;
+        }
+        .about-hero .about-tagline {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .about-hero .about-version {
+            display: inline-block;
+            margin-top: .6rem;
+            font-family: var(--mono);
+            font-size: .72rem;
+            background: var(--primary-soft);
+            color: var(--primary-hover);
+            padding: .18rem .6rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+        }
+        .about-section {
+            margin-bottom: 2.2rem;
+        }
+        .about-section h2 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text);
+            margin: 0 0 .75rem;
+            padding-bottom: .4rem;
+            border-bottom: 2px solid var(--border);
+        }
+        .about-section p,
+        .about-section li {
+            font-size: .88rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+        .about-section ul {
+            padding-left: 1.2rem;
+            margin: .5rem 0;
+        }
+        .about-section li {
+            margin-bottom: .3rem;
+        }
+        .about-section li strong {
+            color: var(--text);
+        }
+
+        /* ── Feature grid ──────────────────────────────── */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: .75rem;
+            margin-top: .75rem;
+        }
+        .feature-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: .85rem 1rem;
+            transition: var(--transition);
+        }
+        .feature-card:hover {
+            border-color: rgba(99,102,241,.25);
+            box-shadow: var(--shadow-sm);
+        }
+        .feature-card h3 {
+            font-size: .82rem;
+            font-weight: 700;
+            color: var(--primary-hover);
+            margin: 0 0 .3rem;
+        }
+        .feature-card p {
+            font-size: .78rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* ── Keyboard shortcuts table ──────────────────── */
+        .kbd-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: .5rem;
+        }
+        .kbd-table th,
+        .kbd-table td {
+            text-align: left;
+            padding: .45rem .6rem;
+            font-size: .82rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .kbd-table th {
+            font-weight: 700;
+            color: var(--text-muted);
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        .kbd-table td { color: var(--text-secondary); }
+        .kbd-table kbd {
+            display: inline-block;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: .1rem .4rem;
+            font-family: var(--mono);
+            font-size: .78rem;
+            color: var(--text);
+            min-width: 1.4rem;
+            text-align: center;
+        }
+
+        /* ── Credits ───────────────────────────────────── */
+        .credits-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: .75rem;
+        }
+        .credit-card {
+            flex: 1;
+            min-width: 200px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: .85rem 1rem;
+        }
+        .credit-card h3 {
+            font-size: .82rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 .25rem;
+        }
+        .credit-card p {
+            font-size: .78rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.5;
+        }
+        .credit-card a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .credit-card a:hover { text-decoration: underline; }
+
+        @media (max-width: 600px) {
+            .about-hero h1 { font-size: 1.5rem; }
+            .feature-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="about-page">
+        <a href="/" class="about-back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to App
+        </a>
+
+        <div class="about-hero">
+            <h1>Caster's Tool</h1>
+            <div class="about-tagline">Events at a glance!</div>
+            <span class="about-version">v1.1</span>
+        </div>
+
+        <!-- ── What is it ──────────────────────────────── -->
+        <div class="about-section">
+            <h2>What is Caster's Tool?</h2>
+            <p>
+                A real-time companion app for <strong>FIRST Robotics Competition</strong> broadcasters and commentators.
+                It surfaces team stats, alliance breakdowns, playoff brackets, play-by-play data, and historical context.
+                Everything a caster needs at a glance!
+            </p>
+        </div>
+
+        <!-- ── Features ────────────────────────────────── -->
+        <div class="about-section">
+            <h2>Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>Events</h3>
+                    <p>Season event picker with region/week filters, search, manual event code entry, and saved events for instant loading.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Rankings</h3>
+                    <p>Live team rankings with rank, record, OPR, DPR, CCWM. Toggle school names and select teams to compare.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Summary</h3>
+                    <p>Event demographics, Hall of Fame teams, Impact finalists, playoff connections graph, and top scorers.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Play by Play</h3>
+                    <p>Match-by-match view with per-team stats, inline comparison, and quick navigation between matches.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Breakdown</h3>
+                    <p>Detailed score breakdowns per match. Supports 2025 REEFSCAPE and 2026 game field layouts.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Alliances</h3>
+                    <p>Alliance selection cards with first-time-partner detection, partnership history, and combined stats.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Playoffs</h3>
+                    <p>Full double-elimination bracket visualization (2023+ format) with live score updates.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>History</h3>
+                    <p>Event lineage — past winners, finalists, awards timeline back to 1992. Region facts &amp; district stats.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Team Lookup</h3>
+                    <p>Individual team profiles with awards, blue banners, season achievements, and head-to-head playoff history.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── How to Use ──────────────────────────────── -->
+        <div class="about-section">
+            <h2>How to Use</h2>
+            <ul>
+                <li><strong>Load an event</strong> — Pick from the season list, search by name, or enter an event code manually (e.g. <code>2025arc</code>).</li>
+                <li><strong>Navigate tabs</strong> — Switch between Rankings, Summary, Play by Play, Breakdown, Alliances, Playoffs, and History.</li>
+                <li><strong>Compare teams</strong> — Check boxes next to teams in Rankings, then click the floating compare bar (or press <kbd>C</kbd>).</li>
+                <li><strong>Quick team lookup</strong> — Select one team and press <kbd>T</kbd>, or use the Team Lookup tab.</li>
+                <li><strong>Save events</strong> — Click the save icon on the event bar to cache data for instant reloading.</li>
+                <li><strong>Toggle settings</strong> — Use the gear icon to switch themes, highlight international teams, or show offseason events.</li>
+            </ul>
+        </div>
+
+        <!-- ── Keyboard Shortcuts ──────────────────────── -->
+        <div class="about-section">
+            <h2>Keyboard Shortcuts</h2>
+            <table class="kbd-table">
+                <thead>
+                    <tr><th>Key</th><th>Action</th><th>Context</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><kbd>C</kbd></td><td>Compare selected teams</td><td>Rankings tab with teams selected</td></tr>
+                    <tr><td><kbd>T</kbd></td><td>Quick team lookup</td><td>Rankings tab with 1 team selected</td></tr>
+                    <tr><td><kbd>Esc</kbd></td><td>Close overlay / deselect</td><td>Any overlay open</td></tr>
+                    <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>Previous / Next match</td><td>Play by Play or Breakdown tab</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ── Data Sources ────────────────────────────── -->
+        <div class="about-section">
+            <h2>Data Sources</h2>
+            <p>
+                Caster's Tool pulls from two external APIs to provide comprehensive FRC data:
+            </p>
+            <ul>
+                <li><strong><a href="https://www.thebluealliance.com" target="_blank" rel="noopener">The Blue Alliance (TBA)</a></strong> —
+                    Event lists, team info, rankings, OPRs, match results, alliances, awards, and media.</li>
+                <li><strong><a href="https://frc-events.firstinspires.org/services/API" target="_blank" rel="noopener">FIRST FRC Events API</a></strong> —
+                    Score breakdowns, per-robot match performance, school names, and team avatars.</li>
+            </ul>
+            <p>
+                Data is cached in-memory on the server and in the browser's IndexedDB for fast reloading. Event snapshots can be saved to disk for instant access.
+            </p>
+        </div>
+
+        <!-- ── Credits ─────────────────────────────────── -->
+        <div class="about-section">
+            <h2>Credits</h2>
+            <div class="credits-row">
+                <div class="credit-card">
+                    <h3>Built by</h3>
+                    <p>Gürsel &amp; <a href="https://www.thebluealliance.com/team/9020" target="_blank" rel="noopener">Team 9020</a> for the FIRST community.</p>
+                </div>
+                <div class="credit-card">
+                    <h3>Powered by</h3>
+                    <p>
+                        <a href="https://www.thebluealliance.com" target="_blank" rel="noopener">The Blue Alliance</a><br>
+                        <a href="https://frc-events.firstinspires.org/services/API" target="_blank" rel="noopener">FIRST FRC Events API</a>
+                    </p>
+                </div>
+                <div class="credit-card">
+                    <h3>Open Source</h3>
+                    <p><a href="https://github.com/kleium/casters-tool" target="_blank" rel="noopener">github.com/kleium/casters-tool</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-top">
+            <span>Caster's Tool</span>
+            <span class="footer-sep">·</span>
+            <span class="footer-version">v1.1</span>
+        </div>
+    </footer>
+</body>
+</html>
