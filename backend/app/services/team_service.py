@@ -219,6 +219,22 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
         for aw in awards_by_year[y]:
             awards_list.append(aw)
 
+    # Determine whether the team actually competed (has qual/playoff data)
+    has_competed = highest_event_type_rank >= 0
+
+    # When the team hasn't competed yet, find their most recent season's
+    # achievement so the frontend can show useful context.
+    last_season = None
+    if not has_competed and years:
+        prior_years = sorted([y2 for y2 in years if y2 < year], reverse=True)
+        if prior_years:
+            last_yr = prior_years[0]
+            last_achievements = await _get_season_achievements(
+                client, team_key, [last_yr]
+            )
+            if last_achievements:
+                last_season = last_achievements[0]
+
     result = {
         "team_number": team_number,
         "team_key": team_key,
@@ -228,10 +244,12 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
         "country": team_info.get("country", ""),
         "rookie_year": team_info.get("rookie_year"),
         "years_active": len(years) if years else 0,
+        "has_competed": has_competed,
         "highest_stage_of_play": highest_comp_label,
         "highest_event_level": EVENT_TYPE_LABELS.get(highest_event_type, "Unknown"),
         "events_this_year": event_results,
         "year": year,
+        "last_season": last_season,
         "season_achievements": None,
         "avatar": avatar_base64,
         "blue_banners": blue_banners,
