@@ -128,7 +128,11 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
             else:
                 highest_comp_label = COMP_LEVEL_LABELS.get(ev_comp_level, "Qualifications")
 
-        if et_rank > highest_event_type_rank:
+        # Only count toward highest event level if the team actually competed
+        # (has qual or playoff status) — excludes award-only appearances like
+        # Dean's List or Impact Finalist at Einstein.
+        actually_competed = qual or playoff
+        if actually_competed and et_rank > highest_event_type_rank:
             highest_event_type_rank = et_rank
             highest_event_type = et
 
@@ -301,6 +305,11 @@ async def _get_season_achievements(
             et = ev.get("event_type", 99)
             et_rank = EVENT_TYPE_ORDER.get(et, 0)
             playoff = status.get("playoff")
+            qual = status.get("qual")
+
+            # Skip award-only appearances (no qual or playoff data)
+            if not playoff and not qual:
+                continue
 
             ev_comp_level = "qm"
             ev_playoff_status = ""

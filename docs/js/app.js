@@ -213,7 +213,7 @@ document.querySelectorAll('.tab').forEach(btn => {
 
         // Lightweight tabs: render from preloaded cache, or fetch if missing
         if (btn.dataset.tab === 'playoff' && currentEvent && !renderedTabs.playoff) {
-            if (playoffData) {
+            if (playoffData?.length) {
                 hide('playoff-empty');
                 renderBracketTree();
                 renderedTabs.playoff = true;
@@ -222,7 +222,7 @@ document.querySelectorAll('.tab').forEach(btn => {
             }
         }
         if (btn.dataset.tab === 'alliance' && currentEvent && !renderedTabs.alliance) {
-            if (allianceData) {
+            if (allianceData?.length) {
                 hide('alliance-empty');
                 hide('alliance-loading');
                 renderAlliances(allianceData);
@@ -232,7 +232,7 @@ document.querySelectorAll('.tab').forEach(btn => {
             }
         }
         if (btn.dataset.tab === 'playbyplay' && currentEvent && !renderedTabs.playbyplay) {
-            if (pbpData) {
+            if (pbpData?.matches?.length) {
                 pbpIndex = 0;
                 hide('pbp-empty');
                 show('pbp-container');
@@ -252,7 +252,7 @@ document.querySelectorAll('.tab').forEach(btn => {
                 el.classList.remove('hidden');
             }
         } else if (btn.dataset.tab === 'breakdown' && currentEvent && !renderedTabs.breakdown) {
-            if (bdData) {
+            if (bdData?.matches?.length) {
                 bdIndex = 0;
                 bdCache = {};
                 hide('bd-empty');
@@ -727,7 +727,7 @@ async function loadEvent(eventKey) {
         show('rankings-container');
         $('event-teams').innerHTML = buildTeamTable(teams);
 
-        // Reset dependent tabs
+        // Reset dependent tabs — clear both visibility and inner content
         $('summary-empty')?.classList.remove('hidden');
         $('summary-container')?.classList.add('hidden');
         $('playoff-empty')?.classList.remove('hidden');
@@ -736,10 +736,17 @@ async function loadEvent(eventKey) {
         $('alliance-grid').innerHTML = '';
         $('bd-empty')?.classList.remove('hidden');
         $('bd-container')?.classList.add('hidden');
-        $('bd-content') && ($('bd-content').innerHTML = '');
-        $('bd-status') && ($('bd-status').innerHTML = '');
+        if ($('bd-content')) $('bd-content').innerHTML = '';
+        if ($('bd-status')) $('bd-status').innerHTML = '';
+        if ($('bd-match-select')) $('bd-match-select').innerHTML = '';
         $('pbp-empty')?.classList.remove('hidden');
         $('pbp-container')?.classList.add('hidden');
+        if ($('pbp-arena')) $('pbp-arena').innerHTML = '';
+        if ($('pbp-footer')) $('pbp-footer').innerHTML = '';
+        if ($('pbp-match-select')) $('pbp-match-select').innerHTML = '';
+        if ($('pbp-match-label')) $('pbp-match-label').textContent = '';
+        const _oldConn = $('pbp-connections');
+        if (_oldConn) _oldConn.innerHTML = '';
         $('history-empty')?.classList.remove('hidden');
         $('history-container')?.classList.add('hidden');
 
@@ -1565,6 +1572,7 @@ async function loadPlayoffs() {
     try {
         const data = await API.playoffMatches(currentEvent);
         playoffData = data.matches;
+        if (!playoffData?.length) return; // no playoff matches yet
         hide('playoff-empty');
         renderBracketTree();
     } catch (err) {
@@ -1831,10 +1839,10 @@ function renderAlliances(data) {
                         : '';
 
                     return `
-                    <div class="alliance-team-row ${isIntl ? 'foreign-team-row' : ''}" data-country="${t.country || ''}">
+                    <div class="alliance-team-row${isIntl ? ' foreign-team-row' : ''}" data-country="${t.country || ''}">
                         <span class="team-role">${roleLabels[idx] || ''}</span>
                         ${avatarHtml}
-                        <span class="team-num has-tooltip" data-country="${t.country || ''}">${t.team_number}${t.nickname ? `<span class="custom-tooltip">${t.nickname}</span>` : ''}</span>
+                        <span class="team-num has-tooltip">${t.team_number}${t.nickname ? `<span class="custom-tooltip">${t.nickname}</span>` : ''}</span>
                         ${allianceShowNames ? `<span class="team-nick">${t.nickname || ''}</span>` : ''}
                         <div class="team-stats-mini">
                             <span>Rank ${t.rank}</span>
@@ -1972,6 +1980,7 @@ function renderTeamStats(d) {
         </div>
 
         <div class="team-highlights">
+            ${d.has_competed ? `
             <div class="highlight-card">
                 <div class="highlight-label">Highest Stage of Play (${d.year})</div>
                 <div class="highlight-value">${d.highest_stage_of_play}</div>
@@ -1979,7 +1988,12 @@ function renderTeamStats(d) {
             <div class="highlight-card">
                 <div class="highlight-label">Highest Event Level (${d.year})</div>
                 <div class="highlight-value">${d.highest_event_level}</div>
-            </div>
+            </div>` : `
+            <div class="highlight-card highlight-no-events">
+                <div class="highlight-label">Season Status (${d.year})</div>
+                <div class="highlight-value">Hasn't competed yet</div>
+                ${d.last_season ? `<div class="highlight-sub">Last season (${d.last_season.year}): <strong>${d.last_season.achievement}</strong>${d.last_season.event_name ? ` — ${d.last_season.event_name}` : ''}</div>` : ''}
+            </div>`}
             ${bannerCard}
         </div>
 
@@ -2163,6 +2177,7 @@ async function loadPlayByPlay() {
         const data = await API.allMatches(currentEvent);
         pbpData = data;
         pbpIndex = 0;
+        if (!data?.matches?.length) return; // upcoming event — no matches yet
         hide('pbp-empty');
         show('pbp-container');
         buildPbpSelector();
@@ -2246,7 +2261,7 @@ function renderPbpMatch() {
     $('pbp-footer').innerHTML = `
         <button class="pbp-compare-btn" onclick="compareCurrentMatch()" title="Compare all 6 teams side by side">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Compare Teams
+            Compare Teams <kbd>C</kbd>
         </button>
         ${qs && qs.score > 0
             ? `<span class="pbp-footer-text">
@@ -2497,6 +2512,7 @@ async function loadBreakdownTab() {
         bdData = pbpData;
         bdIndex = 0;
         bdCache = {};
+        if (!bdData?.matches?.length) return; // no matches yet
         hide('bd-empty');
         show('bd-container');
         buildBdSelector();
