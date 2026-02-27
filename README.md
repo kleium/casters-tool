@@ -1,26 +1,26 @@
 # Caster's Tool
 
-A real-time companion app for **FIRST Robotics Competition (FRC)** event broadcasters and commentators. Surfaces team stats, alliance breakdowns, playoff brackets, play-by-play data, and historical context — everything a caster needs at a glance during a live event.
+A read-only **FIRST Robotics Competition (FRC)** event dashboard, built for broadcasters, commentators and FIRST Community. Displays team stats, alliance breakdowns, playoff brackets, play-by-play data, and historical context. All a caster needs at a glance!
 
-Built by **Gürsel & [Team 9020](https://www.thebluealliance.com/team/9020)** for the FIRST community.
+Built by **Gürsel & [Team 9020](https://www.thebluealliance.com/team/9020)** for the community.
 
 ---
 
 ## Features
 
-| Tab | What it shows |
+| Tab | Function |
 |-----|---------------|
-| **Events** | Season event picker with region/week filters, search, manual entry, and saved events |
-| **Rankings** | Live team rankings with rank, record, OPR, DPR, CCWM |
+| **Events** | Season event picker with region & week filters, manual entry, and saved events |
+| **History** | Full event lineage: past winners, finalists, awards timeline dating back to 1992 |
+| **Rankings** | Live team rankings from an event with record, OPR, DPR, CCWM |
 | **Summary** | Event demographics, Hall of Fame teams, Impact finalists, connections graph, top scorers |
 | **Play by Play** | Match-by-match view with per-team stats and inline team comparison |
-| **Breakdown** | Detailed score breakdowns per match (supports 2025 REEFSCAPE & 2026 game) |
-| **Alliances** | Alliance selection cards with first-time-partner detection & partnership history |
-| **Playoffs** | Double-elimination bracket visualization (2023+ format) |
-| **History** | Full event lineage — past winners, finalists, awards timeline back to 1992 |
+| **Breakdown** | Detailed score breakdowns per match (supports 2025 REEFSCAPE for demo & 2026 game REBUILT) |
+| **Alliances** | Alliance selection cards with partnership history |
+| **Playoffs** | Double-elimination bracket visualization (new format) |
 | **Team Lookup** | Individual team stats, awards, season achievements & head-to-head playoff history |
 
-Additional UI: team comparison modal (up to 6 teams), international-team highlighting, dark/light theme toggle, API status indicators.
+Additional UI: team comparison table (up to 6 teams), international-team highlighting, dark/light theme toggle, API status indicators.
 
 ---
 
