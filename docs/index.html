@@ -198,13 +198,45 @@
                 <div class="summary-stats-row" id="summary-demographics"></div>
 
                 <!-- Hall of Fame & Impact Award -->
-                <div id="summary-hof" class="summary-card hidden">
-                    <h3>Hall of Fame Teams</h3>
-                    <div id="summary-hof-list"></div>
+                <div id="summary-prestige-row" class="team-highlights hidden">
+                    <div id="summary-hof" class="highlight-card highlight-hof hidden">
+                        <div class="highlight-label">🏛️ Hall of Fame Teams</div>
+                        <div id="summary-hof-list"></div>
+                    </div>
+                    <div id="summary-impact" class="highlight-card highlight-impact hidden">
+                        <div class="highlight-label">⭐ Impact Award Finalists</div>
+                        <div id="summary-impact-list"></div>
+                    </div>
                 </div>
-                <div id="summary-impact" class="summary-card hidden">
-                    <h3>Impact Award Finalists</h3>
-                    <div id="summary-impact-list"></div>
+
+                <!-- Returning event champions & finalists -->
+                <div id="summary-past-champs" class="summary-card hidden">
+                    <div class="summary-card-header" onclick="toggleSummarySection('past-champs')">
+                        <h3>Returning Event Champions &amp; Finalists</h3>
+                        <span id="past-champs-toggle-icon" class="collapse-icon">▲</span>
+                    </div>
+                    <div id="summary-past-champs-body" class="summary-collapse-body">
+                        <p class="summary-card-desc">Teams at this event who have previously won or reached the finals here.</p>
+                        <div id="summary-past-champs-list"></div>
+                    </div>
+                </div>
+
+                <!-- Past season award winners -->
+                <div id="summary-past-awards" class="summary-card hidden">
+                    <div class="summary-card-header" onclick="toggleSummarySection('past-awards')">
+                        <h3 id="summary-past-awards-title">Past Season Award Winners</h3>
+                        <span id="past-awards-toggle-icon" class="collapse-icon">▲</span>
+                    </div>
+                    <div id="summary-past-awards-body" class="summary-collapse-body">
+                        <p class="summary-card-desc">Participating teams that earned Regional/District Impact, Winner or Finalist awards last season.</p>
+                        <div class="past-awards-filter-bar">
+                            <button class="past-awards-filter-btn active" data-award-filter="all" onclick="event.stopPropagation(); filterPastAwards('all', this)">All</button>
+                            <button class="past-awards-filter-btn" data-award-filter="impact" onclick="event.stopPropagation(); filterPastAwards('impact', this)">Impact</button>
+                            <button class="past-awards-filter-btn" data-award-filter="winner" onclick="event.stopPropagation(); filterPastAwards('winner', this)">Winner</button>
+                            <button class="past-awards-filter-btn" data-award-filter="finalist" onclick="event.stopPropagation(); filterPastAwards('finalist', this)">Finalist</button>
+                        </div>
+                        <div id="summary-past-awards-list"></div>
+                    </div>
                 </div>
 
                 <!-- Prior partnerships & rivalries -->

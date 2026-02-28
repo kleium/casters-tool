@@ -18,6 +18,7 @@ const API = {
     eventTeams:         (ek) => API.get(`/events/${ek}/teams`),
     eventSummary:       (ek) => API.get(`/events/${ek}/summary`),
     eventSummaryRefresh:(ek) => API.get(`/events/${ek}/summary/refresh-stats`),
+    eventSummaryAwards: (ek) => API.get(`/events/${ek}/summary/awards`),
     eventConnections:   (ek, allTime, teams) => {
         let url = `/events/${ek}/summary/connections?all_time=${allTime ? 'true' : 'false'}`;
         if (teams && teams.length) url += `&teams=${teams.join(',')}`;

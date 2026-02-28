@@ -639,6 +639,7 @@ async function loadEvent(eventKey) {
     _pbpConnCache = {};
     _pbpConnAllTime = false;
     _h2hAllTime = false;
+    currentAwardFilter = 'all';
     renderedTabs = { playoff: false, alliance: false, playbyplay: false, breakdown: false, history: false };
 
     // Reset the connections "All Time" toggle to "Past 3 Seasons"
@@ -1291,6 +1292,90 @@ async function loadSummaryConnections() {
     }
 }
 
+/** Lazy-load returning event champions & previous-season award winners */
+async function loadSummaryAwards() {
+    if (!currentEvent || !summaryData) return;
+    try {
+        const data = await API.eventSummaryAwards(currentEvent);
+        if (!summaryData) return; // user switched events
+
+        summaryData.past_event_champions = data.past_event_champions || [];
+        summaryData.past_season_awards = data.past_season_awards || [];
+
+        const champsEl = $('summary-past-champs');
+        if (data.past_event_champions && data.past_event_champions.length > 0) {
+            renderPastEventChampions(data.past_event_champions);
+            champsEl.classList.remove('hidden');
+        } else {
+            champsEl.classList.add('hidden');
+        }
+
+        const awardsEl = $('summary-past-awards');
+        if (data.past_season_awards && data.past_season_awards.length > 0) {
+            renderPastSeasonAwards(data.past_season_awards);
+            awardsEl.classList.remove('hidden');
+        } else {
+            awardsEl.classList.add('hidden');
+        }
+    } catch {
+        $('summary-past-champs').classList.add('hidden');
+        $('summary-past-awards').classList.add('hidden');
+    }
+}
+
+function renderPastEventChampions(champions) {
+    $('summary-past-champs-list').innerHTML = champions.map(t => {
+        const badges = [];
+        if (t.years_won.length) badges.push(`<span class="past-champ-badge past-champ-winner">\u{1F3C6} Winner: ${t.years_won.join(', ')}</span>`);
+        if (t.years_finalist.length) badges.push(`<span class="past-champ-badge past-champ-finalist">\u{1F948} Finalist: ${t.years_finalist.join(', ')}</span>`);
+        return `<div class="summary-hof-team">
+            <span class="summary-hof-num">${t.team_number}</span>
+            <span class="summary-hof-name">${t.nickname}</span>
+            <span class="past-champ-badges">${badges.join(' ')}</span>
+        </div>`;
+    }).join('');
+}
+
+let currentAwardFilter = 'all';
+
+function filterPastAwards(filter, btn) {
+    currentAwardFilter = filter;
+    document.querySelectorAll('.past-awards-filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    if (summaryData?.past_season_awards) renderPastSeasonAwards(summaryData.past_season_awards);
+}
+
+function renderPastSeasonAwards(awards) {
+    const prevYear = currentEventYear ? currentEventYear - 1 : new Date().getFullYear() - 1;
+    $('summary-past-awards-title').textContent = `${prevYear} Award-Winning Teams`;
+
+    const filtered = currentAwardFilter === 'all'
+        ? awards
+        : awards.map(t => ({
+            ...t,
+            awards: t.awards.filter(a => a.type === currentAwardFilter),
+        })).filter(t => t.awards.length > 0);
+
+    if (filtered.length === 0) {
+        $('summary-past-awards-list').innerHTML = '<p class="empty" style="margin:.5rem 0;font-size:.82rem">No teams match this filter.</p>';
+        return;
+    }
+
+    $('summary-past-awards-list').innerHTML = filtered.map(t => {
+        const chips = t.awards.map(a => {
+            const icon = a.type === 'winner' ? '\u{1F3C6}' : a.type === 'finalist' ? '\u{1F948}' : '\u{2B50}';
+            const cls = `past-award-chip-${a.type}`;
+            const label = a.type.charAt(0).toUpperCase() + a.type.slice(1);
+            return `<span class="past-award-chip ${cls}" title="${_esc(a.event_name)}">${icon} ${label} @ ${_esc(a.event_name)}</span>`;
+        }).join('');
+        return `<div class="summary-hof-team past-award-row">
+            <span class="summary-hof-num">${t.team_number}</span>
+            <span class="summary-hof-name">${t.nickname}</span>
+            <div class="past-award-chips">${chips}</div>
+        </div>`;
+    }).join('');
+}
+
 async function refreshSummaryStats() {
     if (!currentEvent) return;
     const btn = document.querySelector('.summary-refresh-btn');
@@ -1341,14 +1426,18 @@ function renderSummary(data) {
 
     // Hall of Fame
     const hofEl = $('summary-hof');
+    const prestigeRow = $('summary-prestige-row');
     if (data.hall_of_fame.length > 0) {
-        $('summary-hof-list').innerHTML = data.hall_of_fame.map(t => `
-            <div class="summary-hof-team">
-                <span class="summary-hof-num">${t.team_number}</span>
-                <span class="summary-hof-name">${t.nickname}</span>
-                <span class="summary-hof-loc">${[t.city, t.state_prov, t.country].filter(Boolean).join(', ')}</span>
-            </div>`).join('');
+        $('summary-hof-list').innerHTML = data.hall_of_fame.map(t => {
+            const years = t.impact_years ? t.impact_years.join(', ') : '';
+            return `<div class="prestige-entry">
+                <span class="prestige-entry-num prestige-num-hof">${t.team_number}</span>
+                <span class="prestige-entry-name">${t.nickname}</span>
+                ${years ? `<span class="prestige-entry-year">${years}</span>` : ''}
+            </div>`;
+        }).join('');
         hofEl.classList.remove('hidden');
+        prestigeRow.classList.remove('hidden');
     } else {
         hofEl.classList.add('hidden');
     }
@@ -1356,15 +1445,49 @@ function renderSummary(data) {
     // Impact Award Finalists
     const impactEl = $('summary-impact');
     if (data.impact_finalists && data.impact_finalists.length > 0) {
-        $('summary-impact-list').innerHTML = data.impact_finalists.map(t => `
-            <div class="summary-hof-team">
-                <span class="summary-hof-num" style="color:var(--primary)">${t.team_number}</span>
-                <span class="summary-hof-name">${t.nickname}</span>
-                <span class="summary-hof-loc">${t.impact_years.join(', ')}</span>
-            </div>`).join('');
+        $('summary-impact-list').innerHTML = data.impact_finalists.map(t => {
+            const years = t.impact_years.join(', ');
+            return `<div class="prestige-entry">
+                <span class="prestige-entry-num prestige-num-impact">${t.team_number}</span>
+                <span class="prestige-entry-name">${t.nickname}</span>
+                ${years ? `<span class="prestige-entry-year">${years}</span>` : ''}
+            </div>`;
+        }).join('');
         impactEl.classList.remove('hidden');
+        prestigeRow.classList.remove('hidden');
     } else {
         impactEl.classList.add('hidden');
+    }
+    // Hide row if both empty
+    if (data.hall_of_fame.length === 0 && (!data.impact_finalists || data.impact_finalists.length === 0)) {
+        prestigeRow.classList.add('hidden');
+    }
+
+    // Returning Event Champions & Finalists — lazy-load
+    const pastChampsEl = $('summary-past-champs');
+    pastChampsEl.classList.remove('hidden');
+    if (data.past_event_champions && data.past_event_champions.length > 0) {
+        renderPastEventChampions(data.past_event_champions);
+    } else if (!data.past_event_champions) {
+        $('summary-past-champs-list').innerHTML = '<p class="empty" style="margin:.5rem 0;font-size:.82rem">Loading…</p>';
+    } else {
+        pastChampsEl.classList.add('hidden');
+    }
+
+    // Past Season Award Winners — lazy-load
+    const pastAwardsEl = $('summary-past-awards');
+    pastAwardsEl.classList.remove('hidden');
+    if (data.past_season_awards && data.past_season_awards.length > 0) {
+        renderPastSeasonAwards(data.past_season_awards);
+    } else if (!data.past_season_awards) {
+        $('summary-past-awards-list').innerHTML = '<p class="empty" style="margin:.5rem 0;font-size:.82rem">Loading…</p>';
+    } else {
+        pastAwardsEl.classList.add('hidden');
+    }
+
+    // If not cached, fetch awards data in the background
+    if (!data.past_event_champions && !data.past_season_awards) {
+        loadSummaryAwards();
     }
 
     // Prior connections — lazy-load on demand
@@ -1390,6 +1513,13 @@ function renderSummary(data) {
 let currentConnFilter = 'all';
 let currentConnSearch = '';
 let currentConnSort = 'most';
+
+function toggleSummarySection(type) {
+    const body = $(type === 'past-champs' ? 'summary-past-champs-body' : 'summary-past-awards-body');
+    const icon = $(type + '-toggle-icon');
+    body.classList.toggle('collapsed');
+    icon.textContent = body.classList.contains('collapsed') ? '▼' : '▲';
+}
 
 function toggleConnections() {
     const body = $('summary-history-body');

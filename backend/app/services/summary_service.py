@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import date
-from .region_service import _load_region_stats
+from .region_service import _load_region_stats, get_event_history
 from .tba_client import get_tba_client
 
 
@@ -131,6 +131,155 @@ async def get_event_summary(event_key: str) -> dict:
         "impact_finalists": impact_finalists,
         "top_scorers": top_scorers,
     }
+
+
+async def get_event_summary_awards(event_key: str) -> dict:
+    """Deferred summary data — event history champions & previous-season awards.
+
+    This is intentionally separated from the main summary so the UI can
+    render the lightweight demographics / HoF / OPR data immediately and
+    lazy-load this heavier section in the background.
+    """
+    client = get_tba_client()
+    year = int(event_key[:4])
+
+    # Parallel: event history + team list (teams needed for cross-reference)
+    event_history, teams = await asyncio.gather(
+        _safe(get_event_history(event_key)),
+        client.get_event_teams_full(event_key),
+    )
+
+    if not teams:
+        return {"past_event_champions": [], "past_season_awards": []}
+
+    # Returning event champions & finalists (from event history)
+    past_event_champions = _extract_past_event_champions(event_history, teams, year)
+
+    # Previous season awards for all teams
+    prev_year = year - 1
+    prev_award_results = await asyncio.gather(
+        *[_safe(client.get_team_awards_year(f"frc{t['team_number']}", prev_year))
+          for t in teams]
+    )
+    past_season_awards = await _build_past_season_awards(
+        client, teams, prev_award_results, prev_year,
+    )
+
+    return {
+        "past_event_champions": past_event_champions,
+        "past_season_awards": past_season_awards,
+    }
+
+
+# ── Helpers for past-event and past-season award data ───────
+
+def _extract_past_event_champions(
+    event_history: dict | None, teams: list[dict], current_year: int,
+) -> list[dict]:
+    """Cross-reference the event's historical timeline with the current
+    participant list to find teams that previously won / were finalists here."""
+    if not event_history or not event_history.get("timeline"):
+        return []
+
+    team_nums = {t["team_number"] for t in teams}
+    name_map = {t["team_number"]: t.get("nickname", "") for t in teams}
+
+    champ_map: dict[int, dict] = {}  # team_number -> {years_won, years_finalist}
+
+    for yr_data in event_history["timeline"]:
+        yr = yr_data["year"]
+        if yr >= current_year:
+            continue
+
+        for w in yr_data.get("winners", []):
+            num = w["team_number"]
+            if num in team_nums:
+                champ_map.setdefault(num, {"years_won": [], "years_finalist": []})
+                champ_map[num]["years_won"].append(yr)
+
+        for f in yr_data.get("finalists", []):
+            num = f["team_number"]
+            if num in team_nums:
+                champ_map.setdefault(num, {"years_won": [], "years_finalist": []})
+                champ_map[num]["years_finalist"].append(yr)
+
+    result = []
+    for num in sorted(champ_map):
+        d = champ_map[num]
+        result.append({
+            "team_number": num,
+            "nickname": name_map.get(num, ""),
+            "years_won": sorted(d["years_won"]),
+            "years_finalist": sorted(d["years_finalist"]),
+        })
+    return result
+
+
+_AWARD_TYPE_IMPACT = 0
+_AWARD_TYPE_WINNER = 1
+_AWARD_TYPE_FINALIST = 2
+_CHAMPIONSHIP_EVENT_TYPES = {3, 4}  # Championship Division / Finals
+
+
+async def _build_past_season_awards(
+    client, teams: list[dict], prev_award_results: list, prev_year: int,
+) -> list[dict]:
+    """Given per-team award results for the previous season, return a list
+    of teams that earned Impact / Winner / Finalist at a regional or
+    district event."""
+    name_map = {t["team_number"]: t.get("nickname", "") for t in teams}
+    team_award_map: dict[int, list[dict]] = {}
+    award_event_keys: set[str] = set()
+
+    for t, awards in zip(teams, prev_award_results):
+        if not awards:
+            continue
+        num = t["team_number"]
+        for a in awards:
+            atype = a.get("award_type")
+            if atype not in (_AWARD_TYPE_IMPACT, _AWARD_TYPE_WINNER, _AWARD_TYPE_FINALIST):
+                continue
+            ek = a.get("event_key", "")
+            label = {0: "impact", 1: "winner", 2: "finalist"}.get(atype, "")
+            team_award_map.setdefault(num, []).append({"type": label, "event_key": ek})
+            award_event_keys.add(ek)
+
+    if not team_award_map:
+        return []
+
+    # Batch-fetch event info so we can show friendly names & filter types
+    infos = await asyncio.gather(
+        *[_safe(client.get_event(ek)) for ek in award_event_keys]
+    )
+    event_names: dict[str, str] = {}
+    event_types: dict[str, int] = {}
+    for ek, info in zip(award_event_keys, infos):
+        if info:
+            event_names[ek] = info.get("short_name") or info.get("name", ek)
+            event_types[ek] = info.get("event_type", -1)
+        else:
+            event_names[ek] = ek
+            event_types[ek] = -1
+
+    result = []
+    for num in sorted(team_award_map):
+        filtered = []
+        for a in team_award_map[num]:
+            ek = a["event_key"]
+            if event_types.get(ek) in _CHAMPIONSHIP_EVENT_TYPES:
+                continue
+            filtered.append({
+                "type": a["type"],
+                "event_key": ek,
+                "event_name": event_names.get(ek, ek),
+            })
+        if filtered:
+            result.append({
+                "team_number": num,
+                "nickname": name_map.get(num, ""),
+                "awards": filtered,
+            })
+    return result
 
 
 async def get_event_summary_stats(event_key: str) -> dict:

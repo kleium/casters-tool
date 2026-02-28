@@ -4054,7 +4054,91 @@ tr:hover .compare-cb,
     margin: 0 0 .75rem 0;
 }
 
-/* Hall of Fame */
+/* Prestige card variants ────────────────────────────── */
+#summary-prestige-row {
+    margin: 0 0 1rem 0;
+}
+
+/* ── Prestige highlight cards (HoF / Impact) ────────── */
+.highlight-hof {
+    border-color: rgba(251, 191, 36, .25);
+}
+.highlight-hof::after {
+    background: #f5b731;
+}
+.highlight-hof:hover {
+    border-color: rgba(251, 191, 36, .35);
+}
+.highlight-hof .highlight-label {
+    color: #f5b731;
+}
+
+.highlight-impact {
+    border-color: rgba(59, 130, 246, .25);
+}
+.highlight-impact::after {
+    background: #60a5fa;
+}
+.highlight-impact:hover {
+    border-color: rgba(59, 130, 246, .35);
+}
+.highlight-impact .highlight-label {
+    color: #60a5fa;
+}
+
+[data-theme="light"] .highlight-hof .highlight-label { color: #92700a; }
+[data-theme="light"] .highlight-impact .highlight-label { color: #4f46e5; }
+[data-theme="light"] .highlight-hof { border-color: rgba(180, 140, 0, .2); }
+[data-theme="light"] .highlight-impact { border-color: rgba(59, 130, 246, .2); }
+
+/* Prestige entry rows inside highlight cards */
+.prestige-entry {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .3rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.prestige-entry:last-child { border-bottom: none; }
+.prestige-entry:first-child { margin-top: .4rem; }
+.prestige-entry-num {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: .9rem;
+    min-width: 2.5rem;
+}
+.prestige-entry-name {
+    font-weight: 600;
+    font-size: .85rem;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.prestige-entry-year {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Collapsible section body (past champs, past awards) */
+.summary-collapse-body {
+    overflow: hidden;
+    max-height: 2000px;
+    transition: max-height .35s ease, opacity .25s ease, margin .25s ease;
+    opacity: 1;
+    margin-top: .6rem;
+}
+.summary-collapse-body.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+}
+
+/* ── Shared row styles (HoF, past champs, past awards) ── */
 .summary-hof-team {
     display: flex;
     align-items: center;
@@ -4067,7 +4151,7 @@ tr:hover .compare-cb,
     font-family: var(--mono);
     font-weight: 700;
     font-size: .95rem;
-    color: var(--yellow);
+    color: var(--primary);
     min-width: 3.5rem;
 }
 .summary-hof-name {
@@ -4078,6 +4162,151 @@ tr:hover .compare-cb,
     color: var(--text-muted);
     font-size: .78rem;
     margin-left: auto;
+}
+
+/* Past Event Champions & Past Season Awards */
+.past-champ-badges {
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+.past-champ-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    padding: .2rem .65rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    cursor: default;
+    transition: var(--transition);
+}
+.past-champ-winner {
+    background: linear-gradient(135deg, rgba(255, 215, 0, .13), rgba(245, 183, 0, .13));
+    border: 1px solid rgba(255, 215, 0, .35);
+    color: #d4a017;
+}
+.past-champ-winner:hover {
+    border-color: rgba(255, 215, 0, .55);
+    background: linear-gradient(135deg, rgba(255, 215, 0, .2), rgba(245, 183, 0, .2));
+}
+.past-champ-finalist {
+    background: linear-gradient(135deg, rgba(192, 192, 192, .13), rgba(156, 163, 175, .13));
+    border: 1px solid rgba(192, 192, 192, .35);
+    color: #9ca3af;
+}
+.past-champ-finalist:hover {
+    border-color: rgba(192, 192, 192, .55);
+    background: linear-gradient(135deg, rgba(192, 192, 192, .2), rgba(156, 163, 175, .2));
+}
+[data-theme="light"] .past-champ-winner {
+    background: linear-gradient(135deg, rgba(180, 140, 0, .1), rgba(180, 140, 0, .06));
+    border-color: rgba(180, 140, 0, .3);
+    color: #92700a;
+}
+[data-theme="light"] .past-champ-finalist {
+    background: linear-gradient(135deg, rgba(120, 120, 120, .08), rgba(120, 120, 120, .04));
+    border-color: rgba(120, 120, 120, .25);
+    color: #6b7280;
+}
+
+/* Past Season Awards filter bar */
+.past-awards-filter-bar {
+    display: flex;
+    gap: .35rem;
+    flex-wrap: wrap;
+    margin-bottom: .65rem;
+}
+.past-awards-filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: .3rem .75rem;
+    border-radius: 100px;
+    font-family: var(--font);
+    font-size: .75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.past-awards-filter-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.past-awards-filter-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.past-award-row {
+    flex-wrap: wrap;
+}
+.past-award-chips {
+    display: flex;
+    gap: .35rem;
+    flex-wrap: wrap;
+    width: 100%;
+    padding-top: .25rem;
+    padding-left: 4.1rem;
+}
+.past-award-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    padding: .2rem .65rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    cursor: default;
+    transition: var(--transition);
+}
+.past-award-chip-winner {
+    background: linear-gradient(135deg, rgba(255, 215, 0, .13), rgba(245, 183, 0, .13));
+    border: 1px solid rgba(255, 215, 0, .35);
+    color: #d4a017;
+}
+.past-award-chip-winner:hover {
+    border-color: rgba(255, 215, 0, .55);
+    background: linear-gradient(135deg, rgba(255, 215, 0, .2), rgba(245, 183, 0, .2));
+}
+.past-award-chip-finalist {
+    background: linear-gradient(135deg, rgba(192, 192, 192, .13), rgba(156, 163, 175, .13));
+    border: 1px solid rgba(192, 192, 192, .35);
+    color: #9ca3af;
+}
+.past-award-chip-finalist:hover {
+    border-color: rgba(192, 192, 192, .55);
+    background: linear-gradient(135deg, rgba(192, 192, 192, .2), rgba(156, 163, 175, .2));
+}
+.past-award-chip-impact {
+    background: linear-gradient(135deg, rgba(59, 130, 246, .13), rgba(37, 99, 235, .13));
+    border: 1px solid rgba(59, 130, 246, .35);
+    color: #60a5fa;
+}
+.past-award-chip-impact:hover {
+    border-color: rgba(59, 130, 246, .55);
+    background: linear-gradient(135deg, rgba(59, 130, 246, .2), rgba(37, 99, 235, .2));
+}
+[data-theme="light"] .past-award-chip-winner {
+    background: linear-gradient(135deg, rgba(180, 140, 0, .1), rgba(180, 140, 0, .06));
+    border-color: rgba(180, 140, 0, .3);
+    color: #92700a;
+}
+[data-theme="light"] .past-award-chip-finalist {
+    background: linear-gradient(135deg, rgba(120, 120, 120, .08), rgba(120, 120, 120, .04));
+    border-color: rgba(120, 120, 120, .25);
+    color: #6b7280;
+}
+[data-theme="light"] .past-award-chip-impact {
+    background: linear-gradient(135deg, rgba(99, 102, 241, .08), rgba(99, 102, 241, .04));
+    border-color: rgba(99, 102, 241, .25);
+    color: #4f46e5;
 }
 
 /* Connection filter bar */

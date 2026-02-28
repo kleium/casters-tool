@@ -50,6 +50,15 @@ async def event_summary_refresh_stats(event_key: str):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.get("/{event_key}/summary/awards")
+async def event_summary_awards(event_key: str):
+    """Deferred: past event champions & previous-season award winners."""
+    try:
+        return await summary_service.get_event_summary_awards(event_key)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.get("/{event_key}/summary/connections")
 async def event_connections(
     event_key: str,
