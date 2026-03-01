@@ -4046,7 +4046,7 @@ function openFloatingLookup() {
     panel.style.animation = 'none';
     panel.offsetHeight; // force reflow
     panel.style.animation = '';
-    $('float-team-number').focus();
+    requestAnimationFrame(() => $('float-team-number').focus());
 }
 
 function closeFloatingLookup() {
