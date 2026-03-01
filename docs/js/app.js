@@ -385,8 +385,13 @@ document.addEventListener('keydown', e => {
         }
     }
 
-    // C key — Compare Teams on Play by Play
+    // C key — Compare Teams on Play by Play (toggle)
     if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (!$('compare-overlay')?.classList.contains('hidden')) {
+            e.preventDefault();
+            closeCompare();
+            return;
+        }
         const pbpActive = $('tab-playbyplay')?.classList.contains('active');
         if (pbpActive && pbpData && pbpData.matches.length) {
             e.preventDefault();
@@ -4004,14 +4009,19 @@ async function launchLookupFromSelection() {
 document.addEventListener('keydown', e => {
     // Skip if user is typing in an input / textarea / select
     if (e.target.matches('input, textarea, select')) return;
-    // Skip if any overlay is open
-    if (!$('compare-overlay')?.classList.contains('hidden')) return;
-    if (!$('lookup-overlay')?.classList.contains('hidden')) return;
     // Only active on the Rankings tab
     if (!$('tab-rankings')?.classList.contains('active')) return;
-    if (compareSelection.size === 0) return;
 
     if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) {
+        // Toggle: close if already open
+        if (!$('compare-overlay')?.classList.contains('hidden')) {
+            e.preventDefault();
+            closeCompare();
+            return;
+        }
+        // Skip if lookup overlay is open or no teams selected
+        if (!$('lookup-overlay')?.classList.contains('hidden')) return;
+        if (compareSelection.size === 0) return;
         e.preventDefault();
         launchCompareFromSelection();
     }
@@ -4280,6 +4290,43 @@ function renderComparison(data, opts) {
             </div>`;
         });
     });
+
+    // EPA Breakdown stacked bar row
+    const hasEpaBreakdown = teams.some(t => t.epa_auto != null || t.epa_teleop != null || t.epa_endgame != null);
+    if (hasEpaBreakdown) {
+        html += '<div class="comp-label">EPA Breakdown</div>';
+        teams.forEach(t => {
+            const a = t.epa_auto ?? 0;
+            const tp = t.epa_teleop ?? 0;
+            const eg = t.epa_endgame ?? 0;
+            const total = a + tp + eg;
+            const aPct  = total > 0 ? (a / total * 100).toFixed(1) : 0;
+            const tpPct = total > 0 ? (tp / total * 100).toFixed(1) : 0;
+            const egPct = total > 0 ? (eg / total * 100).toFixed(1) : 0;
+
+            let sideCls = '';
+            if (redKeys.has(t.team_key)) sideCls = 'comp-red';
+            else if (blueKeys.has(t.team_key)) sideCls = 'comp-blue';
+
+            if (total === 0) {
+                html += `<div class="comp-cell ${sideCls}"><span class="comp-val">\u2013</span></div>`;
+            } else {
+                html += `
+                <div class="comp-cell ${sideCls} comp-epa-breakdown">
+                    <div class="epa-stacked-bar">
+                        <div class="epa-seg epa-seg-auto" style="width:${aPct}%" title="Auto: ${a.toFixed(1)}"></div>
+                        <div class="epa-seg epa-seg-teleop" style="width:${tpPct}%" title="Teleop: ${tp.toFixed(1)}"></div>
+                        <div class="epa-seg epa-seg-endgame" style="width:${egPct}%" title="Endgame: ${eg.toFixed(1)}"></div>
+                    </div>
+                    <div class="epa-breakdown-labels">
+                        <span class="epa-lbl epa-lbl-auto">A ${a.toFixed(1)}</span>
+                        <span class="epa-lbl epa-lbl-teleop">T ${tp.toFixed(1)}</span>
+                        <span class="epa-lbl epa-lbl-endgame">E ${eg.toFixed(1)}</span>
+                    </div>
+                </div>`;
+            }
+        });
+    }
 
     // Alliance totals row for match mode
     if (isMatchMode) {

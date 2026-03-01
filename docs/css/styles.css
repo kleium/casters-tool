@@ -3429,6 +3429,44 @@ input.input-loading {
 .comp-total { font-weight: 700; }
 .comp-total-empty { background: transparent; }
 
+/* EPA Breakdown stacked bar */
+.comp-epa-breakdown {
+    flex-direction: column;
+    gap: .35rem;
+    padding: .5rem .6rem;
+}
+.epa-stacked-bar {
+    display: flex;
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    background: var(--border-subtle);
+}
+.epa-seg {
+    height: 100%;
+    transition: width var(--transition);
+}
+.epa-seg-auto    { background: #f59e0b; }
+.epa-seg-teleop  { background: var(--primary); }
+.epa-seg-endgame { background: var(--green); }
+.epa-breakdown-labels {
+    display: flex;
+    justify-content: space-between;
+    gap: .25rem;
+    width: 100%;
+}
+.epa-lbl {
+    font-size: .65rem;
+    font-weight: 600;
+    font-family: var(--mono);
+    letter-spacing: .02em;
+    opacity: .85;
+}
+.epa-lbl-auto    { color: #f59e0b; }
+.epa-lbl-teleop  { color: var(--primary); }
+.epa-lbl-endgame { color: var(--green); }
+
 /* ── Rankings table checkbox column ───────────────────────── */
 .compare-th,
 .compare-td {
