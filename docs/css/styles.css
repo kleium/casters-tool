@@ -1674,7 +1674,7 @@ input.input-loading {
 /* ═══ ALLIANCE SELECTION GRID ═════════════════════════════ */
 #alliance-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr));
     gap: 1.1rem;
 }
 #alliance-grid > .empty {
@@ -1746,6 +1746,8 @@ input.input-loading {
     display: flex;
     gap: .35rem;
     flex-wrap: wrap;
+    align-items: center;
+    max-width: 100%;
 }
 
 .combined-opr {
@@ -1770,10 +1772,12 @@ input.input-loading {
 
 .combined-epa-detail {
     font-family: var(--mono);
-    font-size: .75rem;
+    font-size: .7rem;
     color: var(--text-secondary);
-    padding: .15rem .5rem;
+    padding: .15rem .45rem;
     border-radius: 999px;
+    background: var(--primary-soft);
+    white-space: nowrap;
 }
 
 /* ── Playoff ribbon ── */
@@ -1824,10 +1828,11 @@ input.input-loading {
 .alliance-team-row {
     display: flex;
     align-items: center;
-    gap: .8rem;
+    gap: .4rem .8rem;
     padding: .55rem .75rem;
     border-radius: 8px;
     transition: background var(--transition);
+    flex-wrap: wrap;
 }
 
 .alliance-team-row:hover {
@@ -1881,13 +1886,16 @@ input.input-loading {
 
 .team-stats-mini {
     display: flex;
-    gap: .8rem;
+    gap: .5rem;
     font-size: .76rem;
     color: var(--text-muted);
     font-family: var(--mono);
     margin-left: auto;
     white-space: nowrap;
-    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 /* ── Partnership summary row at bottom of card ── */
@@ -4078,7 +4086,7 @@ tr:hover .compare-cb,
     .team-highlights { flex-direction: column; }
     .alliance-team-row { flex-wrap: wrap; }
     .alliance-header { flex-direction: column; align-items: flex-start; }
-    .alliance-header-stats { margin-top: .3rem; }
+    .alliance-header-stats { margin-top: .3rem; width: 100%; }
     .alliance-partners-row { padding-left: .5rem; }
     .alliance-toolbar { flex-wrap: wrap; gap: .6rem; }
 
