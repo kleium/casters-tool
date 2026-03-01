@@ -66,10 +66,11 @@ async def health_check():
 
 @app.get("/api/status")
 async def api_status():
-    """Check connectivity to TBA and FIRST FRC Events APIs."""
+    """Check connectivity to TBA, FIRST FRC Events, and Statbotics APIs."""
     import asyncio
     from .services.tba_client import get_tba_client
     from .services.frc_client import get_frc_client
+    from .services.statbotics_client import get_statbotics_client
 
     async def check_tba():
         try:
@@ -82,11 +83,19 @@ async def api_status():
     async def check_frc():
         try:
             client = get_frc_client()
-            # A lightweight call — just fetch current season
+            # A lightweight call - just fetch current season
             resp = await client._client().get("/")
             return resp.status_code == 200
         except Exception:
             return False
 
-    tba_ok, frc_ok = await asyncio.gather(check_tba(), check_frc())
-    return {"tba": tba_ok, "frc": frc_ok}
+    async def check_statbotics():
+        try:
+            client = get_statbotics_client()
+            resp = await client._client().get("/")
+            return resp.status_code == 200
+        except Exception:
+            return False
+
+    tba_ok, frc_ok, sb_ok = await asyncio.gather(check_tba(), check_frc(), check_statbotics())
+    return {"tba": tba_ok, "frc": frc_ok, "statbotics": sb_ok}

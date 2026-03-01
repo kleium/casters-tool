@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 from .tba_client import get_tba_client
 from .frc_client import get_frc_client
+from .statbotics_client import get_epa_map
 
 
 async def _safe(coro):
@@ -30,13 +31,16 @@ async def get_alliances_with_stats(event_key: str) -> dict:
     year = int(event_key[:4]) if event_key[:4].isdigit() else 2026
     event_code = event_key[4:]
 
-    alliances_raw, rankings, oprs, teams_list, frc_teams_raw = await asyncio.gather(
+    alliances_raw, rankings, oprs, teams_list, frc_teams_raw, epa_data = await asyncio.gather(
         client.get_event_alliances(event_key),
         _safe(client.get_event_rankings(event_key)),
         _safe(client.get_event_oprs(event_key)),
         _safe(client.get_event_teams(event_key)),
         _safe(frc.get_event_teams(year, event_code)),
+        _safe(get_epa_map(event_key)),
     )
+    if epa_data is None:
+        epa_data = {}
 
     if not alliances_raw:
         return {"alliances": [], "partnerships": {}}
@@ -68,10 +72,13 @@ async def get_alliances_with_stats(event_key: str) -> dict:
     opr_map: dict[str, dict] = {}
     if oprs:
         for tk in oprs.get("oprs", {}):
+            epa_info = epa_data.get(tk, {})
             opr_map[tk] = {
                 "opr": round(oprs["oprs"].get(tk, 0), 2),
-                "dpr": round(oprs["dprs"].get(tk, 0), 2),
-                "ccwm": round(oprs["ccwms"].get(tk, 0), 2),
+                "epa": epa_info.get("epa"),
+                "epa_auto": epa_info.get("epa_auto"),
+                "epa_teleop": epa_info.get("epa_teleop"),
+                "epa_endgame": epa_info.get("epa_endgame"),
             }
 
     # ── Fetch avatars for all alliance teams ────────────────
@@ -103,7 +110,7 @@ async def get_alliances_with_stats(event_key: str) -> dict:
         for pick_idx, tk in enumerate(picks):
             r = rank_map.get(tk, {})
             rec = r.get("record", {})
-            o = opr_map.get(tk, {"opr": 0, "dpr": 0, "ccwm": 0})
+            o = opr_map.get(tk, {"opr": 0, "epa": None, "epa_auto": None, "epa_teleop": None, "epa_endgame": None})
             tnum = int(tk.replace("frc", ""))
 
             pick_label = _pick_labels[pick_idx] if pick_idx < len(_pick_labels) else ''
@@ -122,8 +129,10 @@ async def get_alliances_with_stats(event_key: str) -> dict:
                     "losses": rec.get("losses", 0),
                     "ties": rec.get("ties", 0),
                     "opr": o["opr"],
-                    "dpr": o["dpr"],
-                    "ccwm": o["ccwm"],
+                    "epa": o["epa"],
+                    "epa_auto": o["epa_auto"],
+                    "epa_teleop": o["epa_teleop"],
+                    "epa_endgame": o["epa_endgame"],
                 }
             )
 
@@ -153,8 +162,14 @@ async def get_alliances_with_stats(event_key: str) -> dict:
 
         # Combined stats
         combined_opr = round(sum(t["opr"] for t in team_details), 2)
-        combined_dpr = round(sum(t["dpr"] for t in team_details), 2)
-        combined_ccwm = round(sum(t["ccwm"] for t in team_details), 2)
+        _epa_vals = [t["epa"] for t in team_details if t["epa"] is not None]
+        combined_epa = round(sum(_epa_vals), 2) if _epa_vals else None
+        _epa_auto_vals = [t["epa_auto"] for t in team_details if t["epa_auto"] is not None]
+        combined_epa_auto = round(sum(_epa_auto_vals), 2) if _epa_auto_vals else None
+        _epa_teleop_vals = [t["epa_teleop"] for t in team_details if t["epa_teleop"] is not None]
+        combined_epa_teleop = round(sum(_epa_teleop_vals), 2) if _epa_teleop_vals else None
+        _epa_endgame_vals = [t["epa_endgame"] for t in team_details if t["epa_endgame"] is not None]
+        combined_epa_endgame = round(sum(_epa_endgame_vals), 2) if _epa_endgame_vals else None
 
         alliances.append(
             {
@@ -163,8 +178,10 @@ async def get_alliances_with_stats(event_key: str) -> dict:
                 "teams": team_details,
                 "picks": picks,
                 "combined_opr": combined_opr,
-                "combined_dpr": combined_dpr,
-                "combined_ccwm": combined_ccwm,
+                "combined_epa": combined_epa,
+                "combined_epa_auto": combined_epa_auto,
+                "combined_epa_teleop": combined_epa_teleop,
+                "combined_epa_endgame": combined_epa_endgame,
                 "playoff_result": result_label,
                 "playoff_type": result_type,
                 "playoff_record": f"{pw}-{pl}" if (pw or pl) else "",

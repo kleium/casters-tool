@@ -522,6 +522,12 @@ input[type="text"].input-sm {
     max-width: 130px;
 }
 
+.input-hint {
+    font-size: .75rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 button {
     background: linear-gradient(135deg, var(--primary) 0%, #7c7ff7 100%);
     color: #fff;
@@ -1251,7 +1257,7 @@ input.input-loading {
 }
 
 .stat-opr { color: var(--green) !important; }
-.stat-dpr { color: var(--red) !important; }
+.stat-epa { color: var(--primary-hover) !important; }
 
 .winner-text { color: var(--green); font-weight: 700; }
 
@@ -1752,23 +1758,21 @@ input.input-loading {
     border-radius: 999px;
 }
 
-.combined-dpr {
+.combined-epa {
     font-family: var(--mono);
     font-size: .82rem;
-    color: var(--green);
+    color: var(--primary-hover);
     font-weight: 600;
-    background: rgba(52,211,153,.1);
+    background: var(--primary-soft);
     padding: .2rem .7rem;
     border-radius: 999px;
 }
 
-.combined-ccwm {
+.combined-epa-detail {
     font-family: var(--mono);
-    font-size: .82rem;
-    color: var(--yellow);
-    font-weight: 600;
-    background: rgba(251,191,36,.1);
-    padding: .2rem .7rem;
+    font-size: .75rem;
+    color: var(--text-secondary);
+    padding: .15rem .5rem;
     border-radius: 999px;
 }
 
@@ -2382,6 +2386,7 @@ input.input-loading {
 .pbp-arena {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    align-items: start;
     gap: 1.2rem;
 }
 
@@ -2555,13 +2560,114 @@ input.input-loading {
 }
 
 .pbp-stat-value.opr-val { color: var(--green); }
-.pbp-stat-value.dpr-val { color: var(--red); }
+.pbp-stat-value.epa-val { color: var(--primary-hover); }
 
 .pbp-team-highscore {
     font-size: .72rem;
     color: var(--primary-hover);
     margin-top: .4rem;
     font-weight: 600;
+}
+
+/* ── PBP Awards Row ──────────────────────────────────────── */
+.pbp-awards-slot:empty { display: none; }
+.pbp-awards-slot { margin-top: 0; padding: 0; }
+
+.pbp-awards-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .45rem;
+    margin-top: .5rem;
+    padding-top: .45rem;
+    border-top: 1px dashed var(--border-subtle);
+}
+
+.pbp-award-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: .2rem;
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: .15rem .45rem;
+    position: relative;
+    cursor: default;
+}
+
+.pbp-award-icon {
+    width: 14px;
+    height: 14px;
+    color: #3b82f6;
+    flex-shrink: 0;
+}
+
+.pbp-award-count {
+    font-size: .78rem;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: #3b82f6;
+}
+
+.pbp-award-recent {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .3rem;
+}
+
+.pbp-award-entry {
+    font-size: .68rem;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 5px;
+    padding: .1rem .4rem;
+    white-space: nowrap;
+    position: relative;
+    cursor: default;
+}
+
+.pbp-award-entry.pbp-award-blue-banner {
+    color: #eab308;
+    border-color: rgba(234, 179, 8, .35);
+    background: rgba(234, 179, 8, .08);
+}
+
+.pbp-award-overflow {
+    display: contents;
+}
+.pbp-award-overflow.hidden { display: none; }
+
+.pbp-award-year {
+    font-weight: 700;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: .62rem;
+}
+
+.pbp-award-blue-banner .pbp-award-year {
+    color: #ca8a04;
+}
+
+.pbp-award-toggle {
+    font-size: .65rem;
+    color: var(--primary);
+    cursor: pointer;
+    font-style: italic;
+}
+.pbp-award-toggle:hover {
+    text-decoration: underline;
+}
+
+.pbp-award-more {
+    font-size: .65rem;
+    color: var(--primary);
+    cursor: pointer;
+    font-style: italic;
+}
+.pbp-award-more:hover {
+    text-decoration: underline;
 }
 
 /* ── Footer ──────────────────────────────────────────────── */
@@ -2583,6 +2689,73 @@ input.input-loading {
 }
 
 .pbp-footer-score { font-weight: 700; color: var(--primary-hover); }
+
+/* ── Statbotics Win Prediction Bar ──────────────────────── */
+.pbp-prediction {
+    grid-column: 1 / -1;
+    margin-top: 0;
+    padding: .7rem 1rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+.pbp-pred-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .45rem;
+}
+.pbp-pred-label {
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.pbp-pred-scores {
+    font-size: .75rem;
+    font-family: var(--mono);
+    color: var(--text-secondary);
+}
+.pbp-pred-scores .pred-red  { color: var(--red); font-weight: 600; }
+.pbp-pred-scores .pred-blue { color: var(--blue); font-weight: 600; }
+
+.pbp-pred-bar {
+    display: flex;
+    height: 26px;
+    border-radius: 6px;
+    overflow: hidden;
+    gap: 2px;
+}
+.pbp-pred-fill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .72rem;
+    font-weight: 700;
+    color: rgba(255,255,255,.85);
+    transition: width .4s ease;
+}
+.pbp-pred-fill span {
+    text-shadow: 0 1px 3px rgba(0,0,0,.4);
+}
+.pbp-pred-red {
+    background: linear-gradient(135deg, var(--red-deep) 0%, #ef4444 100%);
+}
+.pbp-pred-blue {
+    background: linear-gradient(135deg, #3b82f6 0%, var(--blue-deep) 100%);
+}
+
+/* Dark mode: deeper prediction bar tones */
+:root:not([data-theme="light"]) .pbp-pred-red {
+    background: linear-gradient(135deg, #991b1b 0%, var(--red-deep) 100%);
+}
+:root:not([data-theme="light"]) .pbp-pred-blue {
+    background: linear-gradient(135deg, var(--blue-deep) 0%, #1e40af 100%);
+}
+.pbp-pred-favored {
+    box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.25);
+}
 
 /* PBP Prior Connections */
 .pbp-connections {
@@ -3343,6 +3516,316 @@ tr:hover .compare-cb,
 /* ── Lookup modal ────────────────────────────────────────── */
 .lookup-modal { max-width: 820px; }
 
+/* ── Floating Team Lookup Panel ──────────────────────────── */
+/* ── Floating Team Lookup – panel shell ────────────────────── */
+.float-lookup {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    width: 480px;
+    max-width: calc(100vw - 2rem);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--primary);
+    border-radius: 14px;
+    box-shadow:
+        var(--shadow-lg),
+        0 0 30px var(--primary-glow);
+    z-index: 900;
+    overflow: hidden;
+    animation: float-lookup-in .25s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes float-lookup-in {
+    from { opacity: 0; transform: translateY(12px) scale(.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.float-lookup.hidden { display: none !important; }
+
+/* ── Title bar ─────────────────────────────────────────────── */
+.float-lookup-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .55rem .85rem;
+    background: linear-gradient(180deg, var(--card) 0%, var(--surface) 100%);
+    border-bottom: 1px solid var(--border);
+    border-radius: 14px 14px 0 0;
+    cursor: grab;
+    user-select: none;
+}
+.float-lookup-titlebar:active { cursor: grabbing; }
+
+.float-lookup-title {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--text);
+}
+.float-lookup-title svg {
+    color: var(--primary-hover);
+    filter: drop-shadow(0 0 4px var(--primary-glow));
+}
+.float-lookup-title-badge {
+    font-size: .7rem;
+    font-weight: 600;
+    color: var(--primary-hover);
+    background: var(--primary-soft);
+    padding: .1rem .45rem;
+    border-radius: 999px;
+    margin-left: .15rem;
+    letter-spacing: .01em;
+}
+
+/* ── Window controls ───────────────────────────────────────── */
+.float-lookup-controls {
+    display: flex;
+    gap: .3rem;
+}
+
+.float-lookup-minimize,
+.float-lookup-close {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: .25rem .35rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+.float-lookup-minimize:hover {
+    background: var(--primary-soft);
+    color: var(--text);
+    border-color: rgba(99,102,241,.18);
+    transform: scale(1.08);
+}
+.float-lookup-close:hover {
+    background: rgba(239,68,68,.12);
+    color: #ef4444;
+    border-color: rgba(239,68,68,.2);
+    transform: scale(1.08);
+}
+
+/* ── Search row ────────────────────────────────────────────── */
+.float-lookup-search {
+    display: flex;
+    gap: .5rem;
+    padding: .6rem .85rem;
+    border-bottom: 1px solid var(--border-subtle);
+    align-items: center;
+    background: rgba(0,0,0,.12);
+}
+.float-lookup-search input[type="text"] {
+    padding: .45rem .7rem;
+    font-size: .82rem;
+    flex: 1;
+    min-width: 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: var(--transition);
+}
+.float-lookup-search input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.float-lookup-search input[type="text"]::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+.float-lookup-search input.input-sm {
+    flex: 0 0 60px;
+    max-width: 60px;
+}
+.float-lookup-search button {
+    padding: .45rem 1rem;
+    font-size: .78rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--primary) 0%, #818cf8 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 2px 8px var(--primary-glow);
+    white-space: nowrap;
+}
+.float-lookup-search button:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 4px 14px var(--primary-glow);
+    transform: translateY(-1px);
+}
+.float-lookup-search button:active {
+    transform: translateY(0);
+    filter: brightness(.95);
+}
+
+/* ── Body / content area ───────────────────────────────────── */
+.float-lookup-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: .85rem;
+    min-height: 80px;
+}
+
+/* Custom scrollbar inside the panel */
+.float-lookup-body::-webkit-scrollbar { width: 6px; }
+.float-lookup-body::-webkit-scrollbar-track { background: transparent; }
+.float-lookup-body::-webkit-scrollbar-thumb {
+    background: rgba(99,102,241,.25);
+    border-radius: 99px;
+}
+.float-lookup-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(99,102,241,.45);
+}
+
+/* Remove redundant card chrome when inside panel */
+.float-lookup-body .team-card {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 0;
+    background: transparent;
+}
+.float-lookup-body .team-card::before { display: none; }
+
+/* Scale down content to fit compact panel */
+.float-lookup-body .team-header h2 {
+    font-size: 1.05rem;
+}
+.float-lookup-body .team-header p {
+    font-size: .78rem;
+}
+.float-lookup-body .team-avatar {
+    width: 2.6rem;
+    height: 2.6rem;
+}
+.float-lookup-body .team-highlights {
+    gap: .65rem;
+    margin: .9rem 0;
+    flex-wrap: wrap;
+}
+.float-lookup-body .highlight-card {
+    padding: .65rem .9rem;
+    min-width: 0;
+    flex: 1 1 calc(50% - .65rem);
+    box-sizing: border-box;
+}
+.float-lookup-body .highlight-label {
+    font-size: .65rem;
+}
+.float-lookup-body .highlight-value {
+    font-size: .95rem;
+}
+.float-lookup-body .team-card h3 {
+    font-size: .85rem;
+    margin: 1rem 0 .55rem;
+}
+.float-lookup-body .data-table { font-size: .73rem; }
+.float-lookup-body .banner-list { gap: .4rem; }
+.float-lookup-body .banner-chip { font-size: .72rem; }
+
+/* Empty/loading states within panel */
+.float-lookup-body .empty {
+    padding: 2rem 1.2rem;
+    font-size: .82rem;
+    background: transparent;
+    border: 1px dashed var(--border);
+}
+.float-lookup-body .loading-msg {
+    padding: 2rem 1rem;
+    font-size: .82rem;
+}
+
+/* Styled empty state */
+.float-lookup-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    padding: 2.5rem 1rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+.float-lookup-empty svg {
+    opacity: .3;
+}
+.float-lookup-empty p {
+    font-size: .82rem;
+    font-style: italic;
+    margin: 0;
+}
+
+/* Mini spinner for in-panel loading */
+.float-lookup-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .75rem;
+    padding: 2.5rem 1rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+.float-lookup-loading::before {
+    content: '';
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: float-lookup-spin .7s linear infinite;
+}
+@keyframes float-lookup-spin {
+    to { transform: rotate(360deg); }
+}
+.float-lookup-loading span {
+    font-size: .82rem;
+    font-weight: 500;
+}
+
+/* ── Minimized state ───────────────────────────────────────── */
+.float-lookup-minimized .float-lookup-search,
+.float-lookup-minimized .float-lookup-body {
+    display: none;
+}
+.float-lookup-minimized {
+    max-height: none;
+    width: auto;
+    min-width: 200px;
+    max-width: 260px;
+}
+.float-lookup-minimized .float-lookup-titlebar {
+    border-radius: 14px;
+    border-bottom: none;
+}
+
+/* Active state for header button */
+#float-lookup-btn.active {
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-color: rgba(99,102,241,.3);
+    box-shadow: 0 0 12px var(--primary-glow);
+}
+
+/* ── Responsive: small screens ─────────────────────────────── */
+@media (max-width: 560px) {
+    .float-lookup {
+        right: .5rem;
+        bottom: .5rem;
+        width: calc(100vw - 1rem);
+    }
+    .float-lookup-body .team-highlights { flex-direction: column; }
+}
+
 /* ── PBP Compare button ──────────────────────────────────── */
 .pbp-compare-btn {
     display: inline-flex;
@@ -3723,8 +4206,8 @@ tr:hover .compare-cb,
     .data-table td { padding: .45rem .35rem; }
     .data-table .location,
     .data-table .col-location,
-    .data-table .stat-dpr,
-    .data-table .col-dpr,
+    .data-table .stat-epa,
+    .data-table .col-epa,
     .data-table .team-avatar-cell { display: none; }
     .data-table .team-num { font-size: .82rem; }
     .data-table .rank { text-align: center; min-width: 2rem; }

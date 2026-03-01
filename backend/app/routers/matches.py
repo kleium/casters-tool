@@ -6,6 +6,7 @@ import re as _re
 from fastapi import APIRouter, HTTPException
 from ..services.tba_client import get_tba_client
 from ..services.frc_client import get_frc_client
+from ..services.statbotics_client import get_epa_map, get_match_predictions
 
 router = APIRouter()
 
@@ -37,13 +38,19 @@ async def get_all_matches(event_key: str):
         year = int(event_key[:4])
         event_code = event_key[4:]
 
-        matches_raw, rankings, oprs, teams_raw, frc_teams_raw = await asyncio.gather(
+        matches_raw, rankings, oprs, teams_raw, frc_teams_raw, epa_data, pred_data = await asyncio.gather(
             client.get_event_matches(event_key),
             _safe(client.get_event_rankings(event_key)),
             _safe(client.get_event_oprs(event_key)),
             client.get_event_teams(event_key),
             _safe(frc.get_event_teams(year, event_code)),
+            _safe(get_epa_map(event_key)),
+            _safe(get_match_predictions(event_key)),
         )
+        if epa_data is None:
+            epa_data = {}
+        if pred_data is None:
+            pred_data = {}
 
         # Build FRC Events org-name lookup (teamNumber → schoolOrg)
         frc_org_map: dict[int, str] = {}
@@ -72,12 +79,9 @@ async def get_all_matches(event_key: str):
                 rank_map[r["team_key"]] = r
 
         opr_map: dict[str, float] = {}
-        dpr_map: dict[str, float] = {}
         if oprs:
             for tk in oprs.get("oprs", {}):
                 opr_map[tk] = round(oprs["oprs"][tk], 2)
-            for tk in oprs.get("dprs", {}):
-                dpr_map[tk] = round(oprs["dprs"][tk], 2)
 
         # ── Compute per-team running stats from qual matches ──
         team_matches: dict[str, list[int]] = {}  # team_key -> list of scores in their alliance
@@ -132,7 +136,7 @@ async def get_all_matches(event_key: str):
                 "qual_average": round(sum(scores) / len(scores), 2) if scores else 0,
                 "avg_rp": round(rp_list[0], 2) if rp_list else 0,
                 "opr": opr_map.get(tk, 0),
-                "dpr": dpr_map.get(tk, 0),
+                "epa": (epa_data.get(tk) or {}).get("epa"),
                 "high_score": max(scores) if scores else 0,
                 "high_score_match": "",
             }
@@ -201,6 +205,7 @@ async def get_all_matches(event_key: str):
                     "total_opr": round(sum(opr_map.get(tk, 0) for tk in blue_keys), 2),
                 },
                 "winning_alliance": m.get("winning_alliance", ""),
+                "pred": pred_data.get(m["key"]),
             })
 
         result.sort(key=lambda x: x["sort_key"])

@@ -38,8 +38,8 @@ const API = {
 
     // ── Teams ───────────────────────────────────────────
     teamStats: (num, year) =>
-        API.get(`/teams/${num}/stats${year ? `?year=${year}` : ''}`),
-    headToHead: (a, b, year, allTime) =>
+        API.get(`/teams/${num}/stats${year ? `?year=${year}` : ''}`),    teamAwardsSummary: (teamNums) =>
+        API.get(`/teams/awards-summary?teams=${teamNums.join(',')}`),    headToHead: (a, b, year, allTime) =>
         API.get(`/teams/head-to-head/${a}/${b}${year ? `?year=${year}&` : '?'}all_time=${allTime ? 'true' : 'false'}`),
 
     // ── Compare ─────────────────────────────────────────

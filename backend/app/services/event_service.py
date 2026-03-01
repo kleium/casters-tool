@@ -1,9 +1,10 @@
-"""Event-related business logic — teams, rankings, OPRs."""
+"""Event-related business logic — teams, rankings, OPRs, EPA."""
 from __future__ import annotations
 
 import asyncio
 from datetime import date
 from .tba_client import get_tba_client
+from .statbotics_client import get_epa_map
 
 # TBA event types to exclude from the season dropdown (off-season, preseason, unlabeled)
 _EXCLUDE_TYPES = {99, 100, -1}
@@ -160,10 +161,13 @@ async def get_event_teams_with_stats(event_key: str) -> list[dict]:
     # Determine the year for media lookups
     year = int(event_key[:4]) if event_key[:4].isdigit() else date.today().year
 
-    rankings, oprs = await asyncio.gather(
+    rankings, oprs, epa_data = await asyncio.gather(
         _safe(client.get_event_rankings(event_key)),
         _safe(client.get_event_oprs(event_key)),
+        _safe(get_epa_map(event_key)),
     )
+
+    epa_data = epa_data or {}
 
     # Fetch avatars for all teams in parallel
     avatar_tasks = {
@@ -194,8 +198,6 @@ async def get_event_teams_with_stats(event_key: str) -> list[dict]:
         for tk in oprs.get("oprs", {}):
             opr_map[tk] = {
                 "opr": round(oprs["oprs"].get(tk, 0), 2),
-                "dpr": round(oprs["dprs"].get(tk, 0), 2),
-                "ccwm": round(oprs["ccwms"].get(tk, 0), 2),
             }
 
     result = []
@@ -203,7 +205,8 @@ async def get_event_teams_with_stats(event_key: str) -> list[dict]:
         tk = t["key"]
         r = rank_map.get(tk, {})
         rec = r.get("record", {})
-        o = opr_map.get(tk, {"opr": 0, "dpr": 0, "ccwm": 0})
+        o = opr_map.get(tk, {"opr": 0})
+        epa = epa_data.get(tk, {})
         result.append(
             {
                 "team_key": tk,
@@ -220,8 +223,10 @@ async def get_event_teams_with_stats(event_key: str) -> list[dict]:
                 "ties": rec.get("ties", 0),
                 "qual_average": r.get("qual_average", 0),
                 "opr": o["opr"],
-                "dpr": o["dpr"],
-                "ccwm": o["ccwm"],
+                "epa": epa.get("epa", None),
+                "epa_auto": epa.get("epa_auto", None),
+                "epa_teleop": epa.get("epa_teleop", None),
+                "epa_endgame": epa.get("epa_endgame", None),
             }
         )
 
@@ -238,12 +243,14 @@ async def get_team_comparison(event_key: str, teams_csv: str) -> dict:
     client = get_tba_client()
 
     # Fetch all required data in parallel
-    matches_raw, rankings, oprs, teams_raw = await asyncio.gather(
+    matches_raw, rankings, oprs, teams_raw, epa_data = await asyncio.gather(
         _safe(client.get_event_matches(event_key)),
         _safe(client.get_event_rankings(event_key)),
         _safe(client.get_event_oprs(event_key)),
         _safe(client.get_event_teams_full(event_key)),
+        _safe(get_epa_map(event_key)),
     )
+    epa_data = epa_data or {}
 
     # Build team info lookup
     team_info: dict[str, dict] = {}
@@ -262,8 +269,6 @@ async def get_team_comparison(event_key: str, teams_csv: str) -> dict:
         for tk in oprs.get("oprs", {}):
             opr_data[tk] = {
                 "opr": round(oprs["oprs"].get(tk, 0), 2),
-                "dpr": round(oprs["dprs"].get(tk, 0), 2),
-                "ccwm": round(oprs["ccwms"].get(tk, 0), 2),
             }
 
     # Compute per-team match stats from qual matches
@@ -286,7 +291,8 @@ async def get_team_comparison(event_key: str, teams_csv: str) -> dict:
         info = team_info.get(tk, {})
         rk = rank_map.get(tk, {})
         rec = rk.get("record", {})
-        o = opr_data.get(tk, {"opr": 0, "dpr": 0, "ccwm": 0})
+        o = opr_data.get(tk, {"opr": 0})
+        epa = epa_data.get(tk, {})
         scores = team_scores.get(tk, [])
 
         # Ranking points from sort_orders
@@ -300,14 +306,16 @@ async def get_team_comparison(event_key: str, teams_csv: str) -> dict:
             "city": info.get("city", ""),
             "state_prov": info.get("state_prov", ""),
             "country": info.get("country", ""),
-            "avatar": None,  # Could be populated if needed
+            "avatar": None,
             "rank": rk.get("rank", "-"),
             "wins": rec.get("wins", 0),
             "losses": rec.get("losses", 0),
             "ties": rec.get("ties", 0),
             "opr": o["opr"],
-            "dpr": o["dpr"],
-            "ccwm": o["ccwm"],
+            "epa": epa.get("epa", None),
+            "epa_auto": epa.get("epa_auto", None),
+            "epa_teleop": epa.get("epa_teleop", None),
+            "epa_endgame": epa.get("epa_endgame", None),
             "avg_rp": avg_rp,
             "qual_average": round(sum(scores) / len(scores), 2) if scores else 0,
             "high_score": max(scores) if scores else 0,

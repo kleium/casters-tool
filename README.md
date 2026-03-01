@@ -12,7 +12,7 @@ Built by **Gürsel & [Team 9020](https://www.thebluealliance.com/team/9020)** fo
 |-----|---------------|
 | **Events** | Season event picker with region & week filters, manual entry, and saved events |
 | **History** | Full event lineage: past winners, finalists, awards timeline dating back to 1992 |
-| **Rankings** | Live team rankings from an event with record, OPR, DPR, CCWM |
+| **Rankings** | Live team rankings from an event with record, OPR, and Statbotics EPA |
 | **Summary** | Event demographics, Hall of Fame teams, Impact finalists, connections graph, top scorers |
 | **Play by Play** | Match-by-match view with per-team stats and inline team comparison |
 | **Breakdown** | Detailed score breakdowns per match (supports 2025 REEFSCAPE for demo & 2026 game REBUILT) |

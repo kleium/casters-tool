@@ -5,6 +5,7 @@ import asyncio
 from datetime import date
 from .region_service import _load_region_stats, get_event_history
 from .tba_client import get_tba_client
+from .statbotics_client import get_epa_map
 
 
 # ── Static HoF / Impact lookup (built once from region_stats.json) ───
@@ -51,12 +52,15 @@ async def get_event_summary(event_key: str) -> dict:
     current_year = date.today().year
 
     # Parallel fetch: event info, teams (full detail), rankings, OPRs
-    event_info, teams, rankings, oprs = await asyncio.gather(
+    event_info, teams, rankings, oprs, epa_data = await asyncio.gather(
         _safe(client.get_event(event_key)),
         client.get_event_teams_full(event_key),
         _safe(client.get_event_rankings(event_key)),
         _safe(client.get_event_oprs(event_key)),
+        _safe(get_epa_map(event_key)),
     )
+    if epa_data is None:
+        epa_data = {}
 
     if not teams:
         return {"error": "No teams found for this event."}
@@ -122,7 +126,7 @@ async def get_event_summary(event_key: str) -> dict:
             impact_finalists.append({**info, "impact_years": _IMPACT_BY_NUM[num].get("years", [])})
 
     # ── Top 3 OPR contributors ──────────────────────────────
-    top_scorers = _compute_top_scorers(teams, oprs, rankings)
+    top_scorers = _compute_top_scorers(teams, oprs, rankings, epa_data)
 
     return {
         "event_key": event_key,
@@ -291,21 +295,26 @@ async def get_event_summary_stats(event_key: str) -> dict:
         if endpoint in client._cache:
             del client._cache[endpoint]
 
-    teams, rankings, oprs = await asyncio.gather(
+    teams, rankings, oprs, epa_data = await asyncio.gather(
         client.get_event_teams(event_key),
         _safe(client.get_event_rankings(event_key)),
         _safe(client.get_event_oprs(event_key)),
+        _safe(get_epa_map(event_key)),
     )
+    if epa_data is None:
+        epa_data = {}
 
     return {
-        "top_scorers": _compute_top_scorers(teams, oprs, rankings),
+        "top_scorers": _compute_top_scorers(teams, oprs, rankings, epa_data),
     }
 
 
-def _compute_top_scorers(teams, oprs, rankings) -> list[dict]:
+def _compute_top_scorers(teams, oprs, rankings, epa_data: dict | None = None) -> list[dict]:
     """Return top-3 teams by OPR."""
     if not oprs or not oprs.get("oprs"):
         return []
+    if epa_data is None:
+        epa_data = {}
 
     name_map = {t["key"]: t for t in (teams or [])}
     rank_map: dict[str, int] = {}
@@ -316,12 +325,13 @@ def _compute_top_scorers(teams, oprs, rankings) -> list[dict]:
     scored = []
     for tk, opr_val in oprs["oprs"].items():
         t = name_map.get(tk, {})
+        epa_info = epa_data.get(tk, {})
         scored.append({
             "team_key": tk,
             "team_number": t.get("team_number", int(tk.replace("frc", ""))),
             "nickname": t.get("nickname", ""),
             "opr": round(opr_val, 2),
-            "dpr": round(oprs.get("dprs", {}).get(tk, 0), 2),
+            "epa": epa_info.get("epa"),
             "rank": rank_map.get(tk, "-"),
         })
 

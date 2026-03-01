@@ -62,10 +62,12 @@ let highlightForeign = false; // settings: highlight international teams
 let showOffseason = false;     // settings: show offseason events
 let rankingsCompact = false;      // toggle: compressed rankings view
 let rankingsShowSchool = false;   // toggle: show school/org column
-let allianceShowDpr = false;      // toggle: show DPR/CCWM in alliance cards
+let allianceShowEpa = false;      // toggle: show EPA breakdown in alliance cards
 let allianceShowPlayoff = false;  // toggle: show playoff ribbons/status
 let allianceShowAvatars = true;  // toggle: show team avatars
 let allianceShowNames = false;    // toggle: show team nicknames
+let pbpShowAwards = false;        // toggle: show blue banners + awards in PBP
+let showPredictions = false;       // settings: show Statbotics win predictions in PBP
 let eventCountry = '';         // home country of the currently loaded event
 let eventRegion  = '';         // resolved region name for the loaded event
 let historyData  = null;       // cached event history data
@@ -157,6 +159,49 @@ function toggleShowOffseason(on) {
     }
 })();
 
+// ── PBP Awards Toggle ──────────────────────────────────────
+let _pbpAwardsCache = {};  // team_number -> awards data
+
+function togglePbpAwards(on) {
+    pbpShowAwards = on;
+    localStorage.setItem('pbpShowAwards', on ? 'true' : 'false');
+    if (pbpData && pbpData.matches && pbpData.matches.length) {
+        renderPbpMatch();
+    }
+}
+
+function toggleShowPredictions(on) {
+    showPredictions = on;
+    localStorage.setItem('showPredictions', on ? 'true' : 'false');
+    if (pbpData && pbpData.matches && pbpData.matches.length) {
+        renderPbpMatch();
+    }
+}
+
+// Restore saved PBP awards preference on load
+(function initPbpAwards() {
+    const saved = localStorage.getItem('pbpShowAwards');
+    if (saved === 'true') {
+        pbpShowAwards = true;
+        document.addEventListener('DOMContentLoaded', () => {
+            const cb = document.getElementById('toggle-pbp-awards');
+            if (cb) cb.checked = true;
+        });
+    }
+})();
+
+// Restore saved predictions preference on load
+(function initPredictions() {
+    const saved = localStorage.getItem('showPredictions');
+    if (saved === 'true') {
+        showPredictions = true;
+        document.addEventListener('DOMContentLoaded', () => {
+            const cb = document.getElementById('toggle-predictions');
+            if (cb) cb.checked = true;
+        });
+    }
+})();
+
 function applyForeignHighlight() {
     document.querySelectorAll('[data-country]').forEach(el => {
         const c = el.dataset.country;
@@ -239,6 +284,13 @@ document.querySelectorAll('.tab').forEach(btn => {
                 buildPbpSelector();
                 renderPbpMatch();
                 renderedTabs.playbyplay = true;
+            } else if (currentEventStatus === 'upcoming') {
+                hide('pbp-container');
+                const el = $('pbp-empty');
+                if (el) {
+                    el.textContent = 'The match schedule for this event has not been published yet.';
+                    el.classList.remove('hidden');
+                }
             } else {
                 loadPlayByPlay();
             }
@@ -261,6 +313,13 @@ document.querySelectorAll('.tab').forEach(btn => {
                 loadBdMatch();
                 startBdListRefresh();
                 renderedTabs.breakdown = true;
+            } else if (currentEventStatus === 'upcoming') {
+                hide('bd-container');
+                const el = $('bd-empty');
+                if (el) {
+                    el.textContent = 'The match schedule for this event has not been published yet.';
+                    el.classList.remove('hidden');
+                }
             } else {
                 loadBreakdownTab();
             }
@@ -361,11 +420,15 @@ async function checkApiStatus() {
 
         const tbaDot = document.querySelector('#status-tba .status-dot');
         const frcDot = document.querySelector('#status-frc .status-dot');
+        const sbDot  = document.querySelector('#status-statbotics .status-dot');
         if (tbaDot) {
             tbaDot.className = 'status-dot ' + (data.tba ? 'status-ok' : 'status-down');
         }
         if (frcDot) {
             frcDot.className = 'status-dot ' + (data.frc ? 'status-ok' : 'status-down');
+        }
+        if (sbDot) {
+            sbDot.className = 'status-dot ' + (data.statbotics ? 'status-ok' : 'status-down');
         }
     } catch {
         document.querySelectorAll('.status-dot').forEach(d => d.className = 'status-dot status-down');
@@ -638,6 +701,7 @@ async function loadEvent(eventKey) {
     stopBdListRefresh();
     _pbpConnCache = {};
     _pbpConnAllTime = false;
+    _pbpAwardsCache = {};
     _h2hAllTime = false;
     currentAwardFilter = 'all';
     renderedTabs = { playoff: false, alliance: false, playbyplay: false, breakdown: false, history: false };
@@ -705,7 +769,7 @@ async function loadEvent(eventKey) {
             ? `<span class="aeb-status-badge status-${info.status}">${info.status.toUpperCase()}</span>`
             : '';
         $('aeb-name').textContent = info.name;
-        $('aeb-meta').innerHTML = `<span>${info.event_type_string} — ${info.city}, ${info.state_prov} · ${info.start_date} → ${info.end_date} · ${teams.length} teams</span>${statusBadge}`;
+        $('aeb-meta').innerHTML = `<span>${info.event_type_string} · ${info.city}, ${info.state_prov} · ${info.start_date} → ${info.end_date} · ${teams.length} teams</span>${statusBadge}`;
 
         // Match dot color to event status
         const dot = document.querySelector('.aeb-dot');
@@ -848,6 +912,7 @@ async function loadSavedEvent(eventKey) {
     historyData = null; regionData = null;
     stopBdPolling(); stopBdListRefresh();
     _pbpConnCache = {}; _pbpConnAllTime = false;
+    _pbpAwardsCache = {};
     _h2hAllTime = false;
     renderedTabs = { playoff: false, alliance: false, playbyplay: false, breakdown: false, history: false };
 
@@ -921,7 +986,7 @@ async function loadSavedEvent(eventKey) {
             ? `<span class="aeb-status-badge status-${info.status}">${info.status.toUpperCase()}</span>`
             : '';
         $('aeb-name').textContent = info.name;
-        $('aeb-meta').innerHTML = `<span>${info.event_type_string || ''} — ${info.city || ''}, ${info.state_prov || ''} · ${info.start_date || ''} → ${info.end_date || ''} · ${teams.length} teams</span>${statusBadge}`;
+        $('aeb-meta').innerHTML = `<span>${info.event_type_string || ''} · ${info.city || ''}, ${info.state_prov || ''} · ${info.start_date || ''} → ${info.end_date || ''} · ${teams.length} teams</span>${statusBadge}`;
 
         const dot = document.querySelector('.aeb-dot');
         if (dot) {
@@ -1142,10 +1207,8 @@ function sortTeamsData() {
                 return asc ? b.wins - a.wins : a.wins - b.wins;
             case 'opr':
                 return asc ? b.opr - a.opr : a.opr - b.opr;
-            case 'dpr':
-                return asc ? a.dpr - b.dpr : b.dpr - a.dpr;
-            case 'ccwm':
-                return asc ? b.ccwm - a.ccwm : a.ccwm - b.ccwm;
+            case 'epa':
+                return asc ? (b.epa ?? -Infinity) - (a.epa ?? -Infinity) : (a.epa ?? -Infinity) - (b.epa ?? -Infinity);
             default:
                 return 0;
         }
@@ -1191,8 +1254,7 @@ function renderTeamTable(teams, sortCol, asc) {
                 ${school ? th('school_name', 'School / Org') : ''}
                 ${th('record', 'Record')}
                 ${th('opr', 'OPR')}
-                ${compact ? '' : th('dpr', 'DPR')}
-                ${compact ? '' : th('ccwm', 'CCWM')}
+                ${compact ? '' : th('epa', 'EPA')}
             </tr>
         </thead>
         <tbody>
@@ -1215,8 +1277,7 @@ function renderTeamTable(teams, sortCol, asc) {
                 ${school ? `<td class="location">${t.school_name || ''}</td>` : ''}
                 <td class="stat">${t.wins}-${t.losses}-${t.ties}</td>
                 <td class="stat stat-opr">${t.opr}</td>
-                ${compact ? '' : `<td class="stat stat-dpr">${t.dpr}</td>`}
-                ${compact ? '' : `<td class="stat">${t.ccwm}</td>`}
+                ${compact ? '' : `<td class="stat stat-epa">${t.epa != null ? t.epa : '\u2013'}</td>`}
             </tr>`;
             }).join('')}
         </tbody>
@@ -1395,7 +1456,7 @@ async function refreshSummaryStats() {
 }
 
 function renderSummary(data) {
-    $('summary-title').textContent = `Event Summary — ${currentEvent.toUpperCase()}`;
+    $('summary-title').textContent = `Event Summary · ${currentEvent.toUpperCase()}`;
     show('summary-container');
 
     // Demographics
@@ -1947,8 +2008,8 @@ function toggleAllianceNames(on) {
     allianceShowNames = on;
     if (allianceData) renderAlliances(allianceData);
 }
-function toggleAllianceDpr(on) {
-    allianceShowDpr = on;
+function toggleAllianceEpa(on) {
+    allianceShowEpa = on;
     if (allianceData) renderAlliances(allianceData);
 }
 function toggleAlliancePlayoff(on) {
@@ -1982,8 +2043,11 @@ function renderAlliances(data) {
         }
 
         // Combined stats
-        const dprCcwmHtml = allianceShowDpr
-            ? `<span class="combined-dpr">Σ DPR ${a.combined_dpr}</span><span class="combined-ccwm">Σ CCWM ${a.combined_ccwm}</span>`
+        const epaHtml = allianceShowEpa
+            ? `<span class="combined-epa">Σ EPA ${a.combined_epa != null ? a.combined_epa : '\u2013'}</span>`
+              + `<span class="combined-epa-detail">Auto ${a.combined_epa_auto != null ? a.combined_epa_auto : '\u2013'}</span>`
+              + `<span class="combined-epa-detail">Teleop ${a.combined_epa_teleop != null ? a.combined_epa_teleop : '\u2013'}</span>`
+              + `<span class="combined-epa-detail">Endgame ${a.combined_epa_endgame != null ? a.combined_epa_endgame : '\u2013'}</span>`
             : '';
 
         // Collect all partnerships for this alliance into a summary section
@@ -2016,7 +2080,7 @@ function renderAlliances(data) {
                 </div>
                 <div class="alliance-header-stats">
                     <span class="combined-opr">Σ OPR ${a.combined_opr}</span>
-                    ${dprCcwmHtml}
+                    ${epaHtml}
                 </div>
             </div>
             <div class="alliance-strength-bar"><div class="alliance-strength-fill" style="width:${strengthPct}%"></div></div>
@@ -2030,8 +2094,8 @@ function renderAlliances(data) {
 
                     const isIntl = highlightForeign && t.country && eventCountry && t.country !== eventCountry;
 
-                    const teamDprHtml = allianceShowDpr
-                        ? `<span class="stat-dpr">DPR ${t.dpr}</span>`
+                    const teamEpaHtml = allianceShowEpa
+                        ? `<span class="stat-epa">EPA ${t.epa != null ? t.epa : '\u2013'}</span>`
                         : '';
 
                     return `
@@ -2044,7 +2108,7 @@ function renderAlliances(data) {
                             <span>Rank ${t.rank}</span>
                             <span>${t.wins}-${t.losses}-${t.ties}</span>
                             <span class="stat-opr">OPR ${t.opr}</span>
-                            ${teamDprHtml}
+                            ${teamEpaHtml}
                         </div>
                     </div>`;
                 }).join('')}
@@ -2167,7 +2231,7 @@ function renderTeamStats(d) {
             <div class="team-header-top">
                 ${avatarHtml}
                 <div class="team-header-text">
-                    <h2>${d.team_number} — ${d.nickname}</h2>
+                    <h2>${d.team_number} | ${d.nickname}</h2>
                     ${badgesRow}
                     <p>${[d.city, d.state_prov, d.country].filter(Boolean).join(', ')}</p>
                     <p class="muted">Rookie: ${d.rookie_year || '?'} &nbsp;|&nbsp; ${d.years_active} season${d.years_active !== 1 ? 's' : ''} &nbsp;|&nbsp; Viewing: ${d.year}</p>
@@ -2188,12 +2252,12 @@ function renderTeamStats(d) {
             <div class="highlight-card highlight-no-events">
                 <div class="highlight-label">Season Status (${d.year})</div>
                 <div class="highlight-value">Hasn't competed yet</div>
-                ${d.last_season ? `<div class="highlight-sub">Last season (${d.last_season.year}): <strong>${d.last_season.achievement}</strong>${d.last_season.event_name ? ` — ${d.last_season.event_name}` : ''}</div>` : ''}
+                ${d.last_season ? `<div class="highlight-sub">Last season (${d.last_season.year}): <strong>${d.last_season.achievement}</strong>${d.last_season.event_name ? ` · ${d.last_season.event_name}` : ''}</div>` : ''}
             </div>`}
             ${bannerCard}
         </div>
 
-        <h3>Event Results — ${d.year}</h3>
+        <h3>Event Results · ${d.year}</h3>
         ${eventsThisYear.length ? `
         <table class="data-table compact">
             <thead>
@@ -2209,10 +2273,10 @@ function renderTeamStats(d) {
                     <td class="muted">${e.event_type}</td>
                     <td class="rank">${e.qual_rank}</td>
                     <td class="stat">${e.qual_record}</td>
-                    <td>${e.playoff_level}</td>
+                    <td>${e.playoff_level === 'Qualifications' ? '–' : e.playoff_level}</td>
                     <td>${e.playoff_status === 'won'
                         ? '<span class="winner-text">Won</span>'
-                        : e.playoff_status}</td>
+                        : (e.playoff_status === '-' ? '–' : e.playoff_status)}</td>
                 </tr>`).join('')}
             </tbody>
         </table>` : '<p class="empty">No events yet this year.</p>'}
@@ -2373,7 +2437,17 @@ async function loadPlayByPlay() {
         const data = await API.allMatches(currentEvent);
         pbpData = data;
         pbpIndex = 0;
-        if (!data?.matches?.length) return; // upcoming event — no matches yet
+        if (!data?.matches?.length) {
+            hide('pbp-container');
+            const el = $('pbp-empty');
+            if (el) {
+                el.textContent = currentEventStatus === 'upcoming'
+                    ? 'The match schedule for this event has not been published yet.'
+                    : 'No match data available for this event.';
+                el.classList.remove('hidden');
+            }
+            return;
+        }
         hide('pbp-empty');
         show('pbp-container');
         buildPbpSelector();
@@ -2423,6 +2497,32 @@ function renderPbpMatch() {
     const blueWon = m.winning_alliance === 'blue';
     const upcoming = m.red.score < 0 && m.blue.score < 0;
 
+    // Statbotics prediction bar
+    let predHtml = '';
+    if (showPredictions && m.pred) {
+        const p = m.pred;
+        const redPct = p.red_win_prob != null ? Math.round(p.red_win_prob * 100) : null;
+        const bluePct = redPct != null ? 100 - redPct : null;
+        if (redPct != null) {
+            const favored = redPct >= 50 ? 'red' : 'blue';
+            predHtml = `
+            <div class="pbp-prediction">
+                <div class="pbp-pred-header">
+                    <span class="pbp-pred-label">Statbotics Win Prediction</span>
+                    <span class="pbp-pred-scores">Predicted: <span class="pred-red">${p.red_score}</span> · <span class="pred-blue">${p.blue_score}</span></span>
+                </div>
+                <div class="pbp-pred-bar">
+                    <div class="pbp-pred-fill pbp-pred-red ${favored === 'red' ? 'pbp-pred-favored' : ''}" style="width:${redPct}%">
+                        ${redPct >= 15 ? `<span>${redPct}%</span>` : ''}
+                    </div>
+                    <div class="pbp-pred-fill pbp-pred-blue ${favored === 'blue' ? 'pbp-pred-favored' : ''}" style="width:${bluePct}%">
+                        ${bluePct >= 15 ? `<span>${bluePct}%</span>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        }
+    }
+
     $('pbp-arena').innerHTML = `
         <div class="pbp-alliance red-side ${redWon ? 'pbp-alliance-won' : ''}">
             <div class="pbp-alliance-header">
@@ -2450,7 +2550,13 @@ function renderPbpMatch() {
                 ${m.blue.teams.map(t => renderPbpTeam(t, 'blue-side')).join('')}
             </div>
         </div>
-    `;
+    ` + predHtml;
+
+    // If awards toggle is on, fetch and inject awards asynchronously
+    if (pbpShowAwards) {
+        const allTeams = [...m.red.teams, ...m.blue.teams];
+        _injectPbpAwards(allTeams, pbpIndex);
+    }
 
     // Footer: quals high score + compare button
     const qs = pbpData.quals_high_score;
@@ -2667,8 +2773,8 @@ function renderPbpTeam(t, sideCls) {
                 <div class="pbp-stat-value opr-val">${t.opr}</div>
             </div>
             <div class="pbp-stat">
-                <div class="pbp-stat-label">DPR</div>
-                <div class="pbp-stat-value dpr-val">${t.dpr}</div>
+                <div class="pbp-stat-label">EPA</div>
+                <div class="pbp-stat-value epa-val">${t.epa != null ? t.epa : '\u2013'}</div>
             </div>
             <div class="pbp-stat">
                 <div class="pbp-stat-label">Avg RP</div>
@@ -2676,7 +2782,84 @@ function renderPbpTeam(t, sideCls) {
             </div>
         </div>
         ${t.high_score > 0 ? `<div class="pbp-team-highscore">Team high score: ${t.high_score}${t.high_score_match ? ' in ' + t.high_score_match : ''}</div>` : ''}
+        <div class="pbp-awards-slot" data-team="${t.team_number}"></div>
     </div>`;
+}
+
+// ── PBP Awards injection ───────────────────────────────────
+
+async function _injectPbpAwards(teams, matchIdx) {
+    // Determine which teams need fetching
+    const nums = teams.map(t => t.team_number);
+    const uncached = nums.filter(n => !_pbpAwardsCache[n]);
+
+    if (uncached.length) {
+        try {
+            const data = await API.teamAwardsSummary(uncached);
+            for (const [key, val] of Object.entries(data)) {
+                _pbpAwardsCache[parseInt(key)] = val;
+            }
+        } catch {
+            // silently skip — awards are a nice-to-have
+            return;
+        }
+    }
+
+    // Guard: user may have navigated to a different match during the fetch
+    if (pbpIndex !== matchIdx) return;
+
+    // Inject awards HTML into each team's slot
+    for (const num of nums) {
+        const info = _pbpAwardsCache[num];
+        if (!info) continue;
+        const slot = document.querySelector(`.pbp-awards-slot[data-team="${num}"]`);
+        if (!slot) continue;
+        slot.innerHTML = _renderPbpAwardsRow(info);
+    }
+}
+
+function _renderPbpAwardsRow(info) {
+    const parts = [];
+
+    // Blue banners
+    if (info.blue_banner_count > 0) {
+        parts.push(`<span class="pbp-award-banner has-tooltip" tabindex="0">
+            <svg class="pbp-award-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M5 2h14l-3 7 3 7H5V2z"/></svg>
+            <span class="pbp-award-count">${info.blue_banner_count}</span>
+            <span class="custom-tooltip">${info.blue_banner_count} Blue Banner${info.blue_banner_count !== 1 ? 's' : ''}</span>
+        </span>`);
+    }
+
+    // Recent awards (last 3 seasons)
+    const recent = info.recent_awards || [];
+    if (recent.length) {
+        const renderEntry = (a) => {
+            const cls = a.is_blue_banner ? 'pbp-award-entry pbp-award-blue-banner has-tooltip' : 'pbp-award-entry has-tooltip';
+            return `<span class="${cls}" tabindex="0">${a.name} <span class="pbp-award-year">'${String(a.year).slice(-2)}</span><span class="custom-tooltip">${a.event_name || a.event_key} (${a.year})</span></span>`;
+        };
+
+        const visible = recent.slice(0, 4).map(renderEntry);
+        const hidden = recent.slice(4);
+
+        let html = visible.join('');
+        if (hidden.length) {
+            html += `<span class="pbp-award-toggle" onclick="pbpToggleAwardsOverflow(this)">+${hidden.length} more</span>`;
+            html += `<span class="pbp-award-overflow hidden" data-count="${hidden.length}">${hidden.map(renderEntry).join('')}</span>`;
+        }
+        parts.push(`<span class="pbp-award-recent">${html}</span>`);
+    }
+
+    if (!parts.length) return '';
+    return `<div class="pbp-awards-row">${parts.join('')}</div>`;
+}
+
+function pbpToggleAwardsOverflow(el) {
+    const overflow = el.nextElementSibling;
+    if (!overflow) return;
+    const isHidden = overflow.classList.contains('hidden');
+    overflow.classList.toggle('hidden');
+    const count = overflow.dataset.count || '?';
+    el.textContent = isHidden ? '− collapse' : `+${count} more`;
 }
 
 
@@ -2708,7 +2891,17 @@ async function loadBreakdownTab() {
         bdData = pbpData;
         bdIndex = 0;
         bdCache = {};
-        if (!bdData?.matches?.length) return; // no matches yet
+        if (!bdData?.matches?.length) {
+            hide('bd-container');
+            const el = $('bd-empty');
+            if (el) {
+                el.textContent = currentEventStatus === 'upcoming'
+                    ? 'The match schedule for this event has not been published yet.'
+                    : 'No match data available for this event.';
+                el.classList.remove('hidden');
+            }
+            return;
+        }
         hide('bd-empty');
         show('bd-container');
         buildBdSelector();
@@ -2829,7 +3022,7 @@ async function pollBdMatch() {
             renderBreakdown(data);
             // Flash the status briefly to signal live update
             const statusEl = $('bd-status');
-            statusEl.innerHTML = '<span class="bd-available">✓ Score breakdown available — just posted!</span>';
+            statusEl.innerHTML = '<span class="bd-available">✓ Score breakdown available - just posted!</span>';
             setTimeout(() => {
                 if (statusEl.querySelector('.bd-available'))
                     statusEl.innerHTML = '<span class="bd-available">✓ Score breakdown available</span>';
@@ -3406,7 +3599,7 @@ function _towerBadge(val) {
         'Level2': 'tower-level2', 'Level3': 'tower-level3',
     }[val] || 'tower-none';
     const label = {
-        'None': '—', 'Level1': 'L1', 'Level2': 'L2', 'Level3': 'L3',
+        'None': '–', 'Level1': 'L1', 'Level2': 'L2', 'Level3': 'L3',
     }[val] || val;
     return `<span class="tower-badge ${cls}">${label}</span>`;
 }
@@ -3421,7 +3614,7 @@ function _renderSpotlightContent(panel, perf, robot, gameYear, color, nick, team
 
         html += `
             <div class="spotlight-section">
-                <div class="spotlight-section-title">This Match — Individual</div>
+                <div class="spotlight-section-title">This Match · Individual</div>
                 <div class="spotlight-featured">
                     <div class="spotlight-feat-cell">
                         ${_towerBadge(autoTower)}
@@ -3441,7 +3634,7 @@ function _renderSpotlightContent(panel, perf, robot, gameYear, color, nick, team
 
             html += `
             <div class="spotlight-section">
-                <div class="spotlight-section-title">Event Performance — ${perf.matches_played} Matches</div>
+                <div class="spotlight-section-title">Event Performance · ${perf.matches_played} Matches</div>
                 <div class="spotlight-stats-grid">
                     <div class="spotlight-stat-cell">
                         <span class="spotlight-stat-val">${rec.wins}-${rec.losses}${rec.ties ? `-${rec.ties}` : ''}</span>
@@ -3481,7 +3674,7 @@ function _renderSpotlightContent(panel, perf, robot, gameYear, color, nick, team
             for (const pm of perf.matches) {
                 const isCurrent = pm.matchLevel === frcLevel && pm.matchNumber === currentMatchNum;
                 const rowCls = isCurrent ? 'current-match' : '';
-                const score = pm.allianceScore != null ? `${pm.allianceScore}-${pm.opponentScore}` : '—';
+                const score = pm.allianceScore != null ? `${pm.allianceScore}-${pm.opponentScore}` : '–';
                 rows += `<tr class="${rowCls}">
                     <td>${pm.description}</td>
                     <td><span class="result-badge result-${pm.result}">${pm.result}</span></td>
@@ -3516,7 +3709,7 @@ function _renderSpotlightContent(panel, perf, robot, gameYear, color, nick, team
 
         html += `
             <div class="spotlight-section">
-                <div class="spotlight-section-title">This Match — Individual</div>
+                <div class="spotlight-section-title">This Match · Individual</div>
                 <div class="spotlight-featured">
                     <div class="spotlight-feat-cell">
                         <span class="spotlight-feat-val bd-robot-value ${leaveCls}">${leave}</span>
@@ -3535,7 +3728,7 @@ function _renderSpotlightContent(panel, perf, robot, gameYear, color, nick, team
             const winPct = Math.round((rec.wins / perf.matches_played) * 100);
             html += `
             <div class="spotlight-section">
-                <div class="spotlight-section-title">Event Performance — ${perf.matches_played} Matches</div>
+                <div class="spotlight-section-title">Event Performance · ${perf.matches_played} Matches</div>
                 <div class="spotlight-stats-grid">
                     <div class="spotlight-stat-cell">
                         <span class="spotlight-stat-val">${rec.wins}-${rec.losses}${rec.ties ? `-${rec.ties}` : ''}</span>
@@ -3578,7 +3771,7 @@ function _renderSpotlightFallback(panel, robot, gameYear, color, nick, teamNum, 
 
         html = `
             <div class="spotlight-section">
-                <div class="spotlight-section-title">This Match — Individual</div>
+                <div class="spotlight-section-title">This Match · Individual</div>
                 <div class="spotlight-featured">
                     <div class="spotlight-feat-cell">
                         ${_towerBadge(autoTower)}
@@ -3591,7 +3784,7 @@ function _renderSpotlightFallback(panel, robot, gameYear, color, nick, teamNum, 
                 </div>
             </div>
             <div class="spotlight-section" style="text-align:center; padding:.6rem;">
-                <span style="font-size:.7rem; color:var(--text-muted);">FRC Events API unavailable — showing current match only</span>
+                <span style="font-size:.7rem; color:var(--text-muted);">FRC Events API unavailable - showing current match only</span>
             </div>`;
     } else {
         const leave = robot.autoLine === 'Yes' ? 'Yes' : 'No';
@@ -3606,7 +3799,7 @@ function _renderSpotlightFallback(panel, robot, gameYear, color, nick, teamNum, 
 
         html = `
             <div class="spotlight-section">
-                <div class="spotlight-section-title">This Match — Individual</div>
+                <div class="spotlight-section-title">This Match · Individual</div>
                 <div class="spotlight-featured">
                     <div class="spotlight-feat-cell">
                         <span class="spotlight-feat-val bd-robot-value ${leaveCls}">${leave}</span>
@@ -3707,8 +3900,7 @@ async function compareCurrentMatch() {
                 losses: t.losses || 0,
                 ties: t.ties || 0,
                 opr: t.opr || 0,
-                dpr: t.dpr || 0,
-                ccwm: 0,
+                epa: t.epa ?? null,
                 avg_rp: t.avg_rp || 0,
                 qual_average: t.qual_average || 0,
                 high_score: t.high_score || 0,
@@ -3796,7 +3988,7 @@ async function launchLookupFromSelection() {
     if (!num) return;
 
     openLookup();
-    $('lookup-title').textContent = `Team Lookup — ${num}`;
+    $('lookup-title').textContent = `Team Lookup · ${num}`;
     $('lookup-body').innerHTML = '<p class="loading-msg">Loading team data\u2026</p>';
 
     try {
@@ -3831,6 +4023,144 @@ document.addEventListener('keydown', e => {
     }
 });
 
+// ═══════════════════════════════════════════════════════════
+// FLOATING TEAM LOOKUP PANEL
+// ═══════════════════════════════════════════════════════════
+let _floatMinimized = false;
+
+function toggleFloatingLookup() {
+    const panel = $('float-lookup');
+    if (panel.classList.contains('hidden')) {
+        openFloatingLookup();
+    } else {
+        closeFloatingLookup();
+    }
+}
+
+function openFloatingLookup() {
+    const panel = $('float-lookup');
+    panel.classList.remove('hidden', 'float-lookup-minimized');
+    _floatMinimized = false;
+    $('float-lookup-btn').classList.add('active');
+    // Re-trigger the open animation
+    panel.style.animation = 'none';
+    panel.offsetHeight; // force reflow
+    panel.style.animation = '';
+    $('float-team-number').focus();
+}
+
+function closeFloatingLookup() {
+    const panel = $('float-lookup');
+    panel.classList.add('hidden');
+    panel.classList.remove('float-lookup-minimized');
+    _floatMinimized = false;
+    $('float-lookup-btn').classList.remove('active');
+    _updateFloatTitleBadge('');
+}
+
+function minimizeFloatingLookup() {
+    const panel = $('float-lookup');
+    if (_floatMinimized) {
+        panel.classList.remove('float-lookup-minimized');
+        _floatMinimized = false;
+    } else {
+        panel.classList.add('float-lookup-minimized');
+        _floatMinimized = true;
+    }
+}
+
+/** Show/hide a small team number pill in the titlebar (when minimized) */
+function _updateFloatTitleBadge(text) {
+    let badge = document.querySelector('.float-lookup-title-badge');
+    if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'float-lookup-title-badge';
+        document.querySelector('.float-lookup-title').appendChild(badge);
+    }
+    badge.textContent = text;
+    badge.style.display = text ? '' : 'none';
+}
+
+async function floatLookupTeam() {
+    const num = parseInt($('float-team-number').value, 10);
+    const year = $('float-team-year').value.trim() || null;
+    if (!num) return;
+
+    const body = $('float-lookup-body');
+    body.innerHTML = '<div class="float-lookup-loading"><span>Loading team data\u2026</span></div>';
+    _updateFloatTitleBadge('#' + num);
+
+    try {
+        const data = await API.teamStats(num, year);
+        body.innerHTML = renderTeamStats(data);
+    } catch (err) {
+        body.innerHTML = `<div class="float-lookup-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><p>${err.message}</p></div>`;
+        _updateFloatTitleBadge('');
+    }
+}
+
+/** Open floating lookup pre-filled with a team number (e.g. from PBP click) */
+function floatLookupQuick(teamNumber) {
+    openFloatingLookup();
+    $('float-team-number').value = teamNumber;
+    floatLookupTeam();
+}
+
+// ── Dragging ───────────────────────────────────────────────
+(function initFloatDrag() {
+    let isDragging = false, startX, startY, origX, origY;
+
+    document.addEventListener('mousedown', e => {
+        const titlebar = e.target.closest('#float-lookup-titlebar');
+        if (!titlebar) return;
+        if (e.target.closest('button')) return; // don't drag from buttons
+        isDragging = true;
+        const panel = $('float-lookup');
+        const rect = panel.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        origX = rect.left;
+        origY = rect.top;
+        panel.style.transition = 'none';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        const panel = $('float-lookup');
+        let newX = origX + (e.clientX - startX);
+        let newY = origY + (e.clientY - startY);
+        // Clamp to viewport
+        newX = Math.max(0, Math.min(newX, window.innerWidth - 60));
+        newY = Math.max(0, Math.min(newY, window.innerHeight - 40));
+        panel.style.left = newX + 'px';
+        panel.style.top = newY + 'px';
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        $('float-lookup').style.transition = '';
+    });
+})();
+
+// Q key toggles the floating quick lookup panel
+// Escape key closes it
+document.addEventListener('keydown', e => {
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+
+    if ((e.key === 'q' || e.key === 'Q') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        toggleFloatingLookup();
+    }
+    if (e.key === 'Escape' && !$('float-lookup').classList.contains('hidden')) {
+        closeFloatingLookup();
+    }
+});
+
 // ── Core comparison renderer ───────────────────────────────
 async function showComparison(teamKeys, opts = {}) {
     openCompare();
@@ -3859,8 +4189,7 @@ async function showComparison(teamKeys, opts = {}) {
                     losses: t.losses || 0,
                     ties: t.ties || 0,
                     opr: t.opr || 0,
-                    dpr: t.dpr || 0,
-                    ccwm: t.ccwm || 0,
+                    epa: t.epa ?? null,
                     avg_rp: 0,
                     qual_average: 0,
                     high_score: 0,
@@ -3881,10 +4210,9 @@ function renderComparison(data, opts) {
     const isMatchMode = redKeys.size > 0;
 
     const stats = [
-        { key: 'rank',         label: 'Rank',       fmt: v => v === '-' ? '—' : `#${v}`, lower: true },
+        { key: 'rank',         label: 'Rank',       fmt: v => v === '-' ? '–' : `#${v}`, lower: true },
         { key: 'opr',          label: 'OPR',        fmt: v => v.toFixed(2) },
-        { key: 'dpr',          label: 'DPR',        fmt: v => v.toFixed(2), lower: true },
-        { key: 'ccwm',         label: 'CCWM',       fmt: v => v.toFixed(2) },
+        { key: 'epa',          label: 'EPA',        fmt: v => v != null ? v.toFixed(2) : '\u2013' },
         { key: 'wins',         label: 'Wins',       fmt: v => v },
         { key: 'losses',       label: 'Losses',     fmt: v => v, lower: true },
         { key: 'qual_average', label: 'Avg Score',  fmt: v => v.toFixed(1) },
@@ -3928,7 +4256,7 @@ function renderComparison(data, opts) {
             return typeof v === 'number' ? v : 0;
         });
         const best = s.lower
-            ? Math.min(...vals.filter(v => v > 0 || s.key === 'losses' || s.key === 'dpr'))
+            ? Math.min(...vals.filter(v => v > 0 || s.key === 'losses'))
             : Math.max(...vals);
 
         html += `<div class="comp-label">${s.label}</div>`;
@@ -3936,7 +4264,7 @@ function renderComparison(data, opts) {
             const raw = t[s.key];
             const v = typeof raw === 'number' ? raw : 0;
             const display = s.fmt(raw);
-            const isBest = teams.length > 1 && v === best && (v !== 0 || s.key === 'losses' || s.key === 'dpr');
+            const isBest = teams.length > 1 && v === best && (v !== 0 || s.key === 'losses');
             const pct = maxVals[s.key] > 0 ? Math.round((v / maxVals[s.key]) * 100) : 0;
 
             let sideCls = '';
@@ -3955,7 +4283,7 @@ function renderComparison(data, opts) {
 
     // Alliance totals row for match mode
     if (isMatchMode) {
-        const allianceStats = ['opr', 'dpr', 'ccwm'];
+        const allianceStats = ['opr', 'epa'];
         html += '<div class="comp-divider" style="grid-column: 1 / -1"></div>';
         allianceStats.forEach(key => {
             const label = key.toUpperCase();
@@ -3972,7 +4300,7 @@ function renderComparison(data, opts) {
             // Red sum spans across red columns
             const redPct = Math.round((redSum / maxSum) * 100);
             const bluePct = Math.round((blueSum / maxSum) * 100);
-            const redBest = redSum >= blueSum && key !== 'dpr' || redSum <= blueSum && key === 'dpr';
+            const redBest = redSum >= blueSum;
             const blueBest = !redBest;
 
             // Output one cell per team, but show the sum only in the middle cell of each alliance
@@ -4055,7 +4383,7 @@ function renderRegionFacts(data) {
 
     // Stats cards row
     let html = '<div class="history-stats-row">';
-    html += _statCard('First Event', `${data.first_event_year || '—'}`, data.first_event_name || '');
+    html += _statCard('First Event', `${data.first_event_year || '–'}`, data.first_event_name || '');
     html += _statCard('Total Events', `${data.total_events}`, `${(data.active_years || []).length} seasons`);
     html += _statCard('Active Teams', `${data.current_season_teams || data.team_count}`, `${data.active_year || new Date().getFullYear()} season`);
     html += _statCard('Hall of Fame', `${data.hof_count}`, data.hof_count ? data.hof_teams.map(t => t.team_number).join(', ') : 'none yet');
@@ -4168,9 +4496,9 @@ function renderEventHistory(data) {
         html += '<h4>Year-by-Year Results</h4>';
         html += '<table class="data-table history-table"><thead><tr><th>Year</th><th>Winners</th><th>Finalists</th><th>Event Impact</th></tr></thead><tbody>';
         for (const yr of data.timeline) {
-            const winners = (yr.winners || []).map(t => `<span class="has-tooltip">${t.team_number}<span class="custom-tooltip">${_esc(t.nickname)}</span></span>`).join(', ') || '—';
-            const finalists = (yr.finalists || []).map(t => `<span class="has-tooltip">${t.team_number}<span class="custom-tooltip">${_esc(t.nickname)}</span></span>`).join(', ') || '—';
-            const impact = yr.impact ? `<span class="has-tooltip">${yr.impact.team_number}<span class="custom-tooltip">${_esc(yr.impact.nickname)}</span></span>` : '—';
+            const winners = (yr.winners || []).map(t => `<span class="has-tooltip">${t.team_number}<span class="custom-tooltip">${_esc(t.nickname)}</span></span>`).join(', ') || '–';
+            const finalists = (yr.finalists || []).map(t => `<span class="has-tooltip">${t.team_number}<span class="custom-tooltip">${_esc(t.nickname)}</span></span>`).join(', ') || '–';
+            const impact = yr.impact ? `<span class="has-tooltip">${yr.impact.team_number}<span class="custom-tooltip">${_esc(yr.impact.nickname)}</span></span>` : '–';
             html += `<tr><td class="year-cell">${yr.year}</td><td>${winners}</td><td>${finalists}</td><td>${impact}</td></tr>`;
         }
         html += '</tbody></table></div>';

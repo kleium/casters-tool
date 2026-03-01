@@ -80,6 +80,7 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
     highest_comp_rank = -1
     highest_comp_et_rank = -1
     highest_comp_label = "N/A — No events yet"
+    highest_comp_et = 99       # event_type of the highest stage event
     highest_event_type_rank = -1
     highest_event_type = 99
     event_results = []
@@ -110,7 +111,7 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
             level = playoff.get("level", "qm")
             ev_comp_level = level
             ev_playoff_status = playoff.get("status", "")
-            if ev_playoff_status == "won":
+            if ev_playoff_status == "won" and level == "f":
                 ev_comp_level = "winner"
 
         comp_rank = (
@@ -122,11 +123,20 @@ async def get_team_stats(team_number: int, year: Optional[int] = None) -> dict:
         if comp_rank > highest_comp_rank or (comp_rank == highest_comp_rank and et_rank > highest_comp_et_rank):
             highest_comp_rank = comp_rank
             highest_comp_et_rank = et_rank
+            highest_comp_et = et
             if ev_comp_level == "winner":
                 winner_ctx = WINNER_LABELS.get(et, "")
                 highest_comp_label = f"Event Winner ({winner_ctx})" if winner_ctx else "Event Winner"
             else:
-                highest_comp_label = COMP_LEVEL_LABELS.get(ev_comp_level, "Qualifications")
+                stage = COMP_LEVEL_LABELS.get(ev_comp_level, "Qualifications")
+                # Short event-level labels for context
+                _ET_SHORT = {
+                    0: "Regional", 1: "District", 2: "District CMP",
+                    3: "CMP Division", 4: "Einstein",
+                    5: "DCMP Division", 99: "Offseason",
+                }
+                et_ctx = _ET_SHORT.get(et, "")
+                highest_comp_label = f"{stage} ({et_ctx})" if et_ctx else stage
 
         # Only count toward highest event level if the team actually competed
         # (has qual or playoff status) — excludes award-only appearances like
@@ -335,7 +345,7 @@ async def _get_season_achievements(
                 level = playoff.get("level", "qm")
                 ev_comp_level = level
                 ev_playoff_status = playoff.get("status", "")
-                if ev_playoff_status == "won":
+                if ev_playoff_status == "won" and level == "f":
                     ev_comp_level = "winner"
 
             comp_rank = (
@@ -360,6 +370,79 @@ async def _get_season_achievements(
         })
 
     return achievements
+
+
+# ── Awards Summary (batch, lightweight) ─────────────────────
+
+
+BLUE_BANNER_TYPES = {0, 1, 3}
+_OFFSEASON_TYPES = {99, 100, -1}
+
+
+async def get_awards_summary(team_numbers: list[int]) -> dict:
+    """Return blue banner count + recent awards for a batch of teams.
+
+    Only fetches the minimal data needed: all-time awards and the simple
+    events list (for event names and types).  Results are keyed by team
+    number.
+    """
+    client = get_tba_client()
+    current_year = date.today().year
+    recent_cutoff = current_year - 3  # last 3 seasons including current
+
+    async def _fetch_team(num: int) -> dict:
+        team_key = f"frc{num}"
+        all_awards, all_events_simple = await asyncio.gather(
+            _safe(client.get_team_awards(team_key)),
+            _safe(client.get_team_events_simple(team_key)),
+        )
+
+        # Build lookups
+        event_name_map: dict[str, str] = {}
+        event_type_map: dict[str, int] = {}
+        if all_events_simple:
+            for ev in all_events_simple:
+                event_name_map[ev["key"]] = ev.get("name", ev["key"])
+                event_type_map[ev["key"]] = ev.get("event_type", -1)
+
+        blue_banners: list[dict] = []
+        recent_awards: list[dict] = []
+
+        if all_awards:
+            for aw in all_awards:
+                aw_type = aw.get("award_type")
+                aw_year = aw.get("year")
+                aw_event = aw.get("event_key", "")
+                is_banner = (
+                    aw_type in BLUE_BANNER_TYPES
+                    and event_type_map.get(aw_event, -1) not in _OFFSEASON_TYPES
+                )
+                entry = {
+                    "name": aw.get("name", ""),
+                    "year": aw_year,
+                    "event_key": aw_event,
+                    "event_name": event_name_map.get(aw_event, aw_event),
+                    "is_blue_banner": is_banner,
+                }
+                # Blue banners (excluding offseason)
+                if is_banner:
+                    blue_banners.append(entry)
+                # Recent awards (last 3 seasons)
+                if aw_year and aw_year >= recent_cutoff:
+                    recent_awards.append(entry)
+
+        # Sort recent awards newest-first
+        recent_awards.sort(key=lambda a: a.get("year", 0), reverse=True)
+
+        return {
+            "team_number": num,
+            "blue_banner_count": len(blue_banners),
+            "blue_banners": blue_banners,
+            "recent_awards": recent_awards,
+        }
+
+    results = await asyncio.gather(*[_fetch_team(n) for n in team_numbers])
+    return {str(r["team_number"]): r for r in results}
 
 
 # ── Head-to-Head ────────────────────────────────────────────

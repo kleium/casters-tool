@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About — Caster's Tool</title>
+    <title>About - Caster's Tool</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -221,7 +221,7 @@
                 </div>
                 <div class="feature-card">
                     <h3>Rankings</h3>
-                    <p>Live team rankings with rank, record, OPR, DPR, CCWM. Toggle school names and select teams to compare.</p>
+                    <p>Live team rankings with rank, record, OPR, and Statbotics EPA. Toggle school names and select teams to compare.</p>
                 </div>
                 <div class="feature-card">
                     <h3>Summary</h3>
@@ -245,7 +245,7 @@
                 </div>
                 <div class="feature-card">
                     <h3>History</h3>
-                    <p>Event lineage — past winners, finalists, awards timeline back to 1992. Region facts &amp; district stats.</p>
+                    <p>Event lineage: past winners, finalists, awards timeline back to 1992. Region facts &amp; district stats.</p>
                 </div>
                 <div class="feature-card">
                     <h3>Team Lookup</h3>
@@ -258,12 +258,12 @@
         <div class="about-section">
             <h2>How to Use</h2>
             <ul>
-                <li><strong>Load an event</strong> — Pick from the season list, search by name, or enter an event code manually (e.g. <code>TUIS</code>).</li>
-                <li><strong>Navigate tabs</strong> — Switch between Rankings, Summary, Play by Play, Breakdown, Alliances, Playoffs, and History.</li>
-                <li><strong>Compare teams</strong> — Check boxes next to teams in Rankings, then click the floating compare bar (or press <kbd>C</kbd>).</li>
-                <li><strong>Quick team lookup</strong> — Select one team and press <kbd>L</kbd>, or use the Team Lookup tab for additional info.</li>
-                <li><strong>Save events</strong> — Click the save icon on the event bar to cache data for instant reloading.</li>
-                <li><strong>Toggle settings</strong> — Use the gear icon to switch themes, highlight international teams, or include offseason events in data.</li>
+                <li><strong>Load an event</strong>: Pick from the season list, search by name, or enter an event code manually (e.g. <code>TUIS</code>).</li>
+                <li><strong>Navigate tabs</strong>: Switch between Rankings, Summary, Play by Play, Breakdown, Alliances, Playoffs, and History.</li>
+                <li><strong>Compare teams</strong>: Check boxes next to teams in Rankings, then click the floating compare bar (or press <kbd>C</kbd>).</li>
+                <li><strong>Quick team lookup</strong>: Press <kbd>Q</kbd> to toggle the floating Quick Lookup panel, or select one team and press <kbd>L</kbd>.</li>
+                <li><strong>Save events</strong>: Click the save icon on the event bar to cache data for instant reloading.</li>
+                <li><strong>Toggle settings</strong>: Use the gear icon to switch themes, highlight international teams, or include offseason events in data.</li>
             </ul>
         </div>
 
@@ -277,6 +277,7 @@
                 <tbody>
                     <tr><td><kbd>C</kbd></td><td>Compare selected teams</td><td>Rankings tab with teams selected</td></tr>
                     <tr><td><kbd>L</kbd></td><td>Quick team lookup</td><td>Rankings tab with 1 team selected</td></tr>
+                    <tr><td><kbd>Q</kbd></td><td>Toggle Quick Lookup panel</td><td>Anywhere (not in a text field)</td></tr>
                     <tr><td><kbd>Esc</kbd></td><td>Close overlay / deselect</td><td>Any overlay open</td></tr>
                     <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>Previous / Next match</td><td>Play by Play or Breakdown tab</td></tr>
                 </tbody>
@@ -290,14 +291,21 @@
                 Caster's Tool pulls from two external APIs to provide comprehensive FRC data:
             </p>
             <ul>
-                <li><strong><a href="https://www.thebluealliance.com" target="_blank" rel="noopener">The Blue Alliance (TBA)</a></strong> —
+                <li><strong><a href="https://www.thebluealliance.com" target="_blank" rel="noopener">The Blue Alliance (TBA)</a></strong>:
                     Event lists, team info, rankings, OPRs, match results, alliances, awards, and media.</li>
-                <li><strong><a href="https://frc-events.firstinspires.org/services/API" target="_blank" rel="noopener">FIRST FRC Events API</a></strong> —
+                <li><strong><a href="https://frc-events.firstinspires.org/services/API" target="_blank" rel="noopener">FIRST FRC Events API</a></strong>:
                     Score breakdowns, per-robot match performance, school names, and team avatars.</li>
+                <li><strong><a href="https://www.statbotics.io" target="_blank" rel="noopener">Statbotics</a></strong>:
+                    EPA (Expected Points Added) ratings and match win predictions.</li>
             </ul>
             <p>
                 Data is cached in-memory on the server and in the browser's IndexedDB for fast reloading. Event snapshots can be saved to disk for instant access.
             </p>
+            <h3>Further Reading</h3>
+            <ul>
+                <li><a href="https://blog.thebluealliance.com/2017/10/05/the-math-behind-opr-an-introduction/" target="_blank" rel="noopener">The Math Behind OPR</a>: An introduction to how OPR is calculated.</li>
+                <li><a href="https://www.statbotics.io/blog/intro" target="_blank" rel="noopener">Introduction to EPA</a>: How Statbotics' Expected Points Added model works.</li>
+            </ul>
         </div>
 
         <!-- ── Credits ─────────────────────────────────── -->
@@ -312,7 +320,8 @@
                     <h3>Powered by</h3>
                     <p>
                         <a href="https://www.thebluealliance.com" target="_blank" rel="noopener">The Blue Alliance</a><br>
-                        <a href="https://frc-events.firstinspires.org/services/API" target="_blank" rel="noopener">FIRST FRC Events API</a>
+                        <a href="https://frc-events.firstinspires.org/services/API" target="_blank" rel="noopener">FIRST FRC Events API</a><br>
+                        <a href="https://www.statbotics.io" target="_blank" rel="noopener">Statbotics</a>
                     </p>
                 </div>
                 <div class="credit-card">

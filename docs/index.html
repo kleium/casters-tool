@@ -20,6 +20,9 @@
         </div>
         <div class="header-right">
             <div id="event-badge" class="hidden"></div>
+            <button class="settings-btn" id="float-lookup-btn" onclick="toggleFloatingLookup()" title="Quick Team Lookup">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
             <div class="settings-wrapper">
                 <button class="settings-btn" onclick="toggleSettings()" title="Settings">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -40,6 +43,16 @@
                         <input type="checkbox" id="toggle-offseason" onchange="toggleShowOffseason(this.checked)">
                         <span class="toggle-slider"></span>
                         <span class="toggle-label">Show Offseason Events</span>
+                    </label>
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="toggle-pbp-awards" onchange="togglePbpAwards(this.checked)">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Show Awards in Play by Play</span>
+                    </label>
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="toggle-predictions" onchange="toggleShowPredictions(this.checked)">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Show Win Predictions (Statbotics)</span>
                     </label>
                 </div>
             </div>
@@ -350,7 +363,7 @@
             <div id="alliance-toolbar" class="alliance-toolbar hidden">
                 <label class="toggle-label"><input type="checkbox" id="alliance-toggle-avatars" checked onchange="toggleAllianceAvatars(this.checked)"> Avatars</label>
                 <label class="toggle-label"><input type="checkbox" id="alliance-toggle-names" onchange="toggleAllianceNames(this.checked)"> Team Names</label>
-                <label class="toggle-label"><input type="checkbox" id="alliance-toggle-dpr" onchange="toggleAllianceDpr(this.checked)"> DPR / CCWM</label>
+                <label class="toggle-label"><input type="checkbox" id="alliance-toggle-epa" onchange="toggleAllianceEpa(this.checked)"> EPA Breakdown</label>
                 <label class="toggle-label"><input type="checkbox" id="alliance-toggle-playoff" onchange="toggleAlliancePlayoff(this.checked)"> Playoff Status</label>
             </div>
             <div id="alliance-grid"></div>
@@ -386,8 +399,9 @@
                 <input type="text" id="team-number"
                        placeholder="Enter team number (e.g. 148)" />
                 <input type="text" id="team-year"
-                       placeholder="Year (blank = current)" class="input-sm"/>
+                       placeholder="Year" class="input-sm" title="Leave blank for current season"/>
                 <button onclick="loadTeam()">Look Up</button>
+                <span class="input-hint">Leave year blank for current season</span>
             </div>
             <div id="team-loading" class="hidden loading-msg">
                 Loading team data …
@@ -417,6 +431,38 @@
             </div>
         </section>
     </main>
+
+    <!-- ═══ Floating Team Lookup Panel ═══ -->
+    <div id="float-lookup" class="float-lookup hidden">
+        <div class="float-lookup-titlebar" id="float-lookup-titlebar">
+            <span class="float-lookup-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Team Lookup
+            </span>
+            <div class="float-lookup-controls">
+                <button class="float-lookup-minimize" onclick="minimizeFloatingLookup()" title="Minimize">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <button class="float-lookup-close" onclick="closeFloatingLookup()" title="Close">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="float-lookup-search">
+            <input type="text" id="float-team-number" placeholder="Team #" onkeydown="if(event.key==='Enter')floatLookupTeam()"/>
+            <input type="text" id="float-team-year" placeholder="Year" class="input-sm" title="Leave blank for current season" onkeydown="if(event.key==='Enter')floatLookupTeam()"/>
+            <button onclick="floatLookupTeam()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px;vertical-align:middle;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Lookup
+            </button>
+        </div>
+        <div class="float-lookup-body" id="float-lookup-body">
+            <div class="float-lookup-empty">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <p>Enter a team number to get started</p>
+            </div>
+        </div>
+    </div>
 
     <div id="loading-overlay" class="hidden">
         <div class="spinner"></div>
@@ -482,6 +528,11 @@
             <span class="status-item" id="status-frc" title="FIRST FRC Events API">
                 <span class="status-dot status-checking"></span>
                 Event Data provided by <a href="https://frc-events.firstinspires.org/services/API" target="_blank" rel="noopener"><em>FIRST</em></a>
+            </span>
+            <span class="footer-sep">·</span>
+            <span class="status-item" id="status-statbotics" title="Statbotics API">
+                <span class="status-dot status-checking"></span>
+                EPA by <a href="https://www.statbotics.io" target="_blank" rel="noopener">Statbotics</a>
             </span>
         </div>
     </footer>
