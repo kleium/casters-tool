@@ -301,7 +301,8 @@ async def ingest_event(event_key: str) -> str:
     # ── 6. Register for live polling if ongoing ─────────────
     if status == "ongoing":
         try:
-            from ..workers.match_poller import add_watched_event
+            from ..workers.match_poller import add_watched_event, set_event_types
+            set_event_types({event_key: event_raw.get("event_type", -1)})
             add_watched_event(event_key)
         except Exception:
             pass

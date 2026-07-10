@@ -19,7 +19,7 @@ from ..services.statbotics_client import get_statbotics_client, get_epa_map
 from ..services.supabase_client import upsert_rows, merge_event_teams
 from ..services.circuit_breaker import CircuitOpenError
 from .schemas import TBAEvent, TBATeam, FRCRanking, validate_list
-from .match_poller import set_active_events
+from .match_poller import set_active_events, set_event_types
 
 log = logging.getLogger(__name__)
 
@@ -87,12 +87,15 @@ async def _sync_event_metadata(year: int) -> set[str]:
         return set()
 
     ongoing: set[str] = set()
+    event_types: dict[str, int] = {}
     rows = []
     for ev_model in valid_events:
         ev = ev_model.model_dump()
         etype = ev.get("event_type", -1)
         if etype in {-1, 100}:  # junk types
             continue
+
+        event_types[ev["key"]] = etype
 
         start = ev.get("start_date", "")
         end = ev.get("end_date", "")
@@ -126,6 +129,7 @@ async def _sync_event_metadata(year: int) -> set[str]:
         except Exception as e:
             log.warning("Supabase events upsert failed: %s", e)
 
+    set_event_types(event_types)
     return ongoing
 
 
